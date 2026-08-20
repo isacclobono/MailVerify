@@ -1,0 +1,9 @@
+# Google Cloud OAuth 2.0 Credentials (Get from console.cloud.google.com)
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# Random 32+ character key for session cookie hashing
+SESSION_SECRET=replace-with-a-random-32-char-secret-string
+
+# Frontend Base URL (for redirecting after OAuth)
+APP_BASE_URL=http://localhost:5173

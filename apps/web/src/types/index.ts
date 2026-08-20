@@ -1,0 +1,47 @@
+export type Verdict =
+  | "LIKELY_DELIVERABLE"
+  | "RISKY"
+  | "LIKELY_INVALID"
+  | "DISPOSABLE"
+  | "ROLE_ACCOUNT"
+  | "NO_MX"
+  | "INVALID_SYNTAX"
+  | "UNKNOWN";
+
+export interface VerificationChecks {
+  syntax: "PASS" | "FAIL";
+  domain: "DOMAIN_EXISTS" | "DOMAIN_NOT_FOUND" | "UNKNOWN";
+  mx: "MX_FOUND" | "NO_MX" | "UNKNOWN";
+  spf: "SPF_PRESENT" | "SPF_MISSING" | "SPF_INVALID" | "UNKNOWN";
+  dmarc: "DMARC_PRESENT" | "DMARC_MISSING" | "DMARC_INVALID" | "UNKNOWN";
+  disposable: "DISPOSABLE" | "NOT_DISPOSABLE" | "UNKNOWN";
+  role: "ROLE_ACCOUNT" | "PERSONAL_ACCOUNT_LIKELY" | "UNKNOWN";
+  catch_all: "CATCH_ALL" | "NOT_CATCH_ALL" | "UNKNOWN";
+  smtp: "SMTP_EXISTS" | "SMTP_NOT_FOUND" | "UNKNOWN";
+}
+
+export interface VerificationResult {
+  id?: string;
+  email: string;
+  normalized_email: string;
+  verdict: Verdict;
+  score: number;
+  checks: VerificationChecks;
+  created_at: string;
+  remaining_anonymous_checks?: number;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  name?: string;
+  avatar_url?: string;
+}
+
+export interface BulkJobSummary {
+  total: number;
+  processed: number;
+  successful: number;
+  failed: number;
+  results: VerificationResult[];
+}

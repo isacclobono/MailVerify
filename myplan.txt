@@ -1,0 +1,1077 @@
+Functional Architecture Prompt
+
+Build a production-ready email verification web application using Cloudflare-only infrastructure wherever possible. The current scope is functional completeness, not visual/UI completeness. Implement the complete backend, authentication, database, verification engine, retention, API, security, and deployment architecture. The landing page only needs a simple email search field and Google Login button for now.
+
+1. Technology decisions
+
+Use exactly this stack unless technically necessary to change:
+
+TypeScript
+Cloudflare Workers for the backend/API
+Cloudflare D1 for persistent application data
+Cloudflare KV for caching
+Cloudflare Cron Triggers for scheduled cleanup
+React + Vite + TypeScript for the frontend
+Cloudflare Workers Static Assets / Pages-compatible deployment for the frontend
+Google OAuth 2.0 / OpenID Connect for Google Login
+REST JSON API between frontend and Worker
+No Python backend
+No VPS
+No Redis
+No PostgreSQL
+No paid third-party authentication service
+No paid email-verification API in the initial version
+
+The application must be deployable using Cloudflare's free-tier resources within their applicable limits.
+
+2. Application structure
+
+Create a single repository:
+
+email-verifier/
+├── apps/
+│   ├── web/
+│   │   ├── src/
+│   │   │   ├── api/
+│   │   │   ├── components/
+│   │   │   ├── pages/
+│   │   │   ├── hooks/
+│   │   │   ├── types/
+│   │   │   ├── App.tsx
+│   │   │   └── main.tsx
+│   │   └── package.json
+│   │
+│   └── worker/
+│       ├── src/
+│       │   ├── index.ts
+│       │   ├── router.ts
+│       │   ├── env.ts
+│       │   │
+│       │   ├── auth/
+│       │   │   ├── google.ts
+│       │   │   ├── sessions.ts
+│       │   │   └── auth-routes.ts
+│       │   │
+│       │   ├── verification/
+│       │   │   ├── verifier.ts
+│       │   │   ├── normalize.ts
+│       │   │   ├── syntax.ts
+│       │   │   ├── domain.ts
+│       │   │   ├── mx.ts
+│       │   │   ├── spf.ts
+│       │   │   ├── dmarc.ts
+│       │   │   ├── disposable.ts
+│       │   │   ├── role.ts
+│       │   │   ├── scoring.ts
+│       │   │   └── types.ts
+│       │   │
+│       │   ├── bulk/
+│       │   │   ├── bulk.ts
+│       │   │   └── csv.ts
+│       │   │
+│       │   ├── db/
+│       │   │   ├── users.ts
+│       │   │   ├── sessions.ts
+│       │   │   ├── verifications.ts
+│       │   │   └── jobs.ts
+│       │   │
+│       │   ├── cache/
+│       │   │   └── cache.ts
+│       │   │
+│       │   ├── security/
+│       │   │   ├── rate-limit.ts
+│       │   │   ├── validation.ts
+│       │   │   └── security.ts
+│       │   │
+│       │   └── cron/
+│       │       └── cleanup.ts
+│       │
+│       ├── wrangler.jsonc
+│       └── package.json
+│
+├── migrations/
+│   ├── 0001_initial.sql
+│   └── 0002_indexes.sql
+│
+├── package.json
+├── README.md
+└── .gitignore
+
+
+Keep the code modular and production-ready.
+
+3. Public landing page
+
+The initial landing page needs only:
+
+Email input
+Verify/Search button
+Continue with Google button
+
+
+The email search should work for anonymous users according to the configured anonymous rate limit.
+
+Google Login should redirect the user into the authenticated dashboard.
+
+Do not build unnecessary UI functionality yet.
+
+4. Authentication
+
+Implement Google OAuth/OpenID Connect properly.
+
+Flow:
+
+Browser
+   ↓
+GET /api/auth/google
+   ↓
+Google authorization
+   ↓
+Google callback
+   ↓
+Validate state
+   ↓
+Exchange authorization code
+   ↓
+Validate ID token / user identity
+   ↓
+Find or create user
+   ↓
+Create application session
+   ↓
+Secure HttpOnly cookie
+   ↓
+Dashboard
+
+
+Request only the identity scopes required for login.
+
+Do not request Gmail, Drive, Calendar, Contacts, or other unnecessary Google permissions.
+
+Google OAuth client ID and secret must be stored as Cloudflare Worker secrets.
+
+Never commit secrets to Git.
+
+Implement:
+
+GET  /api/auth/google
+GET  /api/auth/google/callback
+POST /api/auth/logout
+GET  /api/auth/me
+
+5. Session system
+
+Do not expose Google access tokens to the frontend.
+
+After successful Google authentication:
+
+Google
+   ↓
+Worker
+   ↓
+Application session
+   ↓
+HttpOnly Secure SameSite cookie
+
+
+The browser should only receive the application's session cookie.
+
+Store sessions securely.
+
+Use a cryptographically random session identifier.
+
+Store only a hash of the session token in D1 if practical.
+
+Implement session expiration and cleanup.
+
+6. Database
+
+Use Cloudflare D1.
+
+users
+CREATE TABLE users (
+    id TEXT PRIMARY KEY,
+    google_sub TEXT UNIQUE,
+    email TEXT NOT NULL UNIQUE,
+    name TEXT,
+    avatar_url TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+sessions
+CREATE TABLE sessions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    token_hash TEXT NOT NULL UNIQUE,
+    expires_at TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+verifications
+CREATE TABLE verifications (
+    id TEXT PRIMARY KEY,
+    user_id TEXT,
+    email TEXT NOT NULL,
+    normalized_email TEXT NOT NULL,
+    verdict TEXT NOT NULL,
+    score INTEGER NOT NULL,
+    result_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+bulk_jobs
+CREATE TABLE bulk_jobs (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    status TEXT NOT NULL,
+    total INTEGER NOT NULL DEFAULT 0,
+    processed INTEGER NOT NULL DEFAULT 0,
+    successful INTEGER NOT NULL DEFAULT 0,
+    failed INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    completed_at TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+
+Create indexes for:
+
+users.email
+users.google_sub
+sessions.token_hash
+sessions.expires_at
+verifications.user_id
+verifications.created_at
+verifications.normalized_email
+bulk_jobs.user_id
+bulk_jobs.created_at
+
+7. Five-day data retention
+
+User accounts are permanent unless the user deletes their account.
+
+Verification data is temporary.
+
+Every verification must have:
+
+created_at
+
+
+The application must retain verification records for approximately five days and automatically delete records older than five days.
+
+Cloudflare Cron:
+
+Once every 24 hours
+        ↓
+cleanup()
+        ↓
+Delete verification records older than 5 days
+        ↓
+Delete expired sessions
+        ↓
+Delete expired bulk jobs
+
+
+Use a parameterized SQL query.
+
+Example:
+
+DELETE FROM verifications
+WHERE created_at < datetime('now', '-5 days');
+
+
+Also clean expired sessions:
+
+DELETE FROM sessions
+WHERE expires_at < datetime('now');
+
+
+The cleanup must be safe to run repeatedly.
+
+Do not delete the user's Google account record during normal cleanup.
+
+8. Email normalization
+
+Before verification:
+
+Trim whitespace
+Lowercase domain
+Normalize obvious formatting issues
+Reject malformed input
+
+
+Do not make dangerous assumptions about provider-specific email normalization.
+
+For example, do not automatically remove dots or plus-tags unless explicitly implementing provider-specific rules.
+
+Store:
+
+original email
+normalized email
+
+
+where appropriate.
+
+9. Email syntax verification
+
+Implement standards-aware validation without attempting to support every obscure RFC edge case.
+
+Return:
+
+PASS
+FAIL
+
+
+Examples:
+
+[email protected] → PASS
+abc@@example.com → FAIL
+abc → FAIL
+@example.com → FAIL
+
+
+Do not use an enormous fragile regex.
+
+10. Domain verification
+
+Extract the domain.
+
+Check whether the domain can resolve.
+
+Return:
+
+DOMAIN_EXISTS
+DOMAIN_NOT_FOUND
+UNKNOWN
+
+
+Do not equate DNS existence with mailbox existence.
+
+11. MX verification
+
+Check MX records.
+
+Return:
+
+MX_FOUND
+NO_MX
+UNKNOWN
+
+
+If the domain has no usable mail-routing mechanism, the final risk score should increase substantially.
+
+Cache domain-level DNS/MX results in KV with a sensible TTL.
+
+12. SPF
+
+Check the domain's TXT records for SPF.
+
+Return:
+
+SPF_PRESENT
+SPF_MISSING
+SPF_INVALID
+UNKNOWN
+
+
+Do not treat missing SPF alone as proof that an email is fake.
+
+13. DMARC
+
+Check:
+
+_dmarc.example.com
+
+
+Return:
+
+DMARC_PRESENT
+DMARC_MISSING
+DMARC_INVALID
+UNKNOWN
+
+
+Again, use it as a reputation/security signal rather than proof of mailbox existence.
+
+14. Disposable email detection
+
+Maintain a disposable-domain dataset.
+
+Initially support a bundled curated list.
+
+Store/update the list independently from the verification engine where practical.
+
+Use KV for caching.
+
+Example:
+
+disposable:example.com
+
+
+Return:
+
+DISPOSABLE
+NOT_DISPOSABLE
+UNKNOWN
+
+
+Do not claim that a domain is disposable merely because it is unfamiliar.
+
+15. Role-account detection
+
+Detect common role prefixes:
+
+admin@
+administrator@
+support@
+sales@
+info@
+contact@
+help@
+billing@
+security@
+noreply@
+no-reply@
+webmaster@
+postmaster@
+
+
+Return:
+
+ROLE_ACCOUNT
+PERSONAL_ACCOUNT_LIKELY
+UNKNOWN
+
+
+This is a classification signal, not an invalidity signal.
+
+16. Catch-all detection
+
+If a safe and technically reliable implementation is available, expose:
+
+CATCH_ALL
+NOT_CATCH_ALL
+UNKNOWN
+
+
+Do not falsely claim mailbox existence.
+
+Do not repeatedly probe arbitrary mail servers aggressively.
+
+If catch-all cannot be reliably determined, return UNKNOWN.
+
+17. SMTP verification
+
+Do not make SMTP mailbox probing a mandatory dependency in version 1.
+
+The system should support a future provider/component:
+
+SMTP verification
+      ↓
+optional signal
+
+
+The core application must function without it.
+
+Do not classify an email as definitely real solely because an SMTP server accepts a recipient.
+
+18. Final scoring engine
+
+Create a deterministic scoring system.
+
+Possible signals:
+
+Syntax failure          → very high risk
+Domain unavailable      → very high risk
+No MX                   → very high risk
+Disposable              → very high risk
+Role account            → moderate risk
+Suspicious DNS          → moderate risk
+Missing SPF             → small risk
+Missing DMARC           → small risk
+Catch-all               → small/moderate risk
+Valid syntax            → reduces risk
+Valid domain            → reduces risk
+Valid MX                → reduces risk
+
+
+The scoring system must be configurable in one place.
+
+Do not hard-code scoring logic throughout the application.
+
+Final verdicts:
+
+LIKELY_DELIVERABLE
+RISKY
+LIKELY_INVALID
+DISPOSABLE
+ROLE_ACCOUNT
+NO_MX
+INVALID_SYNTAX
+UNKNOWN
+
+
+A score must never be presented as absolute proof.
+
+19. Verification response
+
+Return a consistent API structure:
+
+{
+  "success": true,
+  "data": {
+    "id": "verification-id",
+    "email": "[email protected]",
+    "verdict": "LIKELY_DELIVERABLE",
+    "score": 12,
+    "checks": {
+      "syntax": "PASS",
+      "domain": "PASS",
+      "mx": "PASS",
+      "spf": "PASS",
+      "dmarc": "PASS",
+      "disposable": "NOT_DISPOSABLE",
+      "role": "NOT_ROLE",
+      "catch_all": "UNKNOWN",
+      "smtp": "UNKNOWN"
+    },
+    "created_at": "2026-08-20T12:00:00Z"
+  }
+}
+
+
+Use consistent error responses:
+
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_EMAIL",
+    "message": "The supplied email address is invalid."
+  }
+}
+
+
+Never leak internal exceptions to clients.
+
+20. API routes
+
+Implement:
+
+GET  /api/health
+
+GET  /api/auth/google
+GET  /api/auth/google/callback
+POST /api/auth/logout
+GET  /api/auth/me
+
+POST /api/verify
+
+GET  /api/history
+
+POST /api/bulk
+GET  /api/bulk/:id
+GET  /api/bulk/:id/results
+
+GET  /api/usage
+
+DELETE /api/account
+
+
+Protect authenticated routes with the session middleware.
+
+21. Anonymous verification
+
+Allow the landing-page search without requiring login.
+
+However, protect it with rate limiting.
+
+Example initial policy:
+
+Anonymous:
+5 requests/minute/IP
+
+Authenticated:
+30 requests/minute/user
+
+
+Make these configurable.
+
+Do not permanently store anonymous verification history unless necessary.
+
+If anonymous results are stored, apply the same five-day retention policy.
+
+22. Rate limiting
+
+Implement application-level rate limiting.
+
+Use Cloudflare-compatible storage.
+
+Keep the implementation simple.
+
+Rate-limit:
+
+/auth/*
+/api/verify
+/api/bulk
+
+
+Also impose:
+
+maximum email length
+maximum request body size
+maximum CSV size
+maximum number of CSV rows
+
+
+Reject abusive requests before expensive verification work.
+
+23. Bulk verification
+
+Implement CSV upload.
+
+Input:
+
+email
+[email protected]
+[email protected]
+[email protected]
+
+
+Process:
+
+Upload
+ ↓
+Validate file
+ ↓
+Validate size
+ ↓
+Parse CSV
+ ↓
+Extract email column
+ ↓
+Normalize
+ ↓
+Remove duplicates
+ ↓
+Create bulk job
+ ↓
+Process verification
+ ↓
+Store temporary results
+ ↓
+Expose progress
+ ↓
+Download results
+
+
+Bulk jobs are associated with the authenticated user.
+
+Do not allow one user to access another user's jobs.
+
+Initially keep the maximum CSV size conservative.
+
+Design the code so Cloudflare Queues can be added later if large-scale asynchronous processing becomes necessary.
+
+24. KV caching
+
+Use KV only for cacheable data.
+
+Examples:
+
+mx:example.com
+dns:example.com
+spf:example.com
+dmarc:example.com
+disposable:example.com
+
+
+Every cache entry should have a TTL.
+
+Never treat stale cache data as permanent truth.
+
+If KV fails:
+
+KV unavailable
+     ↓
+perform verification without cache
+
+
+The application should degrade gracefully.
+
+25. Security requirements
+
+Implement:
+
+HTTPS only
+Secure cookies
+HttpOnly cookies
+SameSite cookies
+CSRF protection where required
+OAuth state validation
+OAuth nonce validation where applicable
+Input validation
+SQL parameterization
+Request-size limits
+CSV-size limits
+Rate limiting
+Authorization checks
+No secret exposure
+No Google tokens in frontend
+No passwords in plaintext
+No sensitive data in logs
+
+
+Do not log complete verification payloads unnecessarily.
+
+Avoid logging full email addresses where possible.
+
+26. Account deletion
+
+Implement:
+
+DELETE /api/account
+
+
+When the user deletes their account:
+
+User
+ ↓
+Delete sessions
+ ↓
+Delete verification data
+ ↓
+Delete bulk jobs
+ ↓
+Delete user
+
+
+Use foreign-key cascades where appropriate.
+
+Require authentication and confirmation.
+
+27. Environment variables/secrets
+
+Public configuration:
+
+VITE_API_BASE_URL
+
+
+Worker secrets:
+
+GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET
+SESSION_SECRET
+
+
+Bindings:
+
+DB
+CACHE
+
+
+Never place secrets in:
+
+GitHub
+frontend JavaScript
+wrangler config committed to Git
+logs
+API responses
+
+28. Cloudflare configuration
+
+Configure:
+
+Worker
+D1 binding
+KV binding
+Cron trigger
+Static assets
+
+
+Example conceptual configuration:
+
+{
+  "name": "email-verifier",
+  "main": "src/index.ts",
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "email-verifier",
+      "database_id": "..."
+    }
+  ],
+
+  "kv_namespaces": [
+    {
+      "binding": "CACHE",
+      "id": "..."
+    }
+  ],
+
+  "triggers": {
+    "crons": [
+      "0 0 * * *"
+    ]
+  }
+}
+
+
+Use the actual current Wrangler configuration format when implementing the project.
+
+29. Cron handler
+
+Implement:
+
+scheduled()
+    ↓
+cleanup expired sessions
+    ↓
+cleanup verification records older than 5 days
+    ↓
+cleanup completed/expired bulk jobs
+    ↓
+optional cache maintenance
+
+
+The Cron handler must not affect normal API requests.
+
+30. Error handling
+
+Create typed application errors:
+
+INVALID_EMAIL
+DOMAIN_NOT_FOUND
+NO_MX
+RATE_LIMITED
+UNAUTHORIZED
+FORBIDDEN
+NOT_FOUND
+INVALID_CSV
+CSV_TOO_LARGE
+BULK_LIMIT_EXCEEDED
+OAUTH_ERROR
+INTERNAL_ERROR
+
+
+Return correct HTTP status codes.
+
+Do not expose stack traces.
+
+31. Logging
+
+Use structured server-side logs.
+
+Example:
+
+{
+  "event": "verification",
+  "request_id": "abc123",
+  "user_id": "user123",
+  "verdict": "LIKELY_DELIVERABLE",
+  "duration_ms": 145
+}
+
+
+Do not log unnecessary email addresses or OAuth tokens.
+
+32. Testing
+
+Create tests for:
+
+Syntax
+valid email
+invalid email
+empty input
+oversized input
+
+Domain
+existing domain
+nonexistent domain
+DNS failure
+
+MX
+MX exists
+no MX
+DNS timeout
+
+Disposable
+known disposable
+normal domain
+unknown domain
+
+Scoring
+
+Test every major combination.
+
+Authentication
+
+Test:
+
+OAuth success
+OAuth failure
+invalid state
+expired session
+logout
+unauthorized access
+
+Retention
+
+Test:
+
+4-day record → remains
+5-day-old record → eligible
+older record → deleted
+
+Authorization
+
+Ensure:
+
+User A cannot access User B's history/job.
+
+33. Frontend API layer
+
+Do not put business logic in React.
+
+React should call:
+
+/api/auth/me
+/api/verify
+/api/history
+/api/bulk
+
+
+The Worker owns:
+
+authentication
+authorization
+verification
+scoring
+database
+rate limiting
+retention
+
+
+The frontend is only a client of the API.
+
+34. Deployment process
+
+Document exactly:
+
+1. Install Node.js
+2. Install dependencies
+3. Authenticate Wrangler
+4. Create D1 database
+5. Create KV namespace
+6. Apply migrations
+7. Configure Google OAuth
+8. Add Worker secrets
+9. Configure redirect URL
+10. Deploy Worker
+11. Deploy frontend
+12. Configure domain
+13. Test Google Login
+14. Test verification
+15. Test Cron
+
+
+Provide development and production configurations separately.
+
+35. Google OAuth redirect
+
+Use a Worker callback such as:
+
+https://YOUR_DOMAIN/api/auth/google/callback
+
+
+Configure the exact same authorized redirect URI in Google Cloud.
+
+Do not use wildcard redirect URLs.
+
+36. Development mode
+
+Support local development:
+
+Frontend:
+http://localhost:5173
+
+Worker:
+http://localhost:8787
+
+
+Use separate Google OAuth credentials/configuration for development if necessary.
+
+Do not mix production OAuth credentials with local development unnecessarily.
+
+37. Production principles
+
+The finished project must:
+
+Have no fake verification results.
+Never claim a mailbox is 100% real when the evidence cannot establish that.
+Fail safely when DNS services are unavailable.
+Avoid excessive SMTP probing.
+Keep user verification records for only five days.
+Automatically delete expired records.
+Keep user accounts separate from temporary verification data.
+Never expose credentials.
+Never trust client-side authorization.
+Keep all verification decisions server-side.
+Be structured so future verification providers can be added without rewriting the core application.
+38. Implementation priority
+
+Build in this exact order:
+
+1. Project setup
+        ↓
+2. Worker + routing
+        ↓
+3. D1 schema + migrations
+        ↓
+4. Google OAuth
+        ↓
+5. Session management
+        ↓
+6. Email normalization
+        ↓
+7. Syntax verification
+        ↓
+8. DNS/domain verification
+        ↓
+9. MX verification
+        ↓
+10. SPF verification
+        ↓
+11. DMARC verification
+        ↓
+12. Disposable detection
+        ↓
+13. Role detection
+        ↓
+14. Scoring engine
+        ↓
+15. Verification API
+        ↓
+16. Five-day cleanup Cron
+        ↓
+17. Rate limiting
+        ↓
+18. Bulk CSV processing
+        ↓
+19. History API
+        ↓
+20. Account deletion
+        ↓
+21. React integration
+        ↓
+22. Tests
+        ↓
+23. Cloudflare deployment
+
+
+The priority is functional completeness first. Do not spend development time polishing the UI until the backend, authentication, verification engine, retention, security, and deployment are working end-to-end.
+
+The final result should be a single Cloudflare-oriented production application with Google Login, anonymous email verification, authenticated verification history, bulk verification capability, five-day automatic data deletion, caching, rate limiting, and a clean REST API.
