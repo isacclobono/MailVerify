@@ -5,9 +5,11 @@ import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { HomePage } from "./pages/HomePage";
 import { DashboardPage } from "./pages/DashboardPage";
-import { AlertCircle } from "lucide-react";
+import { useHourlyFont } from "./hooks/useHourlyFont";
 
 export function App() {
+  useHourlyFont(); // Automatically applies Poppins on even hours & Zain on odd hours
+
   const [user, setUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState<"home" | "dashboard">("home");
   const [loading, setLoading] = useState(true);
