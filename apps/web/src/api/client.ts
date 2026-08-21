@@ -119,4 +119,51 @@ export const api = {
   async deleteAccount(): Promise<void> {
     await apiRequest("/api/account", { method: "DELETE" });
   },
+
+  // Admin APIs (requires ADMIN_EMAILS access)
+  async getAdminStats(): Promise<{
+    total_users: number;
+    total_verifications: number;
+    total_bulk_jobs: number;
+    verdict_breakdown: Record<string, number>;
+    edge_runtime: string;
+    cdn_cache_status: string;
+    timestamp: string;
+  }> {
+    return apiRequest("/api/admin/stats");
+  },
+
+  async getAdminUsers(limit = 50, offset = 0): Promise<{
+    users: Array<{
+      id: string;
+      google_sub: string | null;
+      email: string;
+      name: string | null;
+      avatar_url: string | null;
+      created_at: string;
+      updated_at: string;
+    }>;
+    pagination: { total: number; limit: number; offset: number };
+  }> {
+    return apiRequest(`/api/admin/users?limit=${limit}&offset=${offset}`);
+  },
+
+  async getAdminVerifications(limit = 50, offset = 0): Promise<{
+    verifications: Array<{
+      id: string;
+      user_id: string | null;
+      email: string;
+      normalized_email: string;
+      verdict: string;
+      score: number;
+      created_at: string;
+    }>;
+    pagination: { total: number; limit: number; offset: number };
+  }> {
+    return apiRequest(`/api/admin/verifications?limit=${limit}&offset=${offset}`);
+  },
+
+  async deleteAdminUser(userId: string): Promise<{ success: boolean; message: string }> {
+    return apiRequest(`/api/admin/users/${userId}`, { method: "DELETE" });
+  },
 };

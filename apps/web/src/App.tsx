@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
 import { User } from "./types";
 import { api } from "./api/client";
-import { Header } from "./components/Header";
+import { Header, AppView } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { HomePage } from "./pages/HomePage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { DocsPage } from "./pages/DocsPage";
+import { PricingPage } from "./pages/PricingPage";
+import { PrivacyTermsPage } from "./pages/PrivacyTermsPage";
+import { AdminPage } from "./pages/AdminPage";
 import { useHourlyFont } from "./hooks/useHourlyFont";
 import { AlertCircle, Loader2 } from "lucide-react";
 
@@ -12,7 +16,7 @@ export function App() {
   useHourlyFont(); // Automatically applies Poppins on even hours & Zain on odd hours
 
   const [user, setUser] = useState<User | null>(null);
-  const [currentView, setCurrentView] = useState<"home" | "dashboard">("home");
+  const [currentView, setCurrentView] = useState<AppView>("home");
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -20,6 +24,21 @@ export function App() {
     const params = new URLSearchParams(window.location.search);
     const errorParam = params.get("error");
     const tokenParam = params.get("token");
+    const viewParam = params.get("view") as AppView | null;
+
+    // Check pathname or query param for initial view
+    const pathname = window.location.pathname.toLowerCase();
+    if (pathname.includes("admin") || viewParam === "admin") {
+      setCurrentView("admin");
+    } else if (pathname.includes("docs") || viewParam === "docs") {
+      setCurrentView("docs");
+    } else if (pathname.includes("pricing") || viewParam === "pricing") {
+      setCurrentView("pricing");
+    } else if (pathname.includes("privacy") || pathname.includes("terms") || viewParam === "privacy") {
+      setCurrentView("privacy");
+    } else if (pathname.includes("dashboard") || viewParam === "dashboard") {
+      setCurrentView("dashboard");
+    }
 
     if (tokenParam) {
       console.log("[MailVerify Auth] Received token from OAuth redirect.");
@@ -39,9 +58,9 @@ export function App() {
       .getCurrentUser()
       .then((currentUser) => {
         if (currentUser) {
-          console.log("[MailVerify Auth] Authenticated user:", currentUser.email);
+          console.log("[MailVerify Auth] Authenticated user:", currentUser.email, "Admin:", Boolean(currentUser.is_admin));
           setUser(currentUser);
-          if (window.location.pathname.includes("dashboard") || tokenParam) {
+          if (tokenParam || pathname.includes("dashboard")) {
             setCurrentView("dashboard");
           }
         }
@@ -64,18 +83,22 @@ export function App() {
     setCurrentView("home");
   };
 
+  const handleNavigate = (view: AppView) => {
+    setCurrentView(view);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <div className="app-container">
       <Header
         user={user}
         onLogout={handleLogout}
-        onNavigateHome={() => setCurrentView("home")}
-        onNavigateDashboard={() => setCurrentView("dashboard")}
+        onNavigate={handleNavigate}
         currentView={currentView}
       />
 
       {authError && (
-        <div style={{ maxWidth: "1200px", margin: "1rem auto 0", padding: "0 1.5rem", width: "100%" }}>
+        <div style={{ maxWidth: "1120px", margin: "1rem auto 0", padding: "0 1.5rem", width: "100%" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "var(--danger-bg)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.3)", padding: "0.75rem 1rem", borderRadius: "var(--radius-md)" }}>
             <AlertCircle size={18} />
             <span>Authentication Notice: {authError}</span>
@@ -89,17 +112,25 @@ export function App() {
             <Loader2 size={24} className="animate-spin" />
             <span>Loading MailVerify...</span>
           </div>
+        ) : currentView === "admin" ? (
+          <AdminPage user={user} onNavigateHome={() => handleNavigate("home")} />
+        ) : currentView === "docs" ? (
+          <DocsPage />
+        ) : currentView === "pricing" ? (
+          <PricingPage onNavigateHome={() => handleNavigate("home")} />
+        ) : currentView === "privacy" ? (
+          <PrivacyTermsPage />
         ) : currentView === "dashboard" && user ? (
           <DashboardPage user={user} onLogout={handleLogout} />
         ) : (
           <HomePage
             user={user}
-            onNavigateDashboard={() => setCurrentView("dashboard")}
+            onNavigateDashboard={() => handleNavigate("dashboard")}
           />
         )}
       </main>
 
-      <Footer />
+      <Footer onNavigate={handleNavigate} />
     </div>
   );
 }
