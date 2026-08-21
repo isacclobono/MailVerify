@@ -1,6 +1,7 @@
 import { UserCheck, Shield, Upload, History, Key, Zap, ArrowRight } from "lucide-react";
 import { api } from "../api/client";
 import { User } from "../types";
+import { FaqSection } from "../components/FaqSection";
 
 export const AccountQuotasPage = ({
   user,
@@ -111,6 +112,9 @@ export const AccountQuotasPage = ({
           </div>
         )}
       </div>
+
+      {/* Dynamic Accordion FAQ Section */}
+      <FaqSection pageCategory="quotas" title="Account & Quota FAQs" eyebrow="QUOTA & LIMITS FAQ" />
     </div>
   );
 };

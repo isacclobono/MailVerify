@@ -28,16 +28,6 @@ export const Footer = ({ onNavigate }: FooterProps) => {
           </div>
 
           <div>
-            <div className="footer-col-title">INFRASTRUCTURE</div>
-            <ul className="footer-col-list">
-              <li><button onClick={() => handleNav("infra")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Cloudflare Workers</button></li>
-              <li><button onClick={() => handleNav("infra")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Cloudflare D1 SQL</button></li>
-              <li><button onClick={() => handleNav("infra")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Cloudflare KV Cache</button></li>
-              <li><button onClick={() => handleNav("infra")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>DNS over HTTPS</button></li>
-            </ul>
-          </div>
-
-          <div>
             <div className="footer-col-title">DOCUMENTATION</div>
             <ul className="footer-col-list">
               <li><button onClick={() => handleNav("docs")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>REST API Guide</button></li>
@@ -73,10 +63,10 @@ export const Footer = ({ onNavigate }: FooterProps) => {
             <span className="badge-tag">GDPR COMPLIANT</span>
             <span className="badge-tag">5-DAY PURGE</span>
             <span className="badge-tag">200 CALLS/MO FREE</span>
-            <span className="badge-tag">CLOUDFLARE EDGE</span>
+            <span className="badge-tag">HIGH AVAILABILITY</span>
           </div>
           <div>
-            MailVerify © {new Date().getFullYear()} · High-Precision Serverless Email Deliverability Platform
+            MailVerify © {new Date().getFullYear()} · High-Precision Email Deliverability Platform
           </div>
         </div>
       </div>

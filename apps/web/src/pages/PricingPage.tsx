@@ -1,5 +1,6 @@
 import { Check, Zap, Sparkles, Shield, Server, Key, ArrowRight } from "lucide-react";
 import { api } from "../api/client";
+import { FaqSection } from "../components/FaqSection";
 
 export const PricingPage = ({ onNavigateHome }: { onNavigateHome: () => void }) => {
   const plans = [
@@ -136,24 +137,8 @@ export const PricingPage = ({ onNavigateHome }: { onNavigateHome: () => void }) 
         ))}
       </div>
 
-      {/* Free Tier Details Section */}
-      <div className="card" style={{ padding: "2.5rem", background: "var(--bg-subtle)" }}>
-        <h2 style={{ fontSize: "1.4rem", fontWeight: 800, marginBottom: "1rem" }}>Frequently Asked Questions About Quotas</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem", color: "var(--text-muted)", fontSize: "0.9rem", lineHeight: 1.6 }}>
-          <div>
-            <strong style={{ color: "var(--text-main)" }}>When Does the 200 API Call Quota Reset?</strong>
-            <p style={{ marginTop: "0.25rem" }}>Your 200 free API calls reset automatically on the 1st day of every calendar month at 00:00 UTC.</p>
-          </div>
-          <div>
-            <strong style={{ color: "var(--text-main)" }}>Where Can I View My API Key?</strong>
-            <p style={{ marginTop: "0.25rem" }}>Sign in with Google and open your Dashboard &rarr; <strong>API Keys</strong> tab to generate and manage up to 5 active API keys.</p>
-          </div>
-          <div>
-            <strong style={{ color: "var(--text-main)" }}>What Happens If I Reach 200 Calls?</strong>
-            <p style={{ marginTop: "0.25rem" }}>The API returns HTTP 429 with details on your reset date. You can still inspect single emails through your web dashboard.</p>
-          </div>
-        </div>
-      </div>
+      {/* Dynamic Accordion FAQ Section */}
+      <FaqSection pageCategory="pricing" title="Pricing & Quotas FAQ" eyebrow="QUOTA & PRICING FAQ" />
     </div>
   );
 };

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api } from "../api/client";
 import { Shield, Search, CheckCircle2, AlertTriangle, XCircle, Lock, Loader2, Info } from "lucide-react";
 import { VerificationResult } from "../types";
+import { FaqSection } from "../components/FaqSection";
 
 export const SpfDmarcAuditPage = ({ onNavigateHome }: { onNavigateHome: () => void }) => {
   const [domainInput, setDomainInput] = useState("apple.com");
@@ -160,6 +161,9 @@ export const SpfDmarcAuditPage = ({ onNavigateHome }: { onNavigateHome: () => vo
           </div>
         </div>
       </div>
+
+      {/* Dynamic Accordion FAQ Section */}
+      <FaqSection pageCategory="spf-dmarc" title="SPF & DMARC FAQs" eyebrow="ANTI-SPOOFING FAQ" />
     </div>
   );
 };

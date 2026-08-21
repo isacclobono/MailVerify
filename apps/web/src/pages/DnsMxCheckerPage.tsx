@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api } from "../api/client";
 import { Server, Search, CheckCircle2, XCircle, Clock, Shield, ArrowRight, Loader2, Sparkles } from "lucide-react";
 import { VerificationResult } from "../types";
+import { FaqSection } from "../components/FaqSection";
 
 export const DnsMxCheckerPage = ({ onNavigateHome }: { onNavigateHome: () => void }) => {
   const [domainInput, setDomainInput] = useState("google.com");
@@ -158,6 +159,9 @@ export const DnsMxCheckerPage = ({ onNavigateHome }: { onNavigateHome: () => voi
           </div>
         </div>
       </div>
+
+      {/* Dynamic Accordion FAQ Section */}
+      <FaqSection pageCategory="dns-mx" title="DNS & MX Checker FAQs" eyebrow="DNS & ROUTING FAQ" />
     </div>
   );
 };

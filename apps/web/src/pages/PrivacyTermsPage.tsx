@@ -1,4 +1,5 @@
 import { ShieldCheck, Trash2, Lock, FileText, CheckCircle2 } from "lucide-react";
+import { FaqSection } from "../components/FaqSection";
 
 export const PrivacyTermsPage = () => {
   return (
@@ -68,6 +69,9 @@ export const PrivacyTermsPage = () => {
           Under GDPR and CCPA, you have the right to access and erase your personal data at any time. You can execute immediate deletion through your dashboard or by sending a <code>DELETE /api/account</code> request.
         </p>
       </div>
+
+      {/* Dynamic Accordion FAQ Section */}
+      <FaqSection pageCategory="privacy" title="Privacy & Data Governance FAQs" eyebrow="DATA PRIVACY FAQ" />
     </div>
   );
 };
