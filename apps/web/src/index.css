@@ -661,6 +661,34 @@ body {
   border-bottom-color: var(--accent-blue);
 }
 
+/* Docs Layout & Responsive Sidebar */
+.docs-container-grid {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 800px) {
+  .docs-container-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .docs-sidebar {
+    position: static !important;
+    display: flex;
+    overflow-x: auto;
+    padding: 0.5rem !important;
+    gap: 0.35rem;
+    white-space: nowrap;
+  }
+
+  .docs-sidebar button {
+    width: auto !important;
+  }
+}
+
 /* Modal Overlay */
 .modal-overlay {
   position: fixed;
