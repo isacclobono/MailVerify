@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { api } from "../api/client";
-import { Shield, Search, CheckCircle2, AlertTriangle, XCircle, Lock, Loader2, Info } from "lucide-react";
+import { Shield, Search, CheckCircle2, AlertTriangle, Lock, Loader2 } from "lucide-react";
 import { VerificationResult } from "../types";
 import { FaqSection } from "../components/FaqSection";
 

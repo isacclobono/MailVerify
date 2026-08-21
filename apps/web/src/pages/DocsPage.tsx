@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CodeSnippet } from "../components/CodeSnippet";
-import { BookOpen, Terminal, CheckCircle2, Shield, AlertTriangle, Key, Layers } from "lucide-react";
+import { BookOpen } from "lucide-react";
 
 export const DocsPage = () => {
   const [activeSection, setActiveSection] = useState<"quickstart" | "verify" | "bulk" | "auth" | "verdicts" | "errors">("quickstart");

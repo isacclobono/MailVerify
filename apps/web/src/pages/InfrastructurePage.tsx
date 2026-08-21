@@ -1,4 +1,4 @@
-import { Server, Database, Zap, Globe, ShieldCheck, CheckCircle2, Clock, Layers } from "lucide-react";
+import { Globe, CheckCircle2 } from "lucide-react";
 
 export const InfrastructurePage = () => {
   const infraItems = [

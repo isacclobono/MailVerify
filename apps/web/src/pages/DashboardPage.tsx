@@ -13,11 +13,7 @@ import {
   Copy, 
   Check, 
   Plus, 
-  Zap, 
-  Info, 
-  FileSpreadsheet, 
-  FileText,
-  AlertCircle
+  Zap 
 } from "lucide-react";
 import { VerdictBadge } from "../components/VerdictBadge";
 import { ChecksDetail } from "../components/ChecksDetail";

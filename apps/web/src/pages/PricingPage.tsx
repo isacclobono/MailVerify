@@ -1,4 +1,4 @@
-import { Check, Zap, Sparkles, Shield, Server, Key, ArrowRight } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import { api } from "../api/client";
 import { FaqSection } from "../components/FaqSection";
 

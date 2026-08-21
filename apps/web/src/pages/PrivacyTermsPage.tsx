@@ -1,4 +1,4 @@
-import { ShieldCheck, Trash2, Lock, FileText, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, Trash2, Lock } from "lucide-react";
 import { FaqSection } from "../components/FaqSection";
 
 export const PrivacyTermsPage = () => {

@@ -13,9 +13,8 @@ import {
   RefreshCw, 
   Lock, 
   Zap, 
-  ExternalLink,
-  ShieldCheck,
-  AlertTriangle
+  ShieldCheck, 
+  AlertTriangle 
 } from "lucide-react";
 
 interface AdminPageProps {

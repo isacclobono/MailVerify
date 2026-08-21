@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { api } from "../api/client";
-import { Server, Search, CheckCircle2, XCircle, Clock, Shield, ArrowRight, Loader2, Sparkles } from "lucide-react";
+import { Server, Search, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { VerificationResult } from "../types";
 import { FaqSection } from "../components/FaqSection";
 

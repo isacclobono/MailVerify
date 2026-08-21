@@ -86,6 +86,12 @@ export const api = {
     risky_count: number;
     invalid_count: number;
     retention_days: number;
+    monthly_quota?: {
+      current_month: string;
+      calls_used: number;
+      monthly_limit: number;
+      remaining_calls: number;
+    };
   }> {
     return apiRequest("/api/usage");
   },

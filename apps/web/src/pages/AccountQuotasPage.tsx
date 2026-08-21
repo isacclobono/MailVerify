@@ -1,4 +1,4 @@
-import { UserCheck, Shield, Upload, History, Key, Zap, ArrowRight } from "lucide-react";
+import { UserCheck, Shield, Upload, History, Key } from "lucide-react";
 import { api } from "../api/client";
 import { User } from "../types";
 import { FaqSection } from "../components/FaqSection";

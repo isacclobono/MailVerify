@@ -83,4 +83,15 @@ export interface GeneratedApiKeyResponse {
   message: string;
 }
 
+export interface AdminUserRecord {
+  id: string;
+  google_sub: string | null;
+  email: string;
+  name: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+
 
