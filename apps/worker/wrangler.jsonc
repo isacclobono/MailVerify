@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "mailverify-api",
+  "name": "mailverify",
   "main": "src/index.ts",
   "compatibility_date": "2024-11-01",
   "compatibility_flags": [
@@ -24,8 +24,5 @@
     "crons": [
       "0 0 * * *"
     ]
-  },
-  "vars": {
-    "APP_BASE_URL": "http://localhost:5173"
   }
 }
