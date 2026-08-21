@@ -28,8 +28,45 @@ interface DashboardPageProps {
 
 type CodeLang = "curl" | "node" | "javascript" | "python" | "php" | "ruby" | "go" | "rust" | "java" | "c#" | "swift";
 
+type DashboardTab = "overview" | "single" | "bulk" | "history" | "keys" | "settings";
+
 export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
-  const [activeTab, setActiveTab] = useState<"overview" | "single" | "bulk" | "history" | "keys" | "settings">("overview");
+  const getInitialTab = (): DashboardTab => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab") as DashboardTab;
+      const validTabs: DashboardTab[] = ["overview", "single", "bulk", "history", "keys", "settings"];
+      return validTabs.includes(tab) ? tab : "overview";
+    } catch {
+      return "overview";
+    }
+  };
+
+  const [activeTab, setActiveTabState] = useState<DashboardTab>(getInitialTab);
+
+  const setActiveTab = (tab: DashboardTab) => {
+    setActiveTabState(tab);
+    try {
+      const url = new URL(window.location.href);
+      if (tab === "overview") {
+        url.searchParams.delete("tab");
+      } else {
+        url.searchParams.set("tab", tab);
+      }
+      window.history.replaceState({}, "", url.pathname + url.search);
+    } catch {
+      // Ignore history state error
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setActiveTabState(getInitialTab());
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   const [timeRange, setTimeRange] = useState<"Last 24 hours" | "Last 30 days" | "Last 12 months">("Last 24 hours");
   const [selectedLang, setSelectedLang] = useState<CodeLang>("curl");
   const [copiedCode, setCopiedCode] = useState(false);
@@ -351,12 +388,12 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
   return (
     <div style={{ maxWidth: "1120px", margin: "0 auto", width: "100%" }}>
       {/* Top Header Row */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem", flexWrap: "wrap", gap: "1rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
         <div>
-          <h1 style={{ fontSize: "2.1rem", fontWeight: 800, letterSpacing: "-0.02em", color: "#0f172a", marginBottom: "0.25rem" }}>
+          <h1 style={{ fontSize: "1.45rem", fontWeight: 800, letterSpacing: "-0.02em", color: "#0f172a", marginBottom: "0.15rem" }}>
             Dashboard
           </h1>
-          <p style={{ color: "var(--text-muted)", fontSize: "1rem" }}>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
             Welcome back, {user.name ? user.name.split(" ")[0] : "Developer"}.
           </p>
         </div>
@@ -366,12 +403,12 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: "0.6rem",
-            padding: "0.4rem 1rem",
+            gap: "0.5rem",
+            padding: "0.3rem 0.85rem",
             borderRadius: "9999px",
             background: "var(--bg-subtle)",
             border: "1px solid var(--border-subtle)",
-            fontSize: "0.85rem",
+            fontSize: "0.78rem",
             color: "var(--text-muted)",
           }}
         >
@@ -392,7 +429,7 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
           display: "flex",
           gap: "0.5rem",
           borderBottom: "1px solid var(--border-subtle)",
-          marginBottom: "2.5rem",
+          marginBottom: "2rem",
           overflowX: "auto",
         }}
       >
@@ -400,7 +437,7 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
           className={`tab-nav-btn ${activeTab === "overview" ? "active" : ""}`}
           onClick={() => setActiveTab("overview")}
         >
-          <LayoutDashboard size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.35rem" }} />
+          <LayoutDashboard size={13} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.3rem" }} />
           Overview
         </button>
 
@@ -408,7 +445,7 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
           className={`tab-nav-btn ${activeTab === "single" ? "active" : ""}`}
           onClick={() => setActiveTab("single")}
         >
-          <Search size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.35rem" }} />
+          <Search size={13} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.3rem" }} />
           Single Check
         </button>
 
@@ -416,7 +453,7 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
           className={`tab-nav-btn ${activeTab === "bulk" ? "active" : ""}`}
           onClick={() => setActiveTab("bulk")}
         >
-          <Upload size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.35rem" }} />
+          <Upload size={13} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.3rem" }} />
           Bulk Batch Engine
         </button>
 
@@ -424,7 +461,7 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
           className={`tab-nav-btn ${activeTab === "history" ? "active" : ""}`}
           onClick={() => setActiveTab("history")}
         >
-          <History size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.35rem" }} />
+          <History size={13} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.3rem" }} />
           Audit History
         </button>
 
@@ -432,7 +469,7 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
           className={`tab-nav-btn ${activeTab === "keys" ? "active" : ""}`}
           onClick={() => setActiveTab("keys")}
         >
-          <Key size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.35rem" }} />
+          <Key size={13} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.3rem" }} />
           API Keys ({apiKeys.length})
         </button>
 
@@ -440,7 +477,7 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
           className={`tab-nav-btn ${activeTab === "settings" ? "active" : ""}`}
           onClick={() => setActiveTab("settings")}
         >
-          <Settings size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.35rem" }} />
+          <Settings size={13} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.3rem" }} />
           Account
         </button>
       </div>
@@ -454,9 +491,9 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              marginBottom: "1.25rem",
+              marginBottom: "1rem",
               flexWrap: "wrap",
-              gap: "1rem",
+              gap: "0.75rem",
             }}
           >
             <div
@@ -473,8 +510,8 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
                   key={t}
                   onClick={() => setTimeRange(t)}
                   style={{
-                    padding: "0.35rem 0.85rem",
-                    fontSize: "0.82rem",
+                    padding: "0.3rem 0.75rem",
+                    fontSize: "0.78rem",
                     fontWeight: 700,
                     borderRadius: "var(--radius-sm)",
                     border: "none",
@@ -494,11 +531,11 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "0.35rem",
+                gap: "0.3rem",
                 background: "none",
                 border: "none",
                 color: "var(--text-muted)",
-                fontSize: "0.82rem",
+                fontSize: "0.78rem",
                 cursor: "pointer",
               }}
             >
@@ -513,39 +550,39 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              gap: "1.25rem",
-              marginBottom: "2rem",
+              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+              gap: "1rem",
+              marginBottom: "1.5rem",
             }}
           >
-            <div className="card" style={{ padding: "1.5rem" }}>
-              <div style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-muted)", marginBottom: "0.5rem" }}>
+            <div className="card" style={{ padding: "1.25rem" }}>
+              <div style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-muted)", marginBottom: "0.35rem" }}>
                 REQUESTS
               </div>
-              <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>
+              <div style={{ fontSize: "1.65rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>
                 {stats.total}
               </div>
-              <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>—</div>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.35rem" }}>—</div>
             </div>
 
-            <div className="card" style={{ padding: "1.5rem" }}>
-              <div style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-muted)", marginBottom: "0.5rem" }}>
+            <div className="card" style={{ padding: "1.25rem" }}>
+              <div style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-muted)", marginBottom: "0.35rem" }}>
                 2XX REQUESTS (DELIVERABLE)
               </div>
-              <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "var(--success)", lineHeight: 1 }}>
+              <div style={{ fontSize: "1.65rem", fontWeight: 800, color: "var(--success)", lineHeight: 1 }}>
                 {stats.deliverable}
               </div>
-              <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>—</div>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.35rem" }}>—</div>
             </div>
 
-            <div className="card" style={{ padding: "1.5rem" }}>
-              <div style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-muted)", marginBottom: "0.5rem" }}>
+            <div className="card" style={{ padding: "1.25rem" }}>
+              <div style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-muted)", marginBottom: "0.35rem" }}>
                 ERRORS / RISKY
               </div>
-              <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "var(--danger)", lineHeight: 1 }}>
+              <div style={{ fontSize: "1.65rem", fontWeight: 800, color: "var(--danger)", lineHeight: 1 }}>
                 {stats.invalid + stats.risky}
               </div>
-              <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>—</div>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.35rem" }}>—</div>
             </div>
           </div>
 
@@ -784,8 +821,8 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
       {/* TAB 2: Single Verification */}
       {activeTab === "single" && (
         <div className="live-tester-card">
-          <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "1rem" }}>Inspect Single Address</h2>
-          <form onSubmit={handleSingleVerify} className="search-input-group" style={{ maxWidth: "620px" }}>
+          <h2 style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: "0.75rem" }}>Inspect Single Address</h2>
+          <form onSubmit={handleSingleVerify} className="search-input-group" style={{ maxWidth: "580px" }}>
             <input
               type="email"
               className="clean-input"
@@ -794,27 +831,27 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
               onChange={(e) => setSingleEmail(e.target.value)}
               required
             />
-            <button type="submit" className="btn btn-black" disabled={singleLoading} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", whiteSpace: "nowrap", padding: "0.75rem 1.25rem" }}>
-              {singleLoading ? <Loader2 size={16} className="animate-spin" /> : "Verify Now"}
+            <button type="submit" className="btn btn-black" disabled={singleLoading} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", whiteSpace: "nowrap", padding: "0.6rem 1rem" }}>
+              {singleLoading ? <Loader2 size={14} className="animate-spin" /> : "Verify Now"}
             </button>
           </form>
 
           {singleError && (
-            <div style={{ color: "#dc2626", background: "#fef2f2", padding: "0.75rem 1rem", borderRadius: "var(--radius-md)", marginTop: "1rem" }}>
+            <div style={{ color: "#dc2626", background: "#fef2f2", padding: "0.65rem 0.85rem", borderRadius: "var(--radius-md)", marginTop: "0.75rem", fontSize: "0.82rem" }}>
               {singleError}
             </div>
           )}
 
           {singleResult && (
-            <div className="result-card" style={{ marginTop: "1.5rem" }}>
+            <div className="result-card" style={{ marginTop: "1.25rem" }}>
               {singleResult.did_you_mean && (
                 <div
                   style={{
                     background: "rgba(245, 158, 11, 0.1)",
                     border: "1px solid rgba(245, 158, 11, 0.3)",
-                    padding: "0.75rem 1rem",
+                    padding: "0.65rem 0.85rem",
                     borderRadius: "var(--radius-md)",
-                    marginBottom: "1.25rem",
+                    marginBottom: "1rem",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
@@ -822,7 +859,7 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
                     gap: "0.5rem",
                   }}
                 >
-                  <div style={{ fontSize: "0.88rem", color: "#92400e" }}>
+                  <div style={{ fontSize: "0.82rem", color: "#92400e" }}>
                     💡 Possible typo detected. Did you mean <strong>{singleResult.did_you_mean}</strong>?
                   </div>
                   <button
@@ -831,7 +868,7 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
                     onClick={() => {
                       setSingleEmail(singleResult.did_you_mean || "");
                     }}
-                    style={{ fontSize: "0.78rem", padding: "0.3rem 0.65rem", borderColor: "#f59e0b", color: "#b45309" }}
+                    style={{ fontSize: "0.75rem", padding: "0.25rem 0.55rem", borderColor: "#f59e0b", color: "#b45309" }}
                   >
                     Apply {singleResult.did_you_mean} →
                   </button>
@@ -840,15 +877,15 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
 
               <div className="result-header">
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", marginBottom: "0.2rem" }}>
                     <span className="section-eyebrow">VERDICT</span>
                     {singleResult.confidence !== undefined && (
-                      <span style={{ fontSize: "0.72rem", padding: "0.15rem 0.5rem", borderRadius: "9999px", background: "rgba(37, 99, 235, 0.1)", color: "var(--accent-blue)", fontWeight: 700 }}>
+                      <span style={{ fontSize: "0.68rem", padding: "0.15rem 0.45rem", borderRadius: "9999px", background: "rgba(37, 99, 235, 0.1)", color: "var(--accent-blue)", fontWeight: 700 }}>
                         {Math.round(singleResult.confidence * 100)}% Confidence
                       </span>
                     )}
                     {singleResult.is_free_provider && (
-                      <span style={{ fontSize: "0.72rem", padding: "0.15rem 0.5rem", borderRadius: "9999px", background: "rgba(100, 116, 139, 0.1)", color: "var(--text-muted)", fontWeight: 600 }}>
+                      <span style={{ fontSize: "0.68rem", padding: "0.15rem 0.45rem", borderRadius: "9999px", background: "rgba(100, 116, 139, 0.1)", color: "var(--text-muted)", fontWeight: 600 }}>
                         Consumer Mailbox
                       </span>
                     )}
@@ -861,9 +898,9 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
               <ChecksDetail checks={singleResult.checks} />
 
               {singleResult.reasons && singleResult.reasons.length > 0 && (
-                <div style={{ marginTop: "1rem", display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
                   {singleResult.reasons.map((r, i) => (
-                    <span key={i} style={{ fontSize: "0.68rem", padding: "0.15rem 0.45rem", borderRadius: "4px", background: "var(--bg-subtle)", color: "var(--text-muted)", border: "1px solid var(--border-subtle)", fontFamily: "var(--font-mono)" }}>
+                    <span key={i} style={{ fontSize: "0.65rem", padding: "0.15rem 0.4rem", borderRadius: "4px", background: "var(--bg-subtle)", color: "var(--text-muted)", border: "1px solid var(--border-subtle)", fontFamily: "var(--font-mono)" }}>
                       {r.replace("REASON_", "")}
                     </span>
                   ))}
@@ -876,24 +913,24 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
 
       {/* TAB 3: Bulk Verification */}
       {activeTab === "bulk" && (
-        <div className="card" style={{ padding: "2rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem", flexWrap: "wrap", gap: "1rem" }}>
+        <div className="card" style={{ padding: "1.5rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.75rem" }}>
             <div>
-              <h2 style={{ fontSize: "1.3rem", fontWeight: 800, marginBottom: "0.3rem" }}>Bulk Email Batch Engine</h2>
-              <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
+              <h2 style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: "0.2rem" }}>Bulk Email Batch Engine</h2>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.82rem" }}>
                 Verify up to 200 emails per batch. Paste text, upload CSV/JSON, or load sample records.
               </p>
             </div>
 
             {/* Action buttons */}
-            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
               <button
                 type="button"
                 className="btn btn-outline"
                 onClick={loadSampleEmails}
-                style={{ fontSize: "0.8rem", padding: "0.4rem 0.75rem", display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
+                style={{ fontSize: "0.75rem", padding: "0.35rem 0.65rem", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}
               >
-                <Sparkles size={13} color="var(--accent-blue)" /> Load 10 Samples
+                <Sparkles size={12} color="var(--accent-blue)" /> Load 10 Samples
               </button>
 
               <input
@@ -908,9 +945,9 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
                 type="button"
                 className="btn btn-outline"
                 onClick={() => fileInputRef.current?.click()}
-                style={{ fontSize: "0.8rem", padding: "0.4rem 0.75rem", display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
+                style={{ fontSize: "0.75rem", padding: "0.35rem 0.65rem", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}
               >
-                <FileSpreadsheet size={13} /> Upload CSV / TXT
+                <FileSpreadsheet size={12} /> Upload CSV / TXT
               </button>
             </div>
           </div>
@@ -918,75 +955,75 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
           <form onSubmit={handleBulkSubmit}>
             <textarea
               className="clean-input"
-              style={{ width: "100%", height: "150px", fontFamily: "var(--font-mono)", fontSize: "0.85rem", marginBottom: "1rem", lineHeight: 1.5 }}
+              style={{ width: "100%", height: "130px", fontFamily: "var(--font-mono)", fontSize: "0.8rem", marginBottom: "0.75rem", lineHeight: 1.5 }}
               placeholder={`Paste emails separated by newlines or commas:\nalex@gmail.com\ncontact@stripe.com\nsupport@company.org`}
               value={bulkInput}
               onChange={(e) => setBulkInput(e.target.value)}
             />
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem" }}>
               <button
                 type="submit"
                 className="btn btn-black"
                 disabled={bulkLoading || !bulkInput.trim()}
-                style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.65rem 1.25rem" }}
+                style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", padding: "0.55rem 1rem" }}
               >
-                {bulkLoading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-                <span>{bulkLoading ? "Processing Verification Batch..." : "Run Batch Verification"}</span>
+                {bulkLoading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                <span>{bulkLoading ? "Processing Batch..." : "Run Batch Verification"}</span>
               </button>
 
-              <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
                 Detected emails: <strong style={{ color: "var(--text-main)" }}>{parseEmailsFromText(bulkInput).length}</strong>
               </div>
             </div>
           </form>
 
           {bulkError && (
-            <div style={{ color: "#dc2626", background: "#fef2f2", padding: "0.75rem 1rem", borderRadius: "var(--radius-md)", marginTop: "1rem" }}>
+            <div style={{ color: "#dc2626", background: "#fef2f2", padding: "0.65rem 0.85rem", borderRadius: "var(--radius-md)", marginTop: "0.75rem", fontSize: "0.82rem" }}>
               {bulkError}
             </div>
           )}
 
           {/* Bulk Summary & Full Results Table */}
           {bulkSummary && (
-            <div style={{ marginTop: "2.5rem", borderTop: "1px solid var(--border-subtle)", paddingTop: "2rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
+            <div style={{ marginTop: "2rem", borderTop: "1px solid var(--border-subtle)", paddingTop: "1.5rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem", flexWrap: "wrap", gap: "0.75rem" }}>
                 <div>
-                  <h3 style={{ fontSize: "1.15rem", fontWeight: 800 }}>Batch Verification Results</h3>
-                  <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+                  <h3 style={{ fontSize: "1rem", fontWeight: 700 }}>Batch Verification Results</h3>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
                     Completed {bulkSummary.processed} verifications ({bulkSummary.successful} deliverable, {bulkSummary.failed} risky/undeliverable).
                   </p>
                 </div>
 
                 <div style={{ display: "flex", gap: "0.45rem", flexWrap: "wrap" }}>
-                  <button className="btn btn-outline" onClick={downloadResultsCSV} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.75rem" }}>
-                    <Download size={14} /> Export CSV
+                  <button className="btn btn-outline" onClick={downloadResultsCSV} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.75rem", padding: "0.35rem 0.65rem" }}>
+                    <Download size={13} /> Export CSV
                   </button>
-                  <button className="btn btn-outline" onClick={downloadResultsTXT} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.75rem" }}>
-                    <Download size={14} /> Export TXT
+                  <button className="btn btn-outline" onClick={downloadResultsTXT} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.75rem", padding: "0.35rem 0.65rem" }}>
+                    <Download size={13} /> Export TXT
                   </button>
-                  <button className="btn btn-outline" onClick={downloadDeliverableOnlyTXT} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.75rem", borderColor: "var(--success)", color: "var(--success)" }}>
-                    <Download size={14} /> Clean Only (.txt)
+                  <button className="btn btn-outline" onClick={downloadDeliverableOnlyTXT} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.75rem", padding: "0.35rem 0.65rem", borderColor: "var(--success)", color: "var(--success)" }}>
+                    <Download size={13} /> Clean Only (.txt)
                   </button>
-                  <button className="btn btn-outline" onClick={downloadResultsJSON} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.75rem" }}>
-                    <Download size={14} /> Export JSON
+                  <button className="btn btn-outline" onClick={downloadResultsJSON} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.75rem", padding: "0.35rem 0.65rem" }}>
+                    <Download size={13} /> Export JSON
                   </button>
                 </div>
               </div>
 
               {/* Metric Breakdown Row */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "1rem", marginBottom: "1.75rem" }}>
-                <div className="card" style={{ padding: "1rem", textAlign: "center" }}>
-                  <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontWeight: 700 }}>PROCESSED</div>
-                  <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#0f172a" }}>{bulkSummary.total}</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "0.75rem", marginBottom: "1.25rem" }}>
+                <div className="card" style={{ padding: "0.85rem", textAlign: "center" }}>
+                  <div style={{ fontSize: "0.68rem", color: "var(--text-muted)", fontWeight: 700 }}>PROCESSED</div>
+                  <div style={{ fontSize: "1.35rem", fontWeight: 800, color: "#0f172a" }}>{bulkSummary.total}</div>
                 </div>
-                <div className="card" style={{ padding: "1rem", textAlign: "center" }}>
-                  <div style={{ fontSize: "0.72rem", color: "var(--success)", fontWeight: 700 }}>DELIVERABLE</div>
-                  <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--success)" }}>{bulkSummary.successful}</div>
+                <div className="card" style={{ padding: "0.85rem", textAlign: "center" }}>
+                  <div style={{ fontSize: "0.68rem", color: "var(--success)", fontWeight: 700 }}>DELIVERABLE</div>
+                  <div style={{ fontSize: "1.35rem", fontWeight: 800, color: "var(--success)" }}>{bulkSummary.successful}</div>
                 </div>
-                <div className="card" style={{ padding: "1rem", textAlign: "center" }}>
-                  <div style={{ fontSize: "0.72rem", color: "var(--danger)", fontWeight: 700 }}>UNDELIVERABLE / RISKY</div>
-                  <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--danger)" }}>{bulkSummary.failed}</div>
+                <div className="card" style={{ padding: "0.85rem", textAlign: "center" }}>
+                  <div style={{ fontSize: "0.68rem", color: "var(--danger)", fontWeight: 700 }}>UNDELIVERABLE / RISKY</div>
+                  <div style={{ fontSize: "1.35rem", fontWeight: 800, color: "var(--danger)" }}>{bulkSummary.failed}</div>
                 </div>
               </div>
 

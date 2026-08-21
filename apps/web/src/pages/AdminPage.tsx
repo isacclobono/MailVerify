@@ -22,8 +22,44 @@ interface AdminPageProps {
   onNavigateHome: () => void;
 }
 
+type AdminTab = "overview" | "users" | "verifications" | "infra";
+
 export const AdminPage = ({ user, onNavigateHome }: AdminPageProps) => {
-  const [activeTab, setActiveTab] = useState<"overview" | "users" | "verifications" | "infra">("overview");
+  const getInitialTab = (): AdminTab => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab") as AdminTab;
+      const valid: AdminTab[] = ["overview", "users", "verifications", "infra"];
+      return valid.includes(tab) ? tab : "overview";
+    } catch {
+      return "overview";
+    }
+  };
+
+  const [activeTab, setActiveTabState] = useState<AdminTab>(getInitialTab);
+
+  const setActiveTab = (tab: AdminTab) => {
+    setActiveTabState(tab);
+    try {
+      const url = new URL(window.location.href);
+      if (tab === "overview") {
+        url.searchParams.delete("tab");
+      } else {
+        url.searchParams.set("tab", tab);
+      }
+      window.history.replaceState({}, "", url.pathname + url.search);
+    } catch {
+      // Ignore error
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setActiveTabState(getInitialTab());
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [users, setUsers] = useState<AdminUserRecord[]>([]);
@@ -159,22 +195,22 @@ export const AdminPage = ({ user, onNavigateHome }: AdminPageProps) => {
   return (
     <div style={{ maxWidth: "1120px", margin: "0 auto", width: "100%" }}>
       {/* Admin Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem", flexWrap: "wrap", gap: "1rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem", flexWrap: "wrap", gap: "0.75rem" }}>
         <div>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: "rgba(245, 158, 11, 0.15)", color: "#d97706", padding: "0.25rem 0.75rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.05em", marginBottom: "0.5rem" }}>
-            <ShieldAlert size={14} /> LIVE ADMINISTRATOR CONSOLE
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "rgba(245, 158, 11, 0.15)", color: "#d97706", padding: "0.2rem 0.65rem", borderRadius: "9999px", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.05em", marginBottom: "0.35rem" }}>
+            <ShieldAlert size={13} /> LIVE ADMINISTRATOR CONSOLE
           </div>
-          <h1 style={{ fontSize: "2rem", fontWeight: 800, letterSpacing: "-0.02em" }}>System Operations & Telemetry</h1>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 800, letterSpacing: "-0.02em" }}>System Operations & Telemetry</h1>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
             Real-time management for Cloudflare Workers, D1 database, and global verification streams.
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          <button className="btn btn-outline" onClick={fetchAdminData} disabled={loading} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
-            <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button className="btn btn-outline" onClick={fetchAdminData} disabled={loading} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.8rem" }}>
+            <RefreshCw size={13} className={loading ? "animate-spin" : ""} /> Refresh
           </button>
-          <button className="btn btn-black" onClick={onNavigateHome}>
+          <button className="btn btn-black" onClick={onNavigateHome} style={{ fontSize: "0.8rem" }}>
             Exit Console
           </button>
         </div>

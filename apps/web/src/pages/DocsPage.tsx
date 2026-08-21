@@ -1,9 +1,46 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CodeSnippet } from "../components/CodeSnippet";
 import { BookOpen, Layers } from "lucide-react";
 
+type DocsSection = "quickstart" | "verify" | "pipeline" | "bulk" | "auth" | "verdicts" | "errors";
+
 export const DocsPage = () => {
-  const [activeSection, setActiveSection] = useState<"quickstart" | "verify" | "pipeline" | "bulk" | "auth" | "verdicts" | "errors">("quickstart");
+  const getInitialSection = (): DocsSection => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const s = (params.get("section") || params.get("tab")) as DocsSection;
+      const valid: DocsSection[] = ["quickstart", "verify", "pipeline", "bulk", "auth", "verdicts", "errors"];
+      return valid.includes(s) ? s : "quickstart";
+    } catch {
+      return "quickstart";
+    }
+  };
+
+  const [activeSection, setActiveSectionState] = useState<DocsSection>(getInitialSection);
+
+  const setActiveSection = (section: DocsSection) => {
+    setActiveSectionState(section);
+    try {
+      const url = new URL(window.location.href);
+      if (section === "quickstart") {
+        url.searchParams.delete("section");
+        url.searchParams.delete("tab");
+      } else {
+        url.searchParams.set("section", section);
+      }
+      window.history.replaceState({}, "", url.pathname + url.search);
+    } catch {
+      // Ignore error
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setActiveSectionState(getInitialSection());
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   return (
     <div style={{ maxWidth: "1120px", margin: "0 auto", width: "100%" }}>

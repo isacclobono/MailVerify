@@ -71,7 +71,18 @@ export const Header = ({
     return "SK";
   };
 
-  const handleMenuClick = (view: AppView) => {
+  const handleMenuClick = (view: AppView, tab?: string) => {
+    try {
+      const url = new URL(window.location.href);
+      if (tab) {
+        url.searchParams.set("tab", tab);
+      } else {
+        url.searchParams.delete("tab");
+      }
+      window.history.replaceState({}, "", url.pathname + url.search);
+    } catch {
+      // Ignore
+    }
     onNavigate(view);
     setProfileOpen(false);
   };
@@ -110,167 +121,132 @@ export const Header = ({
               borderRadius: "50%",
               backgroundColor: "#10b981",
               boxShadow: "0 0 6px #10b981",
+              display: "inline-block",
             }}
           />
-          Edge Online
+          <span>Edge Online</span>
         </div>
       </div>
 
-      {/* Right Side: Profile Avatar with Complete Popover Menu */}
-      <nav className="nav-links" style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+      {/* Header Right Actions */}
+      <nav className="nav-links">
         {user ? (
-          <div style={{ position: "relative" }} ref={dropdownRef}>
-            {/* Circular Profile Avatar Button */}
+          <div style={{ position: "relative" }} ref={profileRef}>
+            {/* Minimalist Circular Avatar Trigger */}
             <button
               onClick={() => setProfileOpen(!profileOpen)}
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "0.4rem",
-                background: "transparent",
-                border: "none",
+                justifyContent: "center",
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
+                background: user.avatar_url ? `url(${user.avatar_url}) center/cover` : "#0f172a",
+                border: "2px solid #e2e8f0",
+                color: "#ffffff",
+                fontWeight: 700,
+                fontSize: "0.78rem",
                 cursor: "pointer",
-                padding: "0.2rem",
-                borderRadius: "9999px",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                transition: "all 0.15s ease",
               }}
-              title="Account Menu"
-              aria-expanded={profileOpen}
+              title={user.name || user.email}
             >
-              {user.avatar_url ? (
-                <img
-                  src={user.avatar_url}
-                  alt={user.name || user.email}
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "50%",
-                    border: "2px solid #0f172a",
-                    objectFit: "cover",
-                  }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "50%",
-                    background: "#0f172a",
-                    color: "#ffffff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: 700,
-                    fontSize: "0.85rem",
-                    letterSpacing: "0.02em",
-                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                  }}
-                >
-                  {getInitials(user.name, user.email)}
-                </div>
-              )}
-              <ChevronDown
-                size={14}
-                style={{
-                  color: "var(--text-muted)",
-                  transform: profileOpen ? "rotate(180deg)" : "rotate(0deg)",
-                  transition: "transform 0.2s ease",
-                }}
-              />
+              {!user.avatar_url && getInitials(user.name, user.email)}
             </button>
 
-            {/* Profile Dropdown Popup */}
+            {/* Profile Popover Menu */}
             {profileOpen && (
               <div
-                className="profile-dropdown-menu"
                 style={{
                   position: "absolute",
                   top: "calc(100% + 8px)",
                   right: 0,
-                  width: "270px",
+                  width: "240px",
                   background: "#ffffff",
                   border: "1px solid var(--border-subtle)",
-                  borderRadius: "var(--radius-lg)",
-                  boxShadow: "0 12px 30px -4px rgba(15, 23, 42, 0.14), 0 4px 6px -2px rgba(15, 23, 42, 0.05)",
-                  zIndex: 1000,
+                  borderRadius: "var(--radius-md)",
+                  boxShadow: "var(--shadow-lg)",
+                  zIndex: 999,
                   overflow: "hidden",
-                  animation: "fadeIn 0.15s ease",
                 }}
               >
-                {/* User Info Header */}
+                {/* Popover Header */}
                 <div
                   style={{
-                    padding: "1rem 1.25rem",
+                    padding: "0.85rem 1rem",
                     background: "var(--bg-subtle)",
                     borderBottom: "1px solid var(--border-subtle)",
                   }}
                 >
-                  <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "var(--text-main)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <div style={{ fontWeight: 800, fontSize: "0.88rem", color: "var(--text-main)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {user.name || "Developer Account"}
                   </div>
-                  <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: "0.1rem" }}>
+                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: "0.1rem" }}>
                     {user.email}
                   </div>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", marginTop: "0.5rem", padding: "0.15rem 0.55rem", borderRadius: "9999px", background: "rgba(37, 99, 235, 0.1)", color: "var(--accent-blue)", fontSize: "0.7rem", fontWeight: 700 }}>
-                    <Zap size={11} /> Free Plan · 200/mo
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", marginTop: "0.35rem", padding: "0.12rem 0.45rem", borderRadius: "9999px", background: "rgba(37, 99, 235, 0.1)", color: "var(--accent-blue)", fontSize: "0.68rem", fontWeight: 700 }}>
+                    <Zap size={10} /> Free Plan · 200/mo
                   </div>
                 </div>
 
                 {/* Dropdown Menu Items */}
-                <div style={{ padding: "0.4rem 0" }}>
+                <div style={{ padding: "0.35rem 0" }}>
                   <button
                     className="dropdown-item"
                     onClick={() => handleMenuClick("dashboard")}
                   >
-                    <LayoutDashboard size={15} /> Dashboard Overview
+                    <LayoutDashboard size={14} /> Dashboard Overview
                   </button>
 
                   <button
                     className="dropdown-item"
-                    onClick={() => handleMenuClick("dashboard")}
+                    onClick={() => handleMenuClick("dashboard", "keys")}
                   >
-                    <Key size={15} /> API Keys & Quotas
+                    <Key size={14} /> API Keys & Quotas
                   </button>
 
                   <button
                     className="dropdown-item"
                     onClick={() => handleMenuClick("home")}
                   >
-                    <Search size={15} /> Single Email Verifier
+                    <Search size={14} /> Single Email Verifier
                   </button>
 
                   <button
                     className="dropdown-item"
-                    onClick={() => handleMenuClick("dashboard")}
+                    onClick={() => handleMenuClick("dashboard", "bulk")}
                   >
-                    <Upload size={15} /> Bulk Batch Engine
+                    <Upload size={14} /> Bulk Batch Engine
                   </button>
 
                   <button
                     className="dropdown-item"
                     onClick={() => handleMenuClick("dns-mx")}
                   >
-                    <Server size={15} /> DNS & MX Checker
+                    <Server size={14} /> DNS & MX Checker
                   </button>
 
                   <button
                     className="dropdown-item"
                     onClick={() => handleMenuClick("spf-dmarc")}
                   >
-                    <Shield size={15} /> SPF & DMARC Audit
+                    <Shield size={14} /> SPF & DMARC Audit
                   </button>
 
                   <button
                     className="dropdown-item"
                     onClick={() => handleMenuClick("pricing")}
                   >
-                    <CreditCard size={15} /> Plans & Quotas
+                    <CreditCard size={14} /> Plans & Quotas
                   </button>
 
                   <button
                     className="dropdown-item"
                     onClick={() => handleMenuClick("docs")}
                   >
-                    <BookOpen size={15} /> Developer Docs & FAQ
+                    <BookOpen size={14} /> Developer Docs & FAQ
                   </button>
 
                   {user.is_admin && (

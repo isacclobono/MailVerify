@@ -136,8 +136,9 @@ export function App() {
   const handleNavigate = (view: AppView) => {
     setCurrentView(view);
     const targetPath = getPathForView(view);
+    const fullTarget = targetPath + window.location.search;
     if (window.location.pathname !== targetPath) {
-      window.history.pushState({ view }, document.title, targetPath);
+      window.history.pushState({ view }, document.title, fullTarget);
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   };

@@ -37,14 +37,14 @@ export const DnsMxCheckerPage = ({ onNavigateHome }: { onNavigateHome: () => voi
   return (
     <div style={{ maxWidth: "1120px", margin: "0 auto", width: "100%" }}>
       {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: "3rem" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "rgba(37, 99, 235, 0.1)", color: "var(--accent-blue)", padding: "0.25rem 0.75rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.75rem" }}>
-          <Server size={14} /> LIVE DNS & MX DIAGNOSTIC TOOL
+      <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", background: "rgba(37, 99, 235, 0.1)", color: "var(--accent-blue)", padding: "0.2rem 0.65rem", borderRadius: "9999px", fontSize: "0.72rem", fontWeight: 700, marginBottom: "0.5rem" }}>
+          <Server size={13} /> LIVE DNS & MX DIAGNOSTIC TOOL
         </div>
-        <h1 style={{ fontSize: "2.5rem", fontWeight: 800, letterSpacing: "-0.02em", marginBottom: "0.75rem" }}>
+        <h1 style={{ fontSize: "1.75rem", fontWeight: 800, letterSpacing: "-0.02em", marginBottom: "0.5rem" }}>
           DNS & MX Record Checker
         </h1>
-        <p style={{ color: "var(--text-muted)", fontSize: "1.05rem", maxWidth: "650px", margin: "0 auto" }}>
+        <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", maxWidth: "600px", margin: "0 auto" }}>
           Inspect live mail exchange routing, domain resolution, and MX availability in real-time via Cloudflare DNS-over-HTTPS.
         </p>
       </div>

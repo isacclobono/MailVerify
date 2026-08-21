@@ -72,26 +72,26 @@ export const PricingPage = ({ onNavigateHome }: { onNavigateHome: () => void }) 
   return (
     <div style={{ maxWidth: "1120px", margin: "0 auto", width: "100%" }}>
       {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: "3.5rem" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "rgba(37, 99, 235, 0.1)", color: "var(--accent-blue)", padding: "0.25rem 0.75rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.75rem" }}>
-          <Sparkles size={14} /> FLEXIBLE QUOTAS & API KEYS
+      <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", background: "rgba(37, 99, 235, 0.1)", color: "var(--accent-blue)", padding: "0.2rem 0.65rem", borderRadius: "9999px", fontSize: "0.72rem", fontWeight: 700, marginBottom: "0.5rem" }}>
+          <Sparkles size={13} /> FLEXIBLE QUOTAS & API KEYS
         </div>
-        <h1 style={{ fontSize: "2.5rem", fontWeight: 800, letterSpacing: "-0.02em", marginBottom: "1rem" }}>
+        <h1 style={{ fontSize: "1.75rem", fontWeight: 800, letterSpacing: "-0.02em", marginBottom: "0.5rem" }}>
           Simple, Transparent API Plans
         </h1>
-        <p style={{ color: "var(--text-muted)", fontSize: "1.05rem", maxWidth: "680px", margin: "0 auto", lineHeight: 1.6 }}>
+        <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", maxWidth: "620px", margin: "0 auto", lineHeight: 1.55 }}>
           Get 200 free API calls every month with private API keys, high-speed DNS-over-HTTPS resolution, and zero credit card requirements.
         </p>
       </div>
 
       {/* Pricing Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(310px, 1fr))", gap: "1.5rem", marginBottom: "4rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.25rem", marginBottom: "3rem" }}>
         {plans.map((p, idx) => (
           <div
             key={idx}
             className="card"
             style={{
-              padding: "2rem",
+              padding: "1.5rem",
               position: "relative",
               border: p.highlight ? "2px solid var(--accent-blue)" : "1px solid var(--border-subtle)",
               display: "flex",
@@ -100,23 +100,23 @@ export const PricingPage = ({ onNavigateHome }: { onNavigateHome: () => void }) 
             }}
           >
             <div>
-              <div style={{ display: "inline-block", padding: "0.2rem 0.55rem", borderRadius: "4px", background: p.badgeColor, color: p.badgeTextColor, fontSize: "0.7rem", fontWeight: 700, marginBottom: "1rem" }}>
+              <div style={{ display: "inline-block", padding: "0.15rem 0.45rem", borderRadius: "4px", background: p.badgeColor, color: p.badgeTextColor, fontSize: "0.68rem", fontWeight: 700, marginBottom: "0.75rem" }}>
                 {p.badge}
               </div>
-              <h3 style={{ fontSize: "1.3rem", fontWeight: 800, marginBottom: "0.5rem" }}>{p.name}</h3>
-              <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", lineHeight: 1.5, minHeight: "45px" }}>{p.description}</p>
+              <h3 style={{ fontSize: "1.05rem", fontWeight: 800, marginBottom: "0.35rem" }}>{p.name}</h3>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", lineHeight: 1.45, minHeight: "38px" }}>{p.description}</p>
 
-              <div style={{ margin: "1.5rem 0" }}>
-                <span style={{ fontSize: "2.75rem", fontWeight: 800, letterSpacing: "-0.03em" }}>{p.price}</span>
-                <span style={{ color: "var(--text-muted)", fontSize: "0.9rem", marginLeft: "0.4rem" }}>/ {p.period}</span>
+              <div style={{ margin: "1rem 0" }}>
+                <span style={{ fontSize: "1.85rem", fontWeight: 800, letterSpacing: "-0.03em" }}>{p.price}</span>
+                <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", marginLeft: "0.35rem" }}>/ {p.period}</span>
               </div>
 
-              <div style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: "1.5rem", marginBottom: "2rem" }}>
-                <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: "0.75rem" }}>PLAN INCLUDES</div>
-                <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+              <div style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: "1.25rem", marginBottom: "1.5rem" }}>
+                <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: "0.65rem", letterSpacing: "0.04em" }}>PLAN INCLUDES</div>
+                <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                   {p.features.map((feat, fIdx) => (
-                    <li key={fIdx} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.88rem" }}>
-                      <Check size={16} color="var(--success)" style={{ flexShrink: 0 }} />
+                    <li key={fIdx} style={{ display: "flex", alignItems: "center", gap: "0.45rem", fontSize: "0.82rem" }}>
+                      <Check size={14} color="var(--success)" style={{ flexShrink: 0 }} />
                       <span>{feat}</span>
                     </li>
                   ))}

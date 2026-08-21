@@ -13,30 +13,30 @@ export const AccountQuotasPage = ({
   return (
     <div style={{ maxWidth: "1120px", margin: "0 auto", width: "100%" }}>
       {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: "3.5rem" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "rgba(37, 99, 235, 0.1)", color: "var(--accent-blue)", padding: "0.25rem 0.75rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.75rem" }}>
-          <UserCheck size={14} /> ACCOUNT GOVERNANCE & LIMITS
+      <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", background: "rgba(37, 99, 235, 0.1)", color: "var(--accent-blue)", padding: "0.2rem 0.65rem", borderRadius: "9999px", fontSize: "0.72rem", fontWeight: 700, marginBottom: "0.5rem" }}>
+          <UserCheck size={13} /> ACCOUNT GOVERNANCE & LIMITS
         </div>
-        <h1 style={{ fontSize: "2.5rem", fontWeight: 800, letterSpacing: "-0.02em", marginBottom: "0.75rem" }}>
+        <h1 style={{ fontSize: "1.75rem", fontWeight: 800, letterSpacing: "-0.02em", marginBottom: "0.5rem" }}>
           Account Tiers & Quota Specifications
         </h1>
-        <p style={{ color: "var(--text-muted)", fontSize: "1.05rem", maxWidth: "680px", margin: "0 auto", lineHeight: 1.6 }}>
+        <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", maxWidth: "620px", margin: "0 auto", lineHeight: 1.55 }}>
           Understand how anonymous guest verification, Google OAuth authentication, API keys, and monthly quotas operate.
         </p>
       </div>
 
       {/* Account Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.5rem", marginBottom: "3rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.25rem", marginBottom: "2.5rem" }}>
         {/* 1. 5-Check Guest Quota */}
-        <div className="card" style={{ padding: "2rem" }}>
-          <div style={{ display: "inline-flex", padding: "0.75rem", background: "rgba(245, 158, 11, 0.1)", borderRadius: "var(--radius-md)", color: "var(--warning)", marginBottom: "1rem" }}>
-            <Shield size={24} />
+        <div className="card" style={{ padding: "1.5rem" }}>
+          <div style={{ display: "inline-flex", padding: "0.6rem", background: "rgba(245, 158, 11, 0.1)", borderRadius: "var(--radius-md)", color: "var(--warning)", marginBottom: "0.75rem" }}>
+            <Shield size={20} />
           </div>
-          <h3 style={{ fontSize: "1.25rem", fontWeight: 800, marginBottom: "0.5rem" }}>5-Check Guest Quota</h3>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", lineHeight: 1.5, marginBottom: "1rem" }}>
+          <h3 style={{ fontSize: "1.05rem", fontWeight: 800, marginBottom: "0.35rem" }}>5-Check Guest Quota</h3>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.82rem", lineHeight: 1.45, marginBottom: "0.75rem" }}>
             Visitors can verify up to 5 email addresses without creating an account. Rate limiting is tracked per client IP address.
           </p>
-          <ul style={{ listStyle: "none", fontSize: "0.85rem", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+          <ul style={{ listStyle: "none", fontSize: "0.8rem", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
             <li>• No registration or credit card required</li>
             <li>• Full syntax, DNS, and MX inspection</li>
             <li>• Unlocks 200 monthly calls immediately on Google Login</li>
@@ -44,15 +44,15 @@ export const AccountQuotasPage = ({
         </div>
 
         {/* 2. Google Login & API Keys */}
-        <div className="card" style={{ padding: "2rem", border: "2px solid var(--accent-blue)" }}>
-          <div style={{ display: "inline-flex", padding: "0.75rem", background: "rgba(37, 99, 235, 0.1)", borderRadius: "var(--radius-md)", color: "var(--accent-blue)", marginBottom: "1rem" }}>
-            <Key size={24} />
+        <div className="card" style={{ padding: "1.5rem", border: "2px solid var(--accent-blue)" }}>
+          <div style={{ display: "inline-flex", padding: "0.6rem", background: "rgba(37, 99, 235, 0.1)", borderRadius: "var(--radius-md)", color: "var(--accent-blue)", marginBottom: "0.75rem" }}>
+            <Key size={20} />
           </div>
-          <h3 style={{ fontSize: "1.25rem", fontWeight: 800, marginBottom: "0.5rem" }}>200 Calls/Month Free Plan</h3>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", lineHeight: 1.5, marginBottom: "1rem" }}>
+          <h3 style={{ fontSize: "1.05rem", fontWeight: 800, marginBottom: "0.35rem" }}>200 Calls/Month Free Plan</h3>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.82rem", lineHeight: 1.45, marginBottom: "0.75rem" }}>
             Signing in with Google unlocks your private developer API keys and grants you 200 free verification calls each month.
           </p>
-          <ul style={{ listStyle: "none", fontSize: "0.85rem", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+          <ul style={{ listStyle: "none", fontSize: "0.8rem", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
             <li>• 200 API calls per calendar month (resets on 1st)</li>
             <li>• Generate up to 5 active API keys (<code>mv_live_...</code>)</li>
             <li>• Pass keys via <code>X-API-Key</code> or Bearer authorization</li>
