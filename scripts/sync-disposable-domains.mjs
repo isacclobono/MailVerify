@@ -160,7 +160,7 @@ const STRICT_ALLOWLIST = new Set([
   "atlassian.com",
   "zendesk.com",
   "shopify.com",
-  "pulsechat.workers.dev"
+  "sk-builds.workers.dev"
 ]);
 
 // Valid domain regex (RFC 1035 / RFC 1123)

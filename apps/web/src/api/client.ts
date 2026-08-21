@@ -4,7 +4,7 @@ export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   (typeof window !== "undefined" && window.location.hostname.includes("localhost")
     ? "http://localhost:8787"
-    : "https://mailverify.pulsechat.workers.dev");
+    : "https://mailverify.sk-builds.workers.dev");
 
 console.log("[MailVerify API] Initialized with backend:", API_BASE_URL);
 

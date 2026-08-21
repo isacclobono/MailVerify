@@ -334,10 +334,10 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
     const key = activeKeyPrefix;
     switch (lang) {
       case "curl":
-        return `curl "https://mailverify.pulsechat.workers.dev/api/verify" \\\n  -X POST \\\n  -H "Content-Type: application/json" \\\n  -H "X-API-Key: ${key}" \\\n  -d '{"email": "contact@domain.com"}'`;
+        return `curl "https://mailverify.sk-builds.workers.dev/api/verify" \\\n  -X POST \\\n  -H "Content-Type: application/json" \\\n  -H "X-API-Key: ${key}" \\\n  -d '{"email": "contact@domain.com"}'`;
       case "node":
       case "javascript":
-        return `const res = await fetch("https://mailverify.pulsechat.workers.dev/api/verify", {
+        return `const res = await fetch("https://mailverify.sk-builds.workers.dev/api/verify", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -351,13 +351,13 @@ console.log(data);`;
         return `import requests
 
 res = requests.post(
-    "https://mailverify.pulsechat.workers.dev/api/verify",
+    "https://mailverify.sk-builds.workers.dev/api/verify",
     headers={"X-API-Key": "${key}"},
     json={"email": "contact@domain.com"}
 )
 print(res.json())`;
       case "php":
-        return `$ch = curl_init("https://mailverify.pulsechat.workers.dev/api/verify");
+        return `$ch = curl_init("https://mailverify.sk-builds.workers.dev/api/verify");
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     "Content-Type: application/json",
     "X-API-Key": "${key}"
@@ -366,19 +366,19 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(["email" => "contact@domain.com
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $res = curl_exec($ch);`;
       case "go":
-        return `req, _ := http.NewRequest("POST", "https://mailverify.pulsechat.workers.dev/api/verify", bytes.NewBuffer([]byte(\`{"email":"contact@domain.com"}\`)))
+        return `req, _ := http.NewRequest("POST", "https://mailverify.sk-builds.workers.dev/api/verify", bytes.NewBuffer([]byte(\`{"email":"contact@domain.com"}\`)))
 req.Header.Set("X-API-Key", "${key}")
 req.Header.Set("Content-Type", "application/json")
 resp, _ := http.DefaultClient.Do(req)`;
       case "rust":
         return `let client = reqwest::Client::new();
-let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
+let res = client.post("https://mailverify.sk-builds.workers.dev/api/verify")
     .header("X-API-Key", "${key}")
     .json(&serde_json::json!({ "email": "contact@domain.com" }))
     .send()
     .await?;`;
       default:
-        return `// Request to https://mailverify.pulsechat.workers.dev/api/verify with header X-API-Key: ${key}`;
+        return `// Request to https://mailverify.sk-builds.workers.dev/api/verify with header X-API-Key: ${key}`;
     }
   };
 

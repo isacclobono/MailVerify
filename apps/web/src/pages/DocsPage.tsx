@@ -54,7 +54,7 @@ export const DocsPage = () => {
   const [testLoading, setTestLoading] = useState(false);
   const [testResponse, setTestResponse] = useState<string | null>(null);
 
-  const BASE_URL = "https://mailverify.pulsechat.workers.dev";
+  const BASE_URL = "https://mailverify.sk-builds.workers.dev";
 
   const setActiveSection = (section: DocsSection) => {
     setActiveSectionState(section);
@@ -277,7 +277,7 @@ export const DocsPage = () => {
                   <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted)" }}>1. SEND VERIFICATION REQUEST</span>
                   <button
                     type="button"
-                    onClick={() => handleCopy(`curl -X POST "https://mailverify.pulsechat.workers.dev/api/verify" \\\n  -H "Content-Type: application/json" \\\n  -H "X-API-Key: YOUR_API_KEY" \\\n  -d '{"email":"contact@stripe.com"}'`, "curl-quickstart")}
+                    onClick={() => handleCopy(`curl -X POST "https://mailverify.sk-builds.workers.dev/api/verify" \\\n  -H "Content-Type: application/json" \\\n  -H "X-API-Key: YOUR_API_KEY" \\\n  -d '{"email":"contact@stripe.com"}'`, "curl-quickstart")}
                     style={{ background: "none", border: "none", fontSize: "0.72rem", color: "var(--accent-blue)", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.25rem" }}
                   >
                     {copiedCodeId === "curl-quickstart" ? <Check size={12} color="var(--success)" /> : <Copy size={12} />}
@@ -286,7 +286,7 @@ export const DocsPage = () => {
                 </div>
 
                 <pre style={{ background: "var(--bg-dark)", color: "#38bdf8", padding: "1rem", borderRadius: "var(--radius-md)", fontSize: "0.8rem", fontFamily: "var(--font-mono)", overflowX: "auto", lineHeight: 1.5 }}>
-{`curl -X POST "https://mailverify.pulsechat.workers.dev/api/verify" \\
+{`curl -X POST "https://mailverify.sk-builds.workers.dev/api/verify" \\
   -H "Content-Type: application/json" \\
   -H "X-API-Key: YOUR_API_KEY" \\
   -d '{"email":"contact@stripe.com"}'`}
@@ -433,7 +433,7 @@ export const DocsPage = () => {
                   </div>
                   <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", margin: "0 0 0.5rem" }}>Validates RFC 5322 structural formatting, double dots, length boundaries, and label rules.</p>
                   <pre style={{ background: "var(--bg-dark)", color: "#38bdf8", padding: "0.6rem 0.85rem", borderRadius: "var(--radius-sm)", fontSize: "0.75rem", fontFamily: "var(--font-mono)", margin: 0 }}>
-{`curl "https://mailverify.pulsechat.workers.dev/api/check/syntax?email=alex@gmail.com"`}
+{`curl "https://mailverify.sk-builds.workers.dev/api/check/syntax?email=alex@gmail.com"`}
                   </pre>
                 </div>
 
@@ -445,7 +445,7 @@ export const DocsPage = () => {
                   </div>
                   <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", margin: "0 0 0.5rem" }}>Queries Cloudflare DNS-over-HTTPS for active A and AAAA host address records.</p>
                   <pre style={{ background: "var(--bg-dark)", color: "#38bdf8", padding: "0.6rem 0.85rem", borderRadius: "var(--radius-sm)", fontSize: "0.75rem", fontFamily: "var(--font-mono)", margin: 0 }}>
-{`curl "https://mailverify.pulsechat.workers.dev/api/check/dns?domain=stripe.com"`}
+{`curl "https://mailverify.sk-builds.workers.dev/api/check/dns?domain=stripe.com"`}
                   </pre>
                 </div>
 
@@ -457,7 +457,7 @@ export const DocsPage = () => {
                   </div>
                   <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", margin: "0 0 0.5rem" }}>Discovers mail exchangers, checks RFC 7505 Null-MX, and sorts servers by priority.</p>
                   <pre style={{ background: "var(--bg-dark)", color: "#38bdf8", padding: "0.6rem 0.85rem", borderRadius: "var(--radius-sm)", fontSize: "0.75rem", fontFamily: "var(--font-mono)", margin: 0 }}>
-{`curl "https://mailverify.pulsechat.workers.dev/api/check/mx?domain=apple.com"`}
+{`curl "https://mailverify.sk-builds.workers.dev/api/check/mx?domain=apple.com"`}
                   </pre>
                 </div>
 
@@ -469,7 +469,7 @@ export const DocsPage = () => {
                   </div>
                   <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", margin: "0 0 0.5rem" }}>Fetches raw TXT SPF declarations and checks `_dmarc` policy enforcement (reject/quarantine).</p>
                   <pre style={{ background: "var(--bg-dark)", color: "#38bdf8", padding: "0.6rem 0.85rem", borderRadius: "var(--radius-sm)", fontSize: "0.75rem", fontFamily: "var(--font-mono)", margin: 0 }}>
-{`curl "https://mailverify.pulsechat.workers.dev/api/check/security?domain=github.com"`}
+{`curl "https://mailverify.sk-builds.workers.dev/api/check/security?domain=github.com"`}
                   </pre>
                 </div>
 
@@ -481,7 +481,7 @@ export const DocsPage = () => {
                   </div>
                   <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", margin: "0 0 0.5rem" }}>Flags temporary 10-minute inboxes and burner email services.</p>
                   <pre style={{ background: "var(--bg-dark)", color: "#38bdf8", padding: "0.6rem 0.85rem", borderRadius: "var(--radius-sm)", fontSize: "0.75rem", fontFamily: "var(--font-mono)", margin: 0 }}>
-{`curl "https://mailverify.pulsechat.workers.dev/api/check/disposable?domain=mailinator.com"`}
+{`curl "https://mailverify.sk-builds.workers.dev/api/check/disposable?domain=mailinator.com"`}
                   </pre>
                 </div>
 
@@ -493,7 +493,7 @@ export const DocsPage = () => {
                   </div>
                   <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", margin: "0 0 0.5rem" }}>Detects domain misspellings (e.g. <code>gmial.com</code>) and returns suggested corrections.</p>
                   <pre style={{ background: "var(--bg-dark)", color: "#38bdf8", padding: "0.6rem 0.85rem", borderRadius: "var(--radius-sm)", fontSize: "0.75rem", fontFamily: "var(--font-mono)", margin: 0 }}>
-{`curl "https://mailverify.pulsechat.workers.dev/api/check/typo?email=alex@gmial.com"`}
+{`curl "https://mailverify.sk-builds.workers.dev/api/check/typo?email=alex@gmial.com"`}
                   </pre>
                 </div>
               </div>

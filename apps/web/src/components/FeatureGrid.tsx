@@ -29,7 +29,7 @@ export const FeatureGrid = ({ onTryEmail }: { onTryEmail: (email: string) => voi
       sampleEmail: "alex.smith+work@domain.com",
       endpoint: "/api/check/syntax?email=alex.smith+work@domain.com",
       method: "GET",
-      curlExample: `curl "https://mailverify.pulsechat.workers.dev/api/check/syntax?email=alex.smith+work@domain.com"`,
+      curlExample: `curl "https://mailverify.sk-builds.workers.dev/api/check/syntax?email=alex.smith+work@domain.com"`,
       sampleResponse: `{\n  "success": true,\n  "data": {\n    "email": "alex.smith+work@domain.com",\n    "is_valid_rfc": true,\n    "syntax_status": "PASS",\n    "local_part": "alex.smith+work",\n    "domain": "domain.com",\n    "length": { "total": 25, "local": 15, "domain": 10 }\n  }\n}`,
       details: "Performs strict structural validation conforming to RFC 5322 & RFC 3696 specifications while preventing regex denial of service (ReDoS).",
     },
@@ -41,7 +41,7 @@ export const FeatureGrid = ({ onTryEmail }: { onTryEmail: (email: string) => voi
       sampleEmail: "support@google.com",
       endpoint: "/api/check/dns?domain=google.com",
       method: "GET",
-      curlExample: `curl "https://mailverify.pulsechat.workers.dev/api/check/dns?domain=google.com"`,
+      curlExample: `curl "https://mailverify.sk-builds.workers.dev/api/check/dns?domain=google.com"`,
       sampleResponse: `{\n  "success": true,\n  "data": {\n    "domain": "google.com",\n    "status": "DOMAIN_EXISTS",\n    "resolves": true,\n    "ipv4_addresses": ["142.250.190.46"],\n    "ipv6_addresses": ["2607:f8b0:4005:808::200e"]\n  }\n}`,
       details: "Queries Cloudflare DNS edge for active A and AAAA address records, verifying that the domain exists and resolves globally.",
     },
@@ -53,7 +53,7 @@ export const FeatureGrid = ({ onTryEmail }: { onTryEmail: (email: string) => voi
       sampleEmail: "contact@stripe.com",
       endpoint: "/api/check/mx?domain=stripe.com",
       method: "GET",
-      curlExample: `curl "https://mailverify.pulsechat.workers.dev/api/check/mx?domain=stripe.com"`,
+      curlExample: `curl "https://mailverify.sk-builds.workers.dev/api/check/mx?domain=stripe.com"`,
       sampleResponse: `{\n  "success": true,\n  "data": {\n    "domain": "stripe.com",\n    "status": "MX_FOUND",\n    "has_mx_servers": true,\n    "primary_mx": "aspmx.l.google.com",\n    "records": [\n      { "priority": 1, "host": "aspmx.l.google.com" },\n      { "priority": 5, "host": "alt1.aspmx.l.google.com" }\n    ]\n  }\n}`,
       details: "Queries Cloudflare DoH for MX records, sorting them by priority to ensure destination mail exchangers are ready to receive mail.",
     },
@@ -65,7 +65,7 @@ export const FeatureGrid = ({ onTryEmail }: { onTryEmail: (email: string) => voi
       sampleEmail: "security@apple.com",
       endpoint: "/api/check/security?domain=apple.com",
       method: "GET",
-      curlExample: `curl "https://mailverify.pulsechat.workers.dev/api/check/security?domain=apple.com"`,
+      curlExample: `curl "https://mailverify.sk-builds.workers.dev/api/check/security?domain=apple.com"`,
       sampleResponse: `{\n  "success": true,\n  "data": {\n    "domain": "apple.com",\n    "spf_status": "SPF_PRESENT",\n    "dmarc_status": "DMARC_PRESENT",\n    "is_secure": true\n  }\n}`,
       details: "Fetches and analyzes Sender Policy Framework (SPF) and Domain-based Message Authentication, Reporting, and Conformance (DMARC) records.",
     },
@@ -77,7 +77,7 @@ export const FeatureGrid = ({ onTryEmail }: { onTryEmail: (email: string) => voi
       sampleEmail: "burner@mailinator.com",
       endpoint: "/api/check/disposable?domain=mailinator.com",
       method: "GET",
-      curlExample: `curl "https://mailverify.pulsechat.workers.dev/api/check/disposable?domain=mailinator.com"`,
+      curlExample: `curl "https://mailverify.sk-builds.workers.dev/api/check/disposable?domain=mailinator.com"`,
       sampleResponse: `{\n  "success": true,\n  "data": {\n    "domain": "mailinator.com",\n    "status": "DISPOSABLE",\n    "is_disposable": true\n  }\n}`,
       details: "Detects spam traps and throwaway mailboxes from known temporary providers (Mailinator, Temp-Mail, GuerrillaMail, 10minutemail, etc.).",
     },
@@ -89,7 +89,7 @@ export const FeatureGrid = ({ onTryEmail }: { onTryEmail: (email: string) => voi
       sampleEmail: "billing@company.com",
       endpoint: "/api/check/provider?email=billing@company.com",
       method: "GET",
-      curlExample: `curl "https://mailverify.pulsechat.workers.dev/api/check/provider?email=billing@company.com"`,
+      curlExample: `curl "https://mailverify.sk-builds.workers.dev/api/check/provider?email=billing@company.com"`,
       sampleResponse: `{\n  "success": true,\n  "data": {\n    "domain": "company.com",\n    "local_part": "billing",\n    "provider_class": "BUSINESS_CORPORATE",\n    "is_free_mailbox": false,\n    "is_role_account": true,\n    "role_status": "ROLE_ACCOUNT"\n  }\n}`,
       details: "Classifies email addresses into personal direct mailboxes, corporate business accounts, or generic organizational distribution aliases.",
     },
@@ -101,7 +101,7 @@ export const FeatureGrid = ({ onTryEmail }: { onTryEmail: (email: string) => voi
       sampleEmail: "alex@gmial.com",
       endpoint: "/api/check/typo?email=alex@gmial.com",
       method: "GET",
-      curlExample: `curl "https://mailverify.pulsechat.workers.dev/api/check/typo?email=alex@gmial.com"`,
+      curlExample: `curl "https://mailverify.sk-builds.workers.dev/api/check/typo?email=alex@gmial.com"`,
       sampleResponse: `{\n  "success": true,\n  "data": {\n    "original_domain": "gmial.com",\n    "has_typo": true,\n    "suggested_domain": "gmail.com",\n    "suggested_email": "alex@gmail.com"\n  }\n}`,
       details: "Uses dictionary and Levenshtein distance matching to detect typos against popular global mail providers in real time.",
     },
@@ -113,7 +113,7 @@ export const FeatureGrid = ({ onTryEmail }: { onTryEmail: (email: string) => voi
       sampleEmail: "privacy@mailverify.internal",
       endpoint: "/api/usage",
       method: "GET",
-      curlExample: `curl "https://mailverify.pulsechat.workers.dev/api/usage" -H "X-API-Key: YOUR_API_KEY"`,
+      curlExample: `curl "https://mailverify.sk-builds.workers.dev/api/usage" -H "X-API-Key: YOUR_API_KEY"`,
       sampleResponse: `{\n  "success": true,\n  "data": {\n    "retention_days": 5,\n    "auto_purge_enabled": true\n  }\n}`,
       details: "Zero long-term data hoarding. Parameterized SQL queries permanently delete verification rows on a rolling 5-day cycle.",
     },
@@ -123,7 +123,7 @@ export const FeatureGrid = ({ onTryEmail }: { onTryEmail: (email: string) => voi
     setLiveTesting(true);
     setLiveResult(null);
     try {
-      const url = `https://mailverify.pulsechat.workers.dev${feat.endpoint}`;
+      const url = `https://mailverify.sk-builds.workers.dev${feat.endpoint}`;
       const res = await fetch(url);
       const data = await res.json();
       setLiveResult(JSON.stringify(data, null, 2));

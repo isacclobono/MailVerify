@@ -1,6 +1,6 @@
 # 🔌 REST API Reference & Specification
 
-Base URL: `https://mailverify.pulsechat.workers.dev`
+Base URL: `https://mailverify.sk-builds.workers.dev`
 
 All requests and responses use standard JSON formatting. Authentication supports both `X-API-Key: mv_live_...` and `Authorization: Bearer ...` headers as well as HttpOnly session cookies.
 

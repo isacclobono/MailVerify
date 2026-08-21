@@ -12,11 +12,11 @@ export const CodeSnippet = ({ emailSample = "alex@example.com" }: CodeSnippetPro
   const getSnippet = () => {
     switch (activeLang) {
       case "curl":
-        return `curl -X POST "https://mailverify.workers.dev/api/verify" \\
+        return `curl -X POST "https://mailverify.sk-builds.workers.dev/api/verify" \\
   -H "Content-Type: application/json" \\
   -d '{"email": "${emailSample}"}'`;
       case "javascript":
-        return `const response = await fetch('https://mailverify.workers.dev/api/verify', {
+        return `const response = await fetch('https://mailverify.sk-builds.workers.dev/api/verify', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ email: '${emailSample}' })
@@ -27,7 +27,7 @@ console.log(result.data.verdict, result.data.score);`;
         return `import requests
 
 res = requests.post(
-    "https://mailverify.workers.dev/api/verify",
+    "https://mailverify.sk-builds.workers.dev/api/verify",
     json={"email": "${emailSample}"}
 )
 data = res.json()
@@ -35,7 +35,7 @@ print("Verdict:", data["data"]["verdict"], "Score:", data["data"]["score"])`;
       case "node":
         return `import { request } from 'undici';
 
-const { body } = await request('https://mailverify.workers.dev/api/verify', {
+const { body } = await request('https://mailverify.sk-builds.workers.dev/api/verify', {
   method: 'POST',
   headers: { 'content-type': 'application/json' },
   body: JSON.stringify({ email: '${emailSample}' })
