@@ -448,6 +448,7 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
           history={history}
           loading={historyLoading}
           onRefresh={loadHistoryAndStats}
+          onNavigateVerify={() => setActiveTab("single")}
         />
       )}
 

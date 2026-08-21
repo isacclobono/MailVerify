@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Copy, Check, RefreshCw } from "lucide-react";
+import { Copy, Check, RefreshCw, Search, Upload, CheckCircle2, XCircle } from "lucide-react";
 import { VerificationResult, MonthlyQuota, ApiKeyItem } from "../../types";
 import { VerdictBadge } from "../VerdictBadge";
 import { formatTimeAgo, formatUtcDateTime } from "../../utils/time";
@@ -25,20 +25,30 @@ interface DashboardOverviewTabProps {
 
 export const DashboardOverviewTab = ({
   stats,
+  quota,
   history,
   apiKeys,
-  timeRange,
-  onTimeRangeChange,
   onRefresh,
   onNavigateTab,
 }: DashboardOverviewTabProps) => {
   const [selectedLang, setSelectedLang] = useState<CodeLang>("curl");
   const [copiedCode, setCopiedCode] = useState(false);
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
+  };
+
   const languages: CodeLang[] = ["curl", "node", "javascript", "python", "php", "ruby", "go", "rust", "java", "c#", "swift"];
   const hourlyLabels = ["1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p", "10p", "11p", "12a", "1a", "2a", "3a", "4a", "5a", "6a", "7a", "8a", "9a", "10a", "11a", "12p"];
 
   const activeKeyPrefix = apiKeys.length > 0 ? `${apiKeys[0].key_prefix}...` : "mv_live_8994cf5f2b0645589f2fe0d786140cf8";
+
+  const isUnlimited = quota.monthly_limit === -1;
+  const usagePercentage = isUnlimited ? 0 : Math.min(100, Math.round((quota.calls_used / quota.monthly_limit) * 100));
+  const remainingCredits = isUnlimited ? "Unlimited" : Math.max(0, quota.monthly_limit - quota.calls_used);
 
   const getCodeSnippet = (lang: CodeLang): string => {
     const key = activeKeyPrefix;
@@ -103,114 +113,160 @@ let res = client.post("https://mailverify.sk-builds.workers.dev/api/verify")
 
   return (
     <div>
-      {/* Time range selector & Refresh link */}
+      {/* Personalized Task-Oriented Launcher Bar */}
       <div
+        className="card"
         style={{
+          padding: "1.5rem 1.75rem",
+          marginBottom: "1.75rem",
+          background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+          border: "1px solid var(--border-subtle)",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: "1rem",
           flexWrap: "wrap",
-          gap: "0.75rem",
+          gap: "1rem",
         }}
       >
-        <div
-          style={{
-            display: "inline-flex",
-            background: "var(--bg-subtle)",
-            padding: "0.2rem",
-            borderRadius: "var(--radius-md)",
-            border: "1px solid var(--border-subtle)",
-          }}
-        >
-          {(["Last 24 hours", "Last 30 days", "Last 12 months"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => onTimeRangeChange(t)}
-              style={{
-                padding: "0.3rem 0.75rem",
-                fontSize: "0.78rem",
-                fontWeight: 700,
-                borderRadius: "var(--radius-sm)",
-                border: "none",
-                background: timeRange === t ? "#0f172a" : "transparent",
-                color: timeRange === t ? "#ffffff" : "var(--text-muted)",
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-              }}
-            >
-              {t}
-            </button>
-          ))}
+        <div>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#0f172a", marginBottom: "0.25rem" }}>
+            {getGreeting()} 👋
+          </h2>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", margin: 0 }}>
+            What would you like to verify today? Choose an action below to get started immediately.
+          </p>
         </div>
 
-        <button
-          onClick={onRefresh}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "0.3rem",
-            background: "none",
-            border: "none",
-            color: "var(--text-muted)",
-            fontSize: "0.78rem",
-            cursor: "pointer",
-          }}
-        >
-          <span>Just updated</span>
-          <span style={{ textDecoration: "underline", textUnderlineOffset: "3px", color: "var(--text-main)", fontWeight: 600 }}>
-            Refresh
-          </span>
-        </button>
+        <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            className="btn btn-black"
+            onClick={() => onNavigateTab("single")}
+            style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.55rem 1.1rem" }}
+          >
+            <Search size={14} />
+            <span>Verify Single Email</span>
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={() => onNavigateTab("bulk")}
+            style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.55rem 1.1rem" }}
+          >
+            <Upload size={14} />
+            <span>Bulk Batch Upload</span>
+          </button>
+        </div>
       </div>
 
-      {/* 3 Metric Cards */}
+      {/* Quota Progress Bar Card */}
+      <div
+        className="card"
+        style={{
+          padding: "1.5rem",
+          marginBottom: "1.75rem",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
+          <div>
+            <span style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.04em", color: "var(--text-muted)" }}>
+              MONTHLY USAGE QUOTA
+            </span>
+            <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#0f172a" }}>
+              {quota.calls_used.toLocaleString()} / {isUnlimited ? "∞ Unlimited" : quota.monthly_limit.toLocaleString()} verifications
+            </div>
+          </div>
+
+          <div style={{ textAlign: "right" }}>
+            <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+              {isUnlimited ? "Unlimited Admin Access" : `${remainingCredits.toLocaleString()} verifications remaining`}
+            </span>
+            {!isUnlimited && (
+              <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "var(--accent-blue)" }}>
+                {usagePercentage}% used
+              </div>
+            )}
+          </div>
+        </div>
+
+        {!isUnlimited && (
+          <div style={{ width: "100%", height: "8px", background: "var(--bg-subtle)", borderRadius: "9999px", overflow: "hidden" }}>
+            <div
+              style={{
+                width: `${usagePercentage}%`,
+                height: "100%",
+                background: usagePercentage > 85 ? "var(--danger)" : "var(--accent-blue)",
+                borderRadius: "9999px",
+                transition: "width 0.3s ease",
+              }}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Decision-Oriented Telemetry Cards */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
           gap: "1rem",
-          marginBottom: "1.5rem",
+          marginBottom: "1.75rem",
         }}
       >
         <div className="card" style={{ padding: "1.25rem" }}>
-          <div style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-muted)", marginBottom: "0.35rem" }}>
-            REQUESTS
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.35rem" }}>
+            <span style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-muted)" }}>
+              TOTAL REQUESTS
+            </span>
+            <Search size={15} color="var(--text-muted)" />
           </div>
-          <div style={{ fontSize: "1.65rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>
-            {stats.total}
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#0f172a" }}>
+            {stats.total.toLocaleString()}
           </div>
-          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.35rem" }}>—</div>
+          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.2rem" }}>
+            Real-time DoH lookups
+          </div>
         </div>
 
         <div className="card" style={{ padding: "1.25rem" }}>
-          <div style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-muted)", marginBottom: "0.35rem" }}>
-            2XX REQUESTS (DELIVERABLE)
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.35rem" }}>
+            <span style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.05em", color: "#047857" }}>
+              DELIVERABLE (SAFE)
+            </span>
+            <CheckCircle2 size={15} color="#059669" />
           </div>
-          <div style={{ fontSize: "1.65rem", fontWeight: 800, color: "var(--success)", lineHeight: 1 }}>
-            {stats.deliverable}
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--success)" }}>
+            {stats.deliverable.toLocaleString()}
           </div>
-          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.35rem" }}>—</div>
+          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.2rem" }}>
+            Active mailboxes & MX
+          </div>
         </div>
 
         <div className="card" style={{ padding: "1.25rem" }}>
-          <div style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-muted)", marginBottom: "0.35rem" }}>
-            ERRORS / RISKY
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.35rem" }}>
+            <span style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.05em", color: "#b91c1c" }}>
+              RISKY / UNDELIVERABLE
+            </span>
+            <XCircle size={15} color="#dc2626" />
           </div>
-          <div style={{ fontSize: "1.65rem", fontWeight: 800, color: "var(--danger)", lineHeight: 1 }}>
-            {stats.invalid + stats.risky}
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--danger)" }}>
+            {(stats.invalid + stats.risky).toLocaleString()}
           </div>
-          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.35rem" }}>—</div>
+          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.2rem" }}>
+            Burners, no MX or syntax errors
+          </div>
         </div>
       </div>
 
       {/* Requests Per Hour Visualizer */}
-      <div className="card" style={{ padding: "1.75rem", marginBottom: "2.5rem" }}>
+      <div className="card" style={{ padding: "1.75rem", marginBottom: "2rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
           <div style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-muted)" }}>
-            REQUESTS PER HOUR
+            ACTIVITY TIMELINE (LAST 24 HOURS)
           </div>
-          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Max: {Math.max(stats.total, 1)}</span>
+          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Peak: {Math.max(stats.total, 1)} calls</span>
         </div>
 
         {/* Timeline Bars */}
@@ -218,7 +274,7 @@ let res = client.post("https://mailverify.sk-builds.workers.dev/api/verify")
           style={{
             display: "flex",
             alignItems: "flex-end",
-            height: "120px",
+            height: "110px",
             gap: "4px",
             borderBottom: "1px solid var(--border-subtle)",
             paddingBottom: "4px",
@@ -271,17 +327,17 @@ let res = client.post("https://mailverify.sk-builds.workers.dev/api/verify")
       </div>
 
       {/* Recent Activity Section */}
-      <div style={{ marginBottom: "3rem" }}>
+      <div style={{ marginBottom: "2.5rem" }}>
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: "1rem",
+            marginBottom: "0.85rem",
           }}
         >
           <div style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-muted)" }}>
-            RECENT ACTIVITY
+            RECENT VERIFICATIONS
           </div>
           <button
             onClick={onRefresh}
@@ -308,30 +364,33 @@ let res = client.post("https://mailverify.sk-builds.workers.dev/api/verify")
             className="card"
             style={{
               border: "2px dashed var(--border-subtle)",
-              padding: "3.5rem 2rem",
+              padding: "3rem 2rem",
               textAlign: "center",
               borderRadius: "var(--radius-lg)",
             }}
           >
-            <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "0.4rem", color: "#0f172a" }}>
-              No requests yet
+            <h3 style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: "0.35rem", color: "#0f172a" }}>
+              No verification history yet
             </h3>
-            <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", marginBottom: "1.25rem", maxWidth: "480px", margin: "0 auto 1.25rem" }}>
-              Once you make your first call to the API, the most recent requests will show up here.
+            <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "1.25rem", maxWidth: "420px", margin: "0 auto 1.25rem" }}>
+              Run your first live email check or generate an API key to integrate into your application.
             </p>
-            <div style={{ display: "flex", justifyContent: "center", gap: "0.75rem", fontSize: "0.88rem" }}>
+            <div style={{ display: "flex", justifyContent: "center", gap: "0.75rem", fontSize: "0.85rem" }}>
               <button
+                type="button"
+                className="btn btn-black"
                 onClick={() => onNavigateTab("single")}
-                style={{ background: "none", border: "none", color: "var(--accent-blue)", cursor: "pointer", textDecoration: "underline" }}
+                style={{ fontSize: "0.78rem" }}
               >
-                trigger a sample request
+                Verify First Email →
               </button>
-              <span style={{ color: "var(--text-muted)" }}>or</span>
               <button
+                type="button"
+                className="btn btn-outline"
                 onClick={() => onNavigateTab("keys")}
-                style={{ background: "none", border: "none", color: "var(--accent-blue)", cursor: "pointer", textDecoration: "underline" }}
+                style={{ fontSize: "0.78rem" }}
               >
-                view API keys
+                Manage API Keys
               </button>
             </div>
           </div>
@@ -341,10 +400,10 @@ let res = client.post("https://mailverify.sk-builds.workers.dev/api/verify")
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Email</th>
-                    <th>Verdict</th>
-                    <th>Score</th>
-                    <th>Time</th>
+                    <th>Email Address</th>
+                    <th>Outcome</th>
+                    <th>Risk Score</th>
+                    <th>Verified Time</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -352,7 +411,7 @@ let res = client.post("https://mailverify.sk-builds.workers.dev/api/verify")
                     <tr key={idx}>
                       <td style={{ fontWeight: 600, fontFamily: "var(--font-mono)", fontSize: "0.78rem" }}>{item.email}</td>
                       <td>
-                        <VerdictBadge verdict={item.verdict} score={item.score} />
+                        <VerdictBadge verdict={item.verdict} score={item.score} size="sm" />
                       </td>
                       <td style={{ fontWeight: 700, fontFamily: "var(--font-mono)" }}>{item.score}/100</td>
                       <td style={{ color: "var(--text-muted)", fontSize: "0.75rem" }} title={formatUtcDateTime(item.created_at)}>
@@ -367,10 +426,10 @@ let res = client.post("https://mailverify.sk-builds.workers.dev/api/verify")
         )}
       </div>
 
-      {/* Example Request Multi-Language Snippet Box */}
-      <div style={{ marginBottom: "3rem" }}>
+      {/* Integration Code Sandbox Box */}
+      <div style={{ marginBottom: "2rem" }}>
         <div style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-muted)", marginBottom: "0.75rem" }}>
-          EXAMPLE REQUEST
+          DEVELOPER API INTEGRATION
         </div>
 
         <div style={{ background: "var(--bg-dark)", borderRadius: "var(--radius-lg)", border: "1px solid #1e293b", overflow: "hidden" }}>
