@@ -32,7 +32,7 @@ export const Footer = ({ onNavigate }: FooterProps) => {
             <ul className="footer-col-list">
               <li><button onClick={() => handleNav("infra")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Cloudflare Workers</button></li>
               <li><button onClick={() => handleNav("infra")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Cloudflare D1 SQL</button></li>
-              <li><button onClick={() => handleNav("infra")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Cloudflare KV</button></li>
+              <li><button onClick={() => handleNav("infra")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Cloudflare KV Cache</button></li>
               <li><button onClick={() => handleNav("infra")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>DNS over HTTPS</button></li>
             </ul>
           </div>
@@ -40,20 +40,20 @@ export const Footer = ({ onNavigate }: FooterProps) => {
           <div>
             <div className="footer-col-title">DOCUMENTATION</div>
             <ul className="footer-col-list">
-              <li><button onClick={() => handleNav("docs")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>cURL Guide</button></li>
-              <li><button onClick={() => handleNav("docs")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>JavaScript Client</button></li>
-              <li><button onClick={() => handleNav("docs")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Python SDK</button></li>
-              <li><button onClick={() => handleNav("docs")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Error Codes</button></li>
+              <li><button onClick={() => handleNav("docs")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>REST API Guide</button></li>
+              <li><button onClick={() => handleNav("docs")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>cURL & Fetch Examples</button></li>
+              <li><button onClick={() => handleNav("docs")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Deliverability Verdicts</button></li>
+              <li><button onClick={() => handleNav("docs")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Error Codes & Limits</button></li>
             </ul>
           </div>
 
           <div>
-            <div className="footer-col-title">ACCOUNT</div>
+            <div className="footer-col-title">ACCOUNT & KEYS</div>
             <ul className="footer-col-list">
               <li><a href={api.getGoogleLoginUrl()} className="footer-link">Google Login</a></li>
-              <li><button onClick={() => handleNav("account-quotas")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>5-Check Guest Quota</button></li>
-              <li><button onClick={() => handleNav("account-quotas")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Bulk CSV / JSON</button></li>
-              <li><button onClick={() => handleNav("account-quotas")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>5-Day Rolling History</button></li>
+              <li><button onClick={() => handleNav("dashboard")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>API Key Manager</button></li>
+              <li><button onClick={() => handleNav("account-quotas")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>200 Calls/Mo Quota</button></li>
+              <li><button onClick={() => handleNav("admin")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Admin Portal</button></li>
             </ul>
           </div>
 
@@ -62,8 +62,8 @@ export const Footer = ({ onNavigate }: FooterProps) => {
             <ul className="footer-col-list">
               <li><button onClick={() => handleNav("privacy")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>5-Day Auto Retention Purge</button></li>
               <li><button onClick={() => handleNav("privacy")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Zero Data Hoarding</button></li>
-              <li><button onClick={() => handleNav("privacy")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>GDPR Conforming</button></li>
-              <li><button onClick={() => handleNav("pricing")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>100% Free SLA</button></li>
+              <li><button onClick={() => handleNav("privacy")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>GDPR & CCPA Conformance</button></li>
+              <li><button onClick={() => handleNav("pricing")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Free Tier Plan Details</button></li>
             </ul>
           </div>
         </div>
@@ -72,11 +72,11 @@ export const Footer = ({ onNavigate }: FooterProps) => {
           <div className="compliance-badges">
             <span className="badge-tag">GDPR COMPLIANT</span>
             <span className="badge-tag">5-DAY PURGE</span>
-            <span className="badge-tag">ZERO-COST SLA</span>
+            <span className="badge-tag">200 CALLS/MO FREE</span>
             <span className="badge-tag">CLOUDFLARE EDGE</span>
           </div>
           <div>
-            MailVerify © {new Date().getFullYear()} · Zero-Cost Serverless Email Deliverability Platform
+            MailVerify © {new Date().getFullYear()} · High-Precision Serverless Email Deliverability Platform
           </div>
         </div>
       </div>

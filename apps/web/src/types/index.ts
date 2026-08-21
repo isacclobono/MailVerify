@@ -57,13 +57,30 @@ export interface AdminStats {
   timestamp: string;
 }
 
-export interface AdminUserRecord {
-  id: string;
-  google_sub: string | null;
-  email: string;
-  name: string | null;
-  avatar_url: string | null;
-  created_at: string;
-  updated_at: string;
+export interface MonthlyQuota {
+  current_month: string;
+  calls_used: number;
+  monthly_limit: number;
+  remaining_calls: number;
 }
+
+export interface ApiKeyItem {
+  id: string;
+  user_id: string;
+  key_prefix: string;
+  name: string;
+  created_at: string;
+  last_used_at: string | null;
+  is_active: number;
+}
+
+export interface GeneratedApiKeyResponse {
+  key_id: string;
+  raw_key: string;
+  key_prefix: string;
+  name: string;
+  created_at: string;
+  message: string;
+}
+
 

@@ -1,14 +1,14 @@
-import { Check, Zap, Sparkles, Shield, Server, ArrowRight } from "lucide-react";
+import { Check, Zap, Sparkles, Shield, Server, Key, ArrowRight } from "lucide-react";
 import { api } from "../api/client";
 
 export const PricingPage = ({ onNavigateHome }: { onNavigateHome: () => void }) => {
   const plans = [
     {
-      name: "Anonymous Guest",
+      name: "Guest Visitor",
       price: "$0",
-      period: "forever",
-      description: "Quick instant checks without signing up or providing any credentials.",
-      badge: "NO SIGN-UP REQUIRED",
+      period: "no account",
+      description: "Quick single email checks without signing up or generating an API key.",
+      badge: "INSTANT ACCESS",
       badgeColor: "rgba(100, 116, 139, 0.15)",
       badgeTextColor: "var(--text-muted)",
       features: [
@@ -17,53 +17,53 @@ export const PricingPage = ({ onNavigateHome }: { onNavigateHome: () => void }) 
         "Live MX & DNS Resolution",
         "SPF & DMARC Detection",
         "Disposable Domain Checks",
-        "Real-time Verdict & Score",
+        "Real-time Deliverability Score",
       ],
       ctaText: "Start Verifying",
       ctaAction: onNavigateHome,
       ctaStyle: "btn btn-outline",
     },
     {
-      name: "Authenticated Developer",
+      name: "Developer Free Tier",
       price: "$0",
       period: "forever free",
-      description: "Complete email deliverability platform for developers, marketers, and power users.",
-      badge: "MOST POPULAR",
+      description: "Dedicated API keys and generous monthly quota for developers and startups.",
+      badge: "200 API CALLS / MO",
       badgeColor: "rgba(37, 99, 235, 0.15)",
       badgeTextColor: "var(--accent-blue)",
       highlight: true,
       features: [
-        "Unlimited Single Verifications",
-        "Bulk CSV / JSON Uploads (500/batch)",
-        "5-Day Rolling Audit History",
-        "Export Results to CSV / JSON",
-        "REST API & Bearer Token Access",
-        "30 req/min API Capacity",
-        "1-Click Account Data Erasure",
+        "200 API Calls Every Month",
+        "Instant Private API Key Generation",
+        "X-API-Key & Bearer Authorization",
+        "Bulk CSV / JSON Uploads",
+        "5-Day Rolling Audit Log History",
+        "Export Results to CSV & JSON",
+        "1-Click Account & Key Revocation",
       ],
       ctaText: "Sign in with Google",
       ctaLink: api.getGoogleLoginUrl(),
       ctaStyle: "btn btn-black",
     },
     {
-      name: "Self-Hosted Cloudflare",
-      price: "$0",
-      period: "open source",
-      description: "Deploy to your own Cloudflare account using Workers, D1, and KV with zero cloud bills.",
-      badge: "OPEN SOURCE",
+      name: "Enterprise Volume",
+      price: "Custom",
+      period: "custom limits",
+      description: "High-throughput email verification pipelines for high-volume enterprise senders.",
+      badge: "CUSTOM SLA",
       badgeColor: "rgba(16, 185, 129, 0.15)",
       badgeTextColor: "var(--success)",
       features: [
-        "100% Zero Recurring Bills",
-        "100,000 requests/day on Cloudflare Free",
-        "5 Million D1 reads/day",
-        "1 GB KV storage",
-        "Automated Daily Retention Cron",
-        "Admin Console & User Management",
-        "Full Source Code on GitHub",
+        "100,000+ API Calls / Month",
+        "Sub-20ms Global Response Times",
+        "Multiple Team API Keys",
+        "Dedicated Rate Limiting Pools",
+        "Direct DoH Multi-Resolver Pipeline",
+        "Priority Technical Support",
+        "Custom Compliance Agreements",
       ],
-      ctaText: "View GitHub Repository",
-      ctaLink: "https://github.com/isacclobono/MailVerify",
+      ctaText: "Contact Sales",
+      ctaLink: "mailto:sales@mailverify.internal",
       ctaStyle: "btn btn-outline",
     },
   ];
@@ -72,14 +72,14 @@ export const PricingPage = ({ onNavigateHome }: { onNavigateHome: () => void }) 
     <div style={{ maxWidth: "1120px", margin: "0 auto", width: "100%" }}>
       {/* Header */}
       <div style={{ textAlign: "center", marginBottom: "3.5rem" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "rgba(16, 185, 129, 0.1)", color: "#10b981", padding: "0.25rem 0.75rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.75rem" }}>
-          <Sparkles size={14} /> 100% ZERO-COST ARCHITECTURE
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "rgba(37, 99, 235, 0.1)", color: "var(--accent-blue)", padding: "0.25rem 0.75rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.75rem" }}>
+          <Sparkles size={14} /> FLEXIBLE QUOTAS & API KEYS
         </div>
         <h1 style={{ fontSize: "2.5rem", fontWeight: 800, letterSpacing: "-0.02em", marginBottom: "1rem" }}>
-          Zero Bills. Zero Tier Traps. 100% Free.
+          Simple, Transparent API Plans
         </h1>
         <p style={{ color: "var(--text-muted)", fontSize: "1.05rem", maxWidth: "680px", margin: "0 auto", lineHeight: 1.6 }}>
-          MailVerify runs entirely on Cloudflare's generous serverless free tiers and public DNS-over-HTTPS infrastructure. No credit card required.
+          Get 200 free API calls every month with private API keys, high-speed DNS-over-HTTPS resolution, and zero credit card requirements.
         </p>
       </div>
 
@@ -111,7 +111,7 @@ export const PricingPage = ({ onNavigateHome }: { onNavigateHome: () => void }) 
               </div>
 
               <div style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: "1.5rem", marginBottom: "2rem" }}>
-                <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: "0.75rem" }}>INCLUDED CAPABILITIES</div>
+                <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: "0.75rem" }}>PLAN INCLUDES</div>
                 <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
                   {p.features.map((feat, fIdx) => (
                     <li key={fIdx} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.88rem" }}>
@@ -136,21 +136,21 @@ export const PricingPage = ({ onNavigateHome }: { onNavigateHome: () => void }) 
         ))}
       </div>
 
-      {/* Free Tier Guarantees Section */}
+      {/* Free Tier Details Section */}
       <div className="card" style={{ padding: "2.5rem", background: "var(--bg-subtle)" }}>
-        <h2 style={{ fontSize: "1.4rem", fontWeight: 800, marginBottom: "1rem" }}>How Can MailVerify Be Completely Free?</h2>
+        <h2 style={{ fontSize: "1.4rem", fontWeight: 800, marginBottom: "1rem" }}>Frequently Asked Questions About Quotas</h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem", color: "var(--text-muted)", fontSize: "0.9rem", lineHeight: 1.6 }}>
           <div>
-            <strong style={{ color: "var(--text-main)" }}>1. Cloudflare Workers Isolate Architecture</strong>
-            <p style={{ marginTop: "0.25rem" }}>DNS queries resolve asynchronously in milliseconds, using under 10% of Cloudflare's free 100,000 req/day CPU allowance.</p>
+            <strong style={{ color: "var(--text-main)" }}>When Does the 200 API Call Quota Reset?</strong>
+            <p style={{ marginTop: "0.25rem" }}>Your 200 free API calls reset automatically on the 1st day of every calendar month at 00:00 UTC.</p>
           </div>
           <div>
-            <strong style={{ color: "var(--text-main)" }}>2. 5-Day Auto Retention Purge</strong>
-            <p style={{ marginTop: "0.25rem" }}>An automated midnight Cron Trigger purges records older than 5 days, keeping Cloudflare D1 storage well below the 500MB free quota.</p>
+            <strong style={{ color: "var(--text-main)" }}>Where Can I View My API Key?</strong>
+            <p style={{ marginTop: "0.25rem" }}>Sign in with Google and open your Dashboard &rarr; <strong>API Keys</strong> tab to generate and manage up to 5 active API keys.</p>
           </div>
           <div>
-            <strong style={{ color: "var(--text-main)" }}>3. Edge KV Caching & DoH</strong>
-            <p style={{ marginTop: "0.25rem" }}>Repeated domain MX queries are cached in KV with 24-hour TTL, eliminating redundant external DNS lookups entirely.</p>
+            <strong style={{ color: "var(--text-main)" }}>What Happens If I Reach 200 Calls?</strong>
+            <p style={{ marginTop: "0.25rem" }}>The API returns HTTP 429 with details on your reset date. You can still inspect single emails through your web dashboard.</p>
           </div>
         </div>
       </div>

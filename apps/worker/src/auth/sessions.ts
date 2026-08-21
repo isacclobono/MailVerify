@@ -1,6 +1,7 @@
 import { Context, MiddlewareHandler } from "hono";
 import { AppContext } from "../env";
 import { findSessionAndUserByToken } from "../db/sessions";
+import { findUserByApiKey, incrementMonthlyUsage, getMonthlyUsage, FREE_TIER_MONTHLY_LIMIT } from "../db/api-keys";
 
 export const SESSION_COOKIE_NAME = "mv_session";
 
@@ -36,13 +37,19 @@ export function buildClearSessionCookie(isSecure = true): string {
 }
 
 export function extractAuthToken(c: Context<AppContext>): string | null {
-  // 1. Check Authorization header (Bearer token)
+  // 1. Check X-API-Key header
+  const apiKeyHeader = c.req.header("X-API-Key");
+  if (apiKeyHeader && apiKeyHeader.trim()) {
+    return apiKeyHeader.trim();
+  }
+
+  // 2. Check Authorization header (Bearer token or API key)
   const authHeader = c.req.header("Authorization");
   if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
     return authHeader.substring(7).trim();
   }
 
-  // 2. Check Cookie
+  // 3. Check Cookie
   const cookieHeader = c.req.header("Cookie") || null;
   const cookies = parseCookies(cookieHeader);
   if (cookies[SESSION_COOKIE_NAME]) {
@@ -66,17 +73,33 @@ export const optionalAuthMiddleware: MiddlewareHandler<AppContext> = async (c, n
 
   if (rawToken && c.env.DB) {
     try {
-      const authData = await findSessionAndUserByToken(c.env.DB, rawToken);
-      if (authData) {
-        const isAdmin = checkIsAdmin(authData.user.email, c.env.ADMIN_EMAILS);
-        c.set("user", {
-          id: authData.user.id,
-          email: authData.user.email,
-          name: authData.user.name || undefined,
-          avatar_url: authData.user.avatar_url || undefined,
-          isAdmin,
-        });
-        c.set("sessionId", authData.session.id);
+      if (rawToken.startsWith("mv_live_")) {
+        // Authenticate via API Key
+        const keyData = await findUserByApiKey(c.env.DB, rawToken);
+        if (keyData) {
+          const isAdmin = checkIsAdmin(keyData.user.email, c.env.ADMIN_EMAILS);
+          c.set("user", {
+            id: keyData.user.id,
+            email: keyData.user.email,
+            name: keyData.user.name || undefined,
+            avatar_url: keyData.user.avatar_url || undefined,
+            isAdmin,
+          });
+        }
+      } else {
+        // Authenticate via Session Token
+        const authData = await findSessionAndUserByToken(c.env.DB, rawToken);
+        if (authData) {
+          const isAdmin = checkIsAdmin(authData.user.email, c.env.ADMIN_EMAILS);
+          c.set("user", {
+            id: authData.user.id,
+            email: authData.user.email,
+            name: authData.user.name || undefined,
+            avatar_url: authData.user.avatar_url || undefined,
+            isAdmin,
+          });
+          c.set("sessionId", authData.session.id);
+        }
       }
     } catch {
       // Ignore session lookup failures
@@ -95,36 +118,61 @@ export const requireAuthMiddleware: MiddlewareHandler<AppContext> = async (c, ne
         success: false,
         error: {
           code: "UNAUTHORIZED",
-          message: "Authentication required to access this resource.",
+          message: "Authentication or API Key required to access this resource.",
         },
       },
       401
     );
   }
 
-  const authData = await findSessionAndUserByToken(c.env.DB, rawToken);
-  if (!authData) {
-    return c.json(
-      {
-        success: false,
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Session expired or invalid.",
+  if (rawToken.startsWith("mv_live_")) {
+    const keyData = await findUserByApiKey(c.env.DB, rawToken);
+    if (!keyData) {
+      return c.json(
+        {
+          success: false,
+          error: {
+            code: "INVALID_API_KEY",
+            message: "The provided API Key is invalid, inactive, or revoked.",
+          },
         },
-      },
-      401
-    );
-  }
+        401
+      );
+    }
 
-  const isAdmin = checkIsAdmin(authData.user.email, c.env.ADMIN_EMAILS);
-  c.set("user", {
-    id: authData.user.id,
-    email: authData.user.email,
-    name: authData.user.name || undefined,
-    avatar_url: authData.user.avatar_url || undefined,
-    isAdmin,
-  });
-  c.set("sessionId", authData.session.id);
+    const isAdmin = checkIsAdmin(keyData.user.email, c.env.ADMIN_EMAILS);
+    c.set("user", {
+      id: keyData.user.id,
+      email: keyData.user.email,
+      name: keyData.user.name || undefined,
+      avatar_url: keyData.user.avatar_url || undefined,
+      isAdmin,
+    });
+  } else {
+    const authData = await findSessionAndUserByToken(c.env.DB, rawToken);
+    if (!authData) {
+      return c.json(
+        {
+          success: false,
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Session expired or invalid.",
+          },
+        },
+        401
+      );
+    }
+
+    const isAdmin = checkIsAdmin(authData.user.email, c.env.ADMIN_EMAILS);
+    c.set("user", {
+      id: authData.user.id,
+      email: authData.user.email,
+      name: authData.user.name || undefined,
+      avatar_url: authData.user.avatar_url || undefined,
+      isAdmin,
+    });
+    c.set("sessionId", authData.session.id);
+  }
 
   await next();
 };

@@ -19,9 +19,9 @@ export const DocsPage = () => {
       </div>
 
       {/* Docs Layout */}
-      <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: "2.5rem" }}>
+      <div className="docs-container-grid" style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: "2.5rem" }}>
         {/* Sidebar Nav */}
-        <div style={{ borderRight: "1px solid var(--border-subtle)", paddingRight: "1.5rem" }}>
+        <div className="docs-sidebar" style={{ borderRight: "1px solid var(--border-subtle)", paddingRight: "1.5rem" }}>
           <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.05em", marginBottom: "0.75rem" }}>
             GETTING STARTED
           </div>
@@ -187,26 +187,26 @@ export const DocsPage = () => {
             <div>
               <h2 style={{ fontSize: "1.5rem", fontWeight: 800, marginBottom: "1rem" }}>Status Codes & Quotas</h2>
               <ul style={{ listStyle: "none", fontSize: "0.9rem", color: "var(--text-muted)", lineHeight: 2.2 }}>
-                <li><code style={{ color: "var(--text-main)", fontWeight: 700 }}>200 OK</code> — Successful verification or query result.</li>
-                <li><code style={{ color: "var(--text-main)", fontWeight: 700 }}>400 Bad Request</code> — Invalid JSON, malformed syntax, or file size limit exceeded.</li>
-                <li><code style={{ color: "var(--text-main)", fontWeight: 700 }}>401 Unauthorized</code> — Session cookie or Bearer token expired/missing.</li>
-                <li><code style={{ color: "var(--text-main)", fontWeight: 700 }}>403 Forbidden</code> — Anonymous 5-check free limit reached (login required) or non-admin on admin route.</li>
-                <li><code style={{ color: "var(--text-main)", fontWeight: 700 }}>429 Too Many Requests</code> — Burst rate limit exceeded.</li>
+                <li><code style={{ color: "var(--text-main)", fontWeight: 700 }}>200 OK</code> — Successful verification result.</li>
+                <li><code style={{ color: "var(--text-main)", fontWeight: 700 }}>400 Bad Request</code> — Malformed email syntax or invalid JSON body.</li>
+                <li><code style={{ color: "var(--text-main)", fontWeight: 700 }}>401 Unauthorized</code> — Missing, invalid, or revoked API Key (<code>X-API-Key</code>).</li>
+                <li><code style={{ color: "var(--text-main)", fontWeight: 700 }}>403 Forbidden</code> — Anonymous 5-check limit reached (sign in with Google to get 200 monthly calls).</li>
+                <li><code style={{ color: "var(--text-main)", fontWeight: 700 }}>429 Monthly Quota Exceeded</code> — You have reached the Free Plan limit of 200 API calls for this month. Quota resets on the 1st.</li>
               </ul>
             </div>
           )}
 
           {activeSection === "auth" && (
             <div>
-              <h2 style={{ fontSize: "1.5rem", fontWeight: 800, marginBottom: "1rem" }}>Authentication & Sessions</h2>
+              <h2 style={{ fontSize: "1.5rem", fontWeight: 800, marginBottom: "1rem" }}>API Keys & Authorization</h2>
               <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: "1.5rem" }}>
-                Authentication uses Google OpenID Connect. The server issues an HttpOnly SameSite=None secure session cookie and returns a session token for cross-origin Bearer authorization.
+                Generate your private API keys (<code>mv_live_...</code>) from your account Dashboard. Authenticate requests using the <code>X-API-Key</code> header or <code>Authorization: Bearer &lt;key&gt;</code>.
               </p>
               <div style={{ background: "var(--bg-subtle)", padding: "1.25rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border-subtle)" }}>
-                <h4 style={{ fontWeight: 700, marginBottom: "0.5rem" }}>Passing Session Tokens in API headers:</h4>
-                <code style={{ fontSize: "0.85rem", fontFamily: "var(--font-mono)" }}>
-                  Authorization: Bearer &lt;session_token&gt;
-                </code>
+                <h4 style={{ fontWeight: 700, marginBottom: "0.5rem" }}>Header Syntax:</h4>
+                <pre style={{ background: "#0f172a", color: "#f8fafc", padding: "0.85rem", borderRadius: "var(--radius-sm)", fontSize: "0.85rem", fontFamily: "var(--font-mono)" }}>
+{`X-API-Key: mv_live_xxxxxxxxxxxxxxxxxxxxxxxx`}
+                </pre>
               </div>
             </div>
           )}

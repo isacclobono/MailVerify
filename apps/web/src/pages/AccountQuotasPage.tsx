@@ -1,4 +1,4 @@
-import { UserCheck, Shield, Upload, History, Trash2, Zap, ArrowRight } from "lucide-react";
+import { UserCheck, Shield, Upload, History, Key, Zap, ArrowRight } from "lucide-react";
 import { api } from "../api/client";
 import { User } from "../types";
 
@@ -20,7 +20,7 @@ export const AccountQuotasPage = ({
           Account Tiers & Quota Specifications
         </h1>
         <p style={{ color: "var(--text-muted)", fontSize: "1.05rem", maxWidth: "680px", margin: "0 auto", lineHeight: 1.6 }}>
-          Understand how anonymous guest verification, Google OAuth authentication, and bulk upload capacities operate.
+          Understand how anonymous guest verification, Google OAuth authentication, API keys, and monthly quotas operate.
         </p>
       </div>
 
@@ -33,28 +33,28 @@ export const AccountQuotasPage = ({
           </div>
           <h3 style={{ fontSize: "1.25rem", fontWeight: 800, marginBottom: "0.5rem" }}>5-Check Guest Quota</h3>
           <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", lineHeight: 1.5, marginBottom: "1rem" }}>
-            Visitors can verify up to 5 email addresses without an account. Rate limiting tracks client IP addresses in Cloudflare KV cache with sliding windows.
+            Visitors can verify up to 5 email addresses without creating an account. Rate limiting is tracked per client IP address.
           </p>
           <ul style={{ listStyle: "none", fontSize: "0.85rem", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-            <li>• No registration or cookies required</li>
+            <li>• No registration or credit card required</li>
             <li>• Full syntax, DNS, and MX inspection</li>
-            <li>• Resets or unlocks immediately on Google Login</li>
+            <li>• Unlocks 200 monthly calls immediately on Google Login</li>
           </ul>
         </div>
 
-        {/* 2. Google Login Unlocks */}
+        {/* 2. Google Login & API Keys */}
         <div className="card" style={{ padding: "2rem", border: "2px solid var(--accent-blue)" }}>
           <div style={{ display: "inline-flex", padding: "0.75rem", background: "rgba(37, 99, 235, 0.1)", borderRadius: "var(--radius-md)", color: "var(--accent-blue)", marginBottom: "1rem" }}>
-            <Zap size={24} />
+            <Key size={24} />
           </div>
-          <h3 style={{ fontSize: "1.25rem", fontWeight: 800, marginBottom: "0.5rem" }}>Google Login (Unlocked Tier)</h3>
+          <h3 style={{ fontSize: "1.25rem", fontWeight: 800, marginBottom: "0.5rem" }}>200 Calls/Month Free Plan</h3>
           <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", lineHeight: 1.5, marginBottom: "1rem" }}>
-            Signing in with your Google account removes guest limits completely, unlocking unlimited single checks, batch verification, and export tools.
+            Signing in with Google unlocks your private developer API keys and grants you 200 free verification calls each month.
           </p>
           <ul style={{ listStyle: "none", fontSize: "0.85rem", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-            <li>• Unlimited single email validations</li>
-            <li>• 30 requests/minute burst API throughput</li>
-            <li>• Bearer token authentication for API use</li>
+            <li>• 200 API calls per calendar month (resets on 1st)</li>
+            <li>• Generate up to 5 active API keys (<code>mv_live_...</code>)</li>
+            <li>• Pass keys via <code>X-API-Key</code> or Bearer authorization</li>
           </ul>
         </div>
 
@@ -63,9 +63,9 @@ export const AccountQuotasPage = ({
           <div style={{ display: "inline-flex", padding: "0.75rem", background: "rgba(16, 185, 129, 0.1)", borderRadius: "var(--radius-md)", color: "var(--success)", marginBottom: "1rem" }}>
             <Upload size={24} />
           </div>
-          <h3 style={{ fontSize: "1.25rem", fontWeight: 800, marginBottom: "0.5rem" }}>Bulk CSV & JSON Engine</h3>
+          <h3 style={{ fontSize: "1.25rem", fontWeight: 800, marginBottom: "0.5rem" }}>Bulk CSV & JSON Batches</h3>
           <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", lineHeight: 1.5, marginBottom: "1rem" }}>
-            Upload clean lists of up to 500 emails per batch. The Worker processes batches concurrently with real-time status reporting.
+            Upload clean lists of emails in CSV, TXT, or JSON format. Batches deduct from your 200 monthly quota seamlessly.
           </p>
           <ul style={{ listStyle: "none", fontSize: "0.85rem", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             <li>• Supports CSV (.csv), JSON (.json), and TSV</li>
@@ -81,12 +81,12 @@ export const AccountQuotasPage = ({
           </div>
           <h3 style={{ fontSize: "1.25rem", fontWeight: 800, marginBottom: "0.5rem" }}>5-Day Rolling History</h3>
           <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", lineHeight: 1.5, marginBottom: "1rem" }}>
-            Authenticated verifications are retained in D1 for 5 days so you can review deliverability trends and download past results.
+            Authenticated verifications are retained in encrypted D1 storage for 5 days so you can review deliverability trends.
           </p>
           <ul style={{ listStyle: "none", fontSize: "0.85rem", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             <li>• Auto-purged daily at midnight by Cron</li>
             <li>• Prevents database bloat and saves storage</li>
-            <li>• Instant 1-click manual account deletion</li>
+            <li>• Instant 1-click manual account and key revocation</li>
           </ul>
         </div>
       </div>
@@ -96,15 +96,15 @@ export const AccountQuotasPage = ({
         {user ? (
           <div>
             <h2 style={{ fontSize: "1.5rem", fontWeight: 800, marginBottom: "0.5rem" }}>You are authenticated as {user.email}</h2>
-            <p style={{ color: "var(--text-muted)", marginBottom: "1.5rem" }}>All developer features, unlimited checks, and bulk uploads are active.</p>
+            <p style={{ color: "var(--text-muted)", marginBottom: "1.5rem" }}>Manage your API keys and check your monthly remaining quota.</p>
             <button className="btn btn-black" onClick={onNavigateDashboard}>
-              Open Developer Dashboard →
+              Open Developer Dashboard & Keys →
             </button>
           </div>
         ) : (
           <div>
-            <h2 style={{ fontSize: "1.5rem", fontWeight: 800, marginBottom: "0.5rem" }}>Ready to unlock unlimited email checks?</h2>
-            <p style={{ color: "var(--text-muted)", marginBottom: "1.5rem" }}>Sign in with Google in 5 seconds &mdash; zero passwords, 100% free.</p>
+            <h2 style={{ fontSize: "1.5rem", fontWeight: 800, marginBottom: "0.5rem" }}>Ready to get your API Key?</h2>
+            <p style={{ color: "var(--text-muted)", marginBottom: "1.5rem" }}>Sign in with Google to get 200 free API calls every month.</p>
             <a href={api.getGoogleLoginUrl()} className="btn btn-black">
               Sign in with Google →
             </a>

@@ -31,7 +31,7 @@ export const DnsMxCheckerPage = ({ onNavigateHome }: { onNavigateHome: () => voi
     }
   };
 
-  const sampleDomains = ["google.com", "github.com", "stripe.com", "mailinator.com", "invalid-domain-xyz.test"];
+  const sampleDomains = ["google.com", "dropbox.com", "stripe.com", "mailinator.com", "invalid-domain-xyz.test"];
 
   return (
     <div style={{ maxWidth: "1120px", margin: "0 auto", width: "100%" }}>

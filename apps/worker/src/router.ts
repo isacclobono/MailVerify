@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { AppContext } from "./env";
 import { authRoutes } from "./auth/auth-routes";
 import { adminRoutes } from "./admin/admin-routes";
+import { keyRoutes } from "./keys/key-routes";
 import { optionalAuthMiddleware, requireAuthMiddleware } from "./auth/sessions";
 import { securityHeadersMiddleware, corsMiddleware } from "./security/security";
 import { checkRateLimit, ANONYMOUS_CHECK_LIMIT } from "./security/rate-limit";
@@ -13,6 +14,7 @@ import { createBulkJob, getBulkJobById } from "./db/jobs";
 import { parseEmailsMultiFormat } from "./bulk/parser";
 import { processBulkVerification } from "./bulk/bulk";
 import { deleteUser } from "./db/users";
+import { incrementMonthlyUsage, getMonthlyUsage, FREE_TIER_MONTHLY_LIMIT } from "./db/api-keys";
 
 export function createRouter(): Hono<AppContext> {
   const app = new Hono<AppContext>();
@@ -195,37 +197,62 @@ export function createRouter(): Hono<AppContext> {
   // Admin routes
   app.route("/api/admin", adminRoutes);
 
-  // Single Verification (Anonymous with 5-check limit & Authenticated)
-  app.post("/api/verify", async (c) => {
-    // 1. Rate Limiting Check
-    const rateLimit = await checkRateLimit(c);
-    c.res.headers.set("X-RateLimit-Remaining", rateLimit.remaining.toString());
-    c.res.headers.set("X-RateLimit-Reset", rateLimit.reset.toString());
+  // API Key management routes
+  app.route("/api/keys", keyRoutes);
 
-    if (!rateLimit.allowed) {
-      if (rateLimit.requireLogin) {
+  // Single Verification (Anonymous with 5-check limit & Authenticated 200/mo limit)
+  app.post("/api/verify", async (c) => {
+    const user = c.get("user");
+
+    // 1. Check Monthly Quota for Authenticated User (Session or API Key)
+    if (user && c.env.DB) {
+      const usage = await incrementMonthlyUsage(c.env.DB, user.id);
+      c.res.headers.set("X-RateLimit-Monthly-Limit", usage.limit.toString());
+      c.res.headers.set("X-RateLimit-Monthly-Remaining", usage.remaining.toString());
+
+      if (!usage.allowed) {
         return c.json(
           {
             success: false,
             error: {
-              code: "LOGIN_REQUIRED",
-              message: `You have reached the free limit of ${ANONYMOUS_CHECK_LIMIT} anonymous email verifications. Please sign in with Google to continue verifying unlimited emails.`,
+              code: "MONTHLY_QUOTA_EXCEEDED",
+              message: `You have reached your Free Plan limit of ${FREE_TIER_MONTHLY_LIMIT} API calls for this month. Your quota will reset on the 1st of next month.`,
             },
           },
-          403
+          429
         );
       }
+    } else {
+      // Anonymous IP Rate Limiting
+      const rateLimit = await checkRateLimit(c);
+      c.res.headers.set("X-RateLimit-Remaining", rateLimit.remaining.toString());
+      c.res.headers.set("X-RateLimit-Reset", rateLimit.reset.toString());
 
-      return c.json(
-        {
-          success: false,
-          error: {
-            code: "RATE_LIMITED",
-            message: "Rate limit exceeded. Please wait a moment before trying again.",
+      if (!rateLimit.allowed) {
+        if (rateLimit.requireLogin) {
+          return c.json(
+            {
+              success: false,
+              error: {
+                code: "LOGIN_REQUIRED",
+                message: `You have reached the free limit of ${ANONYMOUS_CHECK_LIMIT} anonymous email verifications. Please sign in with Google to get 200 free API calls and your API Key.`,
+              },
+            },
+            403
+          );
+        }
+
+        return c.json(
+          {
+            success: false,
+            error: {
+              code: "RATE_LIMITED",
+              message: "Rate limit exceeded. Please wait a moment before trying again.",
+            },
           },
-        },
-        429
-      );
+          429
+        );
+      }
     }
 
     // 2. Validate input
@@ -258,7 +285,6 @@ export function createRouter(): Hono<AppContext> {
     const result = await verifyEmail(email, cache);
 
     // 4. Save record if user is authenticated
-    const user = c.get("user");
     if (user && c.env.DB) {
       try {
         const id = await saveVerification(c.env.DB, result, user.id);
@@ -272,7 +298,6 @@ export function createRouter(): Hono<AppContext> {
       success: true,
       data: {
         ...result,
-        remaining_anonymous_checks: !user ? rateLimit.remaining : undefined,
       },
     });
   });
@@ -301,7 +326,10 @@ export function createRouter(): Hono<AppContext> {
   // Usage statistics (Authenticated)
   app.get("/api/usage", requireAuthMiddleware, async (c) => {
     const user = c.get("user")!;
-    const history = await getUserVerifications(c.env.DB, user.id, 100, 0);
+    const [history, monthlyUsage] = await Promise.all([
+      getUserVerifications(c.env.DB, user.id, 100, 0),
+      getMonthlyUsage(c.env.DB, user.id),
+    ]);
 
     const total = history.length;
     const deliverable = history.filter((h) => h.verdict === "LIKELY_DELIVERABLE").length;
@@ -316,6 +344,12 @@ export function createRouter(): Hono<AppContext> {
         risky_count: risky,
         invalid_count: invalid,
         retention_days: 5,
+        monthly_quota: {
+          current_month: monthlyUsage.monthYear,
+          calls_used: monthlyUsage.callCount,
+          monthly_limit: monthlyUsage.limit,
+          remaining_calls: monthlyUsage.remaining,
+        },
       },
     });
   });

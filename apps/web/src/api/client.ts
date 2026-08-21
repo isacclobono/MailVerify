@@ -120,6 +120,45 @@ export const api = {
     await apiRequest("/api/account", { method: "DELETE" });
   },
 
+  // API Key Management & Quota
+  async listApiKeys(): Promise<{
+    keys: Array<{
+      id: string;
+      user_id: string;
+      key_prefix: string;
+      name: string;
+      created_at: string;
+      last_used_at: string | null;
+      is_active: number;
+    }>;
+    usage: {
+      current_month: string;
+      calls_used: number;
+      monthly_limit: number;
+      remaining_calls: number;
+    };
+  }> {
+    return apiRequest("/api/keys");
+  },
+
+  async createApiKey(name = "Production API Key"): Promise<{
+    key_id: string;
+    raw_key: string;
+    key_prefix: string;
+    name: string;
+    created_at: string;
+    message: string;
+  }> {
+    return apiRequest("/api/keys", {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    });
+  },
+
+  async deleteApiKey(keyId: string): Promise<void> {
+    await apiRequest(`/api/keys/${keyId}`, { method: "DELETE" });
+  },
+
   // Admin APIs (requires ADMIN_EMAILS access)
   async getAdminStats(): Promise<{
     total_users: number;
