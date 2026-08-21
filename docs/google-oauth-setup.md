@@ -38,10 +38,10 @@ Follow these steps to configure Google OpenID Connect / OAuth login and Admin ac
 4. Name: `MailVerify Web App`.
 5. Under **Authorized JavaScript origins**, add:
    - `http://localhost:5173` (for local development)
-   - `https://your-app.pages.dev` (for Cloudflare Pages production)
+   - `https://mailverify-8j0.pages.dev` (for Cloudflare Pages production)
 6. Under **Authorized redirect URIs**, add:
    - `http://localhost:8787/api/auth/google/callback` (for local development)
-   - `https://your-worker.your-subdomain.workers.dev/api/auth/google/callback` (for Cloudflare Workers production)
+   - `https://mailverify.pulsechat.workers.dev/api/auth/google/callback` (for Cloudflare Workers production)
 7. Click **Create**.
 8. Copy your **Client ID** and **Client Secret**.
 

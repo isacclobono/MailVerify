@@ -22,6 +22,158 @@ export function createRouter(): Hono<AppContext> {
   app.use("*", securityHeadersMiddleware);
   app.use("/api/*", optionalAuthMiddleware);
 
+  // Root status page for browsers and API clients
+  app.get("/", (c) => {
+    const acceptHeader = c.req.header("Accept") || "";
+    const appBaseUrl = c.env.APP_BASE_URL || "https://mailverify-8j0.pages.dev";
+
+    if (acceptHeader.includes("text/html")) {
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MailVerify API — Operational</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2'><rect width='20' height='16' x='2' y='4' rx='2'/><path d='m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7'/></svg>">
+  <style>
+    :root {
+      --bg: #09090b;
+      --card: #18181b;
+      --border: #27272a;
+      --text: #fafafa;
+      --muted: #a1a1aa;
+      --primary: #3b82f6;
+      --success: #10b981;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1.5rem;
+    }
+    .card {
+      background-color: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem;
+      max-width: 580px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--success);
+    }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    h1 span { color: var(--primary); font-weight: 400; }
+    p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 1.5rem;
+    }
+    .endpoints {
+      background: #000;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: #d4d4d8;
+      margin-bottom: 1.75rem;
+      line-height: 1.8;
+    }
+    .endpoints div { display: flex; justify-content: space-between; }
+    .method { color: #60a5fa; font-weight: 600; }
+    .btn-group { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.65rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .btn-primary { background: #fafafa; color: #09090b; }
+    .btn-primary:hover { background: #e4e4e7; transform: translateY(-1px); }
+    .btn-secondary { background: transparent; color: #fafafa; border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #27272a; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">
+      <span class="dot"></span> All Systems Operational
+    </div>
+    <h1>Mail<span>Verify</span> API</h1>
+    <p>Cloudflare Serverless High-Precision Email Verification & Deliverability Engine.</p>
+    
+    <div class="endpoints">
+      <div><span class="method">GET</span> <span>/api/health</span></div>
+      <div><span class="method">POST</span> <span>/api/verify</span></div>
+      <div><span class="method">POST</span> <span>/api/bulk</span></div>
+      <div><span class="method">GET</span> <span>/api/auth/google</span></div>
+      <div><span class="method">GET</span> <span>/api/admin/stats</span></div>
+    </div>
+
+    <div class="btn-group">
+      <a href="${appBaseUrl}" class="btn btn-primary">Open Web Application →</a>
+      <a href="https://github.com/isacclobono/MailVerify" target="_blank" class="btn btn-secondary">GitHub Docs</a>
+    </div>
+  </div>
+</body>
+</html>`;
+      return c.html(html);
+    }
+
+    return c.json({
+      name: "MailVerify API",
+      status: "operational",
+      message: "MailVerify Cloudflare Serverless API is running.",
+      version: "1.0.0",
+      frontend_url: appBaseUrl,
+      docs_url: "https://github.com/isacclobono/MailVerify",
+      edge_runtime: "Cloudflare Workers",
+      endpoints: {
+        health: "GET /api/health",
+        verify: "POST /api/verify",
+        bulk: "POST /api/bulk",
+        auth_google: "GET /api/auth/google",
+        auth_me: "GET /api/auth/me",
+        admin_stats: "GET /api/admin/stats",
+      },
+    });
+  });
+
   // Health check with CDN edge cache headers
   app.get("/api/health", (c) => {
     c.header("Cache-Control", "public, max-age=30, s-maxage=60");

@@ -9,6 +9,7 @@
     "dev:worker": "npm run dev --workspace=apps/worker",
     "dev:web": "npm run dev --workspace=apps/web",
     "build": "npm run build --workspaces",
-    "test": "npm run test --workspace=apps/worker"
+    "test": "npm run test --workspace=apps/worker",
+    "typecheck": "tsc --noEmit --project apps/worker/tsconfig.json && tsc --noEmit --project apps/web/tsconfig.json"
   }
 }
