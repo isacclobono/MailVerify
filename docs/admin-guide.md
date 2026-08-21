@@ -1,59 +1,82 @@
-# 🛡️ Admin Account & CDN Integration Guide
+# 🛡️ Admin Portal & Security Guide
 
-MailVerify includes built-in role-based administrator controls and Cloudflare Edge CDN caching capabilities.
-
----
-
-## 1. How the Admin System Works
-
-1. **Role Verification**: Admin access is governed by the `ADMIN_EMAILS` configuration.
-2. **Zero-Database Password Leaks**: When an administrator signs in via Google OAuth, the server checks their authenticated email against `ADMIN_EMAILS`.
-3. **Admin Flag in Session**: If the email matches, the session payload marks `isAdmin: true` and `/api/auth/me` includes `is_admin: true`.
-4. **Middleware Protection**: All `/api/admin/*` endpoints require the `requireAdminMiddleware`, which returns `403 FORBIDDEN` for non-admin users.
+MailVerify provides a dedicated, credential-protected Administrator Portal with role-based security, live telemetry, multi-source disposable domain sync controls, and user directory management.
 
 ---
 
-## 2. Configuring Admin Accounts
+## 1. Admin Portal URL & Access
+
+- **Web Portal Route**: [`/admin`](https://mailverify-8j0.pages.dev/admin) (or `http://localhost:5173/admin` locally)
+- **Direct Tabs**:
+  - `/admin?tab=overview` — Real-time telemetry, total users, verifications, and verdict breakdown.
+  - `/admin?tab=users` — Searchable and paginated registered users directory.
+  - `/admin?tab=verifications` — Live global verification stream.
+  - `/admin?tab=infra` — Cloudflare Edge runtime diagnostics, D1 database status, and Disposable Domain Intelligence Hub.
+
+---
+
+## 2. How Admin Authentication Works
+
+MailVerify supports dedicated **Email & Password Authentication** for administrators without requiring third-party Google OAuth:
+
+1. **Authentication Endpoint**: `POST /api/auth/admin/login`
+2. **Credentials Verification**:
+   - The provided email is checked against `ADMIN_EMAILS` (or default `admin@mailverify.com`).
+   - The provided password is validated against `ADMIN_PASSWORD` (or default `AdminMailVerify2026!`).
+3. **Local D1 Admin Session**:
+   - On successful validation, a session token is issued in D1 `sessions` table.
+   - Secure HttpOnly session cookie (`mv_session`) is set.
+4. **Middleware Protection**: All `/api/admin/*` endpoints enforce `requireAdminMiddleware`, returning `403 FORBIDDEN` for unauthorized accounts.
+
+---
+
+## 3. Configuring Admin Credentials
 
 ### In Local Development (`.env` and `apps/worker/.dev.vars`):
-Add comma-separated emails to `ADMIN_EMAILS`:
 ```ini
-ADMIN_EMAILS=your.email@gmail.com,admin@yourdomain.com
+ADMIN_EMAILS=admin@mailverify.com,your-email@gmail.com
+ADMIN_PASSWORD=YourCustomSecretPassword123!
 ```
 
 ### In Production (Cloudflare Worker Secrets):
-Set the secret using Wrangler:
 ```bash
 cd apps/worker
+
+# Set authorized admin emails (comma-separated):
 npx wrangler secret put ADMIN_EMAILS
-# Enter your comma-separated admin emails when prompted:
-# e.g., your.email@gmail.com,colleague@yourdomain.com
+
+# Set secure admin password:
+npx wrangler secret put ADMIN_PASSWORD
 ```
 
 ---
 
-## 3. Administrator Capabilities
+## 4. Administrator Endpoints Reference
 
-| Action | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| **System Stats** | `GET /api/admin/stats` | View total users, total verifications, bulk jobs, and verdict breakdown. |
-| **User Directory** | `GET /api/admin/users` | List registered users with registration timestamps and avatars. |
-| **Global Audit Log** | `GET /api/admin/verifications` | Monitor real-time email verification queries across the platform. |
-| **User Deletion** | `DELETE /api/admin/users/:id` | Remove any user and cascade delete all their stored sessions and data. |
+| `POST` | `/api/auth/admin/login` | Authenticate with administrator email & password. |
+| `GET` | `/api/admin/stats` | Global analytics (total users, total checks, verdict breakdown, bulk jobs). |
+| `GET` | `/api/admin/users?limit=50&offset=0` | Paginated registered users directory. |
+| `GET` | `/api/admin/verifications?limit=50&offset=0` | Paginated live telemetry verification stream. |
+| `DELETE` | `/api/admin/users/:id` | Permanently delete a user and cascade purge all their logs/sessions. |
+| `POST` | `/api/admin/disposable/sync` | Trigger live multi-source synchronization of 10+ disposable domain lists. |
+| `GET` | `/api/admin/disposable/stats` | View active metadata of the synchronized disposable domain dataset. |
 
 ---
 
-## 4. Cloudflare CDN Edge Optimization
+## 5. Multi-Source Disposable Domain Intelligence Hub
 
-MailVerify leverages Cloudflare's global edge network (280+ cities) for CDN delivery and low-latency responses:
+Administrators can inspect and trigger real-time updates for the disposable domain database from the Admin Dashboard:
 
-1. **Static Assets**:
-   - The React frontend (`apps/web`) is deployed to Cloudflare Pages and served from Cloudflare's CDN edge.
-   - Immutable assets (JS chunks, CSS, SVG icons) are automatically cached with long TTLs.
-
-2. **API Edge Caching**:
-   - Public non-sensitive routes (e.g. `/api/health`, domain lookup lists) serve `Cache-Control` headers (`public, s-maxage=...`) to cache responses at Cloudflare CDN edge nodes.
-   - Repeated MX and DNS lookups are cached in Cloudflare KV with TTL to avoid redundant network queries.
-
-3. **Global Sub-50ms Latency**:
-   - Cloudflare Workers run across global points of presence (PoP), executing DNS/DoH verification close to the user.
+1. **10+ Curated Open-Source Feeds**:
+   - `disposable/domains_strict.txt`
+   - `disposable/domains.txt`
+   - `disposable-email-domains/blocklist.conf`
+   - `StefanPejcic/domains.txt`
+   - `7c/fakefilter/data.txt`
+   - `wesbos/burner-email-providers/emails.txt`
+   - `Laravel-Disposable-Email/domains.json`
+2. **Deduplication & Normalization**: Strips comments, subdomains, leading `@`, and validates RFC hostname structure.
+3. **Allowlist Safeguard**: Never flags major providers (Gmail, Outlook, Yahoo, Apple, Proton, Fastmail, etc.).
+4. **Automated Background Sync**: Runs daily at midnight UTC via Cloudflare Cron Triggers (`0 0 * * *`).

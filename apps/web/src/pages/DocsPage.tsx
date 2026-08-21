@@ -559,9 +559,24 @@ X-API-Key: mv_live_8994cf5f2b0645589f2fe0d786140cf8
 Authorization: Bearer mv_live_8994cf5f2b0645589f2fe0d786140cf8`}
               </pre>
 
-              <div style={{ background: "rgba(37, 99, 235, 0.08)", border: "1px solid rgba(37, 99, 235, 0.2)", borderRadius: "var(--radius-md)", padding: "1rem", fontSize: "0.82rem", color: "#1e3a8a" }}>
+              <div style={{ background: "rgba(37, 99, 235, 0.08)", border: "1px solid rgba(37, 99, 235, 0.2)", borderRadius: "var(--radius-md)", padding: "1rem", fontSize: "0.82rem", color: "#1e3a8a", marginBottom: "1.5rem" }}>
                 <strong>Quota Mechanics:</strong> Usage is counted per verified email address. Batch submissions decrement the monthly counter by the number of processed emails. Monthly quotas reset automatically at midnight UTC on the 1st of every month.
               </div>
+
+              {/* Admin Portal Authentication */}
+              <h3 style={{ fontSize: "0.95rem", fontWeight: 700, marginBottom: "0.5rem" }}>Administrator Direct Login</h3>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", lineHeight: 1.55, marginBottom: "0.75rem" }}>
+                The Administrator Portal at <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.8rem" }}>/admin</code> uses direct email & password authentication.
+              </p>
+              <pre style={{ background: "var(--bg-dark)", color: "#f8fafc", padding: "1rem", borderRadius: "var(--radius-md)", fontSize: "0.78rem", fontFamily: "var(--font-mono)", overflowX: "auto", lineHeight: 1.5 }}>
+{`POST /api/auth/admin/login
+Content-Type: application/json
+
+{
+  "email": "admin@mailverify.com",
+  "password": "AdminMailVerify2026!"
+}`}
+              </pre>
             </div>
           )}
 

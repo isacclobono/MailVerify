@@ -1,84 +1,87 @@
-# 🔌 REST API Reference
+# 🔌 REST API Reference & Specification
 
-All requests and responses use JSON. Authenticated endpoints use HttpOnly session cookies. Edge responses utilize Cloudflare CDN caching where applicable.
+Base URL: `https://mailverify.pulsechat.workers.dev`
+
+All requests and responses use standard JSON formatting. Authentication supports both `X-API-Key: mv_live_...` and `Authorization: Bearer ...` headers as well as HttpOnly session cookies.
 
 ---
 
-## 1. System Health & CDN Status
-### `GET /api/health`
-Checks Worker health, runtime, and edge CDN status.
+## 1. Authentication Endpoints
 
-#### Response Headers:
-- `Cache-Control: public, max-age=30, s-maxage=60`
-- `CF-Cache-Status: DYNAMIC`
+### `POST /api/auth/admin/login`
+Authenticates administrator via email and password without Google OAuth.
 
-#### Response:
+#### Request Body:
 ```json
 {
-  "success": true,
-  "data": {
-    "status": "healthy",
-    "edge_runtime": "Cloudflare Workers",
-    "cdn_cache": "enabled",
-    "timestamp": "2026-08-21T12:00:00.000Z"
-  }
+  "email": "admin@mailverify.com",
+  "password": "YourAdminPassword123!"
 }
 ```
 
----
-
-## 2. Authentication
-### `GET /api/auth/google`
-Redirects browser to Google OAuth consent screen.
-
-### `GET /api/auth/google/callback`
-Validates OAuth state, exchanges code for Google tokens, creates user session in D1, and sets `mv_session` HttpOnly cookie.
-
-### `GET /api/auth/me`
-Fetches current authenticated user profile including admin status.
-
 #### Response:
 ```json
 {
   "success": true,
   "data": {
+    "token": "mv_sess_...",
     "user": {
-      "id": "usr_12345",
-      "email": "admin@example.com",
-      "name": "Jane Doe",
-      "avatar_url": "https://lh3.googleusercontent.com/...",
+      "id": "usr_admin_123",
+      "email": "admin@mailverify.com",
+      "name": "System Administrator",
       "is_admin": true
     }
   }
 }
 ```
 
+---
+
+### `GET /api/auth/google`
+Initiates Google OAuth 2.0 OpenID Connect login flow.
+
+### `GET /api/auth/google/callback`
+Validates OAuth authorization code and creates session cookie.
+
+### `GET /api/auth/me`
+Returns profile details of the authenticated developer / administrator.
+
 ### `POST /api/auth/logout`
-Destroys session in D1 and clears the session cookie.
+Destroys session and clears cookies.
 
 ---
 
-## 3. Email Verification
-### `POST /api/verify`
-Performs multi-step email verification (Anonymous: 5 req/min, Authenticated: 30 req/min).
+## 2. Core Email Verification Pipeline
 
-#### Request Body:
+### `POST /api/verify` or `GET /api/verify?email=...`
+Executes the full 8-stage verification pipeline: Syntax, Domain DNS, MX Exchanger, SPF, DMARC, Disposable Detection, Role Classification, and Typo Suggestions.
+
+#### Request Payload:
 ```json
 {
-  "email": "test@example.com"
+  "email": "contact@stripe.com"
 }
 ```
 
-#### Response:
+#### Response (200 OK):
 ```json
 {
   "success": true,
   "data": {
-    "id": "ver_98765",
-    "email": "test@example.com",
-    "normalized_email": "test@example.com",
+    "email": "contact@stripe.com",
+    "normalized_email": "contact@stripe.com",
     "verdict": "LIKELY_DELIVERABLE",
     "score": 10,
+    "confidence": 0.98,
+    "is_free_provider": false,
+    "did_you_mean": null,
+    "reasons": [
+      "REASON_BUSINESS_CORPORATE_DOMAIN",
+      "REASON_DOMAIN_ACTIVE",
+      "REASON_MX_SERVERS_CONFIGURED",
+      "REASON_SPF_POLICY_VALID",
+      "REASON_DMARC_POLICY_ENFORCED"
+    ],
     "checks": {
       "syntax": "PASS",
       "domain": "DOMAIN_EXISTS",
@@ -87,72 +90,84 @@ Performs multi-step email verification (Anonymous: 5 req/min, Authenticated: 30 
       "dmarc": "DMARC_PRESENT",
       "disposable": "NOT_DISPOSABLE",
       "role": "PERSONAL_ACCOUNT_LIKELY",
-      "catch_all": "NOT_CATCH_ALL",
-      "smtp": "SMTP_EXISTS"
+      "catch_all": "UNKNOWN",
+      "smtp": "UNKNOWN",
+      "free_provider": "BUSINESS_CORPORATE"
     },
-    "created_at": "2026-08-21T12:00:00.000Z"
+    "created_at": "2026-08-21T14:00:00.000Z"
   }
 }
 ```
 
 ---
 
-## 4. History (Authenticated)
-### `GET /api/history`
-Returns user's verification records from the last 5 days.
+## 3. Dedicated Sub-Pipeline Micro-Checks
+
+Call individual verification stages independently:
+
+| Endpoint | Method | Parameter | Description |
+|---|---|---|---|
+| `/api/check/syntax` | `GET\|POST` | `email` | RFC 5322 syntax and length boundaries. |
+| `/api/check/dns` | `GET\|POST` | `domain` | DoH A/AAAA address resolution. |
+| `/api/check/mx` | `GET\|POST` | `domain` | MX records sorted by priority & RFC 7505 check. |
+| `/api/check/security` | `GET\|POST` | `domain` | Raw SPF & DMARC anti-spoofing policy inspection. |
+| `/api/check/disposable` | `GET\|POST` | `domain` | Lookup against 10+ multi-source burner domain lists. |
+| `/api/check/provider` | `GET\|POST` | `email` | Detects role mailbox aliases & corporate vs free provider. |
+| `/api/check/typo` | `GET\|POST` | `email` | Levenshtein typo detection and corrections (e.g. `gmial.com`). |
 
 ---
 
-## 5. Bulk Verification (Authenticated)
+## 4. Bulk Batch Verification
+
 ### `POST /api/bulk`
-Upload a CSV, TXT, or JSON list of emails (max 500 emails per batch in free tier).
+Verifies up to 200 emails per batch concurrently with automatic rate throttling.
 
-### `GET /api/bulk/:id`
-Check status and real-time progress of a bulk verification job.
-
-### `GET /api/bulk/:id/results`
-Download or view results of the bulk verification job.
-
----
-
-## 6. Admin Endpoints (Admin Authenticated)
-*Requires user email to be included in `ADMIN_EMAILS`.*
-
-### `GET /api/admin/stats`
-Returns system overview metrics, total users, verification volume, and verdict distribution.
+#### Request Body (JSON or raw CSV/TXT):
+```json
+{
+  "emails": [
+    "user1@gmail.com",
+    "contact@stripe.com",
+    "burner@mailinator.com"
+  ]
+}
+```
 
 #### Response:
 ```json
 {
   "success": true,
-  "data": {
-    "total_users": 150,
-    "total_verifications": 14230,
-    "total_bulk_jobs": 48,
-    "verdict_breakdown": {
-      "LIKELY_DELIVERABLE": 11200,
-      "RISKY": 1500,
-      "LIKELY_INVALID": 1200,
-      "DISPOSABLE": 330
-    },
-    "edge_runtime": "Cloudflare Workers",
-    "cdn_cache_status": "Active (Edge-Cached)",
-    "timestamp": "2026-08-21T12:00:00.000Z"
+  "summary": {
+    "total": 3,
+    "processed": 3,
+    "successful": 2,
+    "failed": 1,
+    "results": [ ... ]
   }
 }
 ```
 
-### `GET /api/admin/users?limit=50&offset=0`
-Returns paginated list of registered users.
+---
 
-### `GET /api/admin/verifications?limit=50&offset=0`
-Returns recent verifications across the entire system.
+## 5. API Key Management
 
-### `DELETE /api/admin/users/:id`
-Deletes a user account and cascades deletion to their sessions, verification history, and bulk jobs.
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/keys` | List active API keys and monthly quota usage. |
+| `POST` | `/api/keys` | Generate a new API key (`mv_live_...`). Max 5 keys. |
+| `DELETE` | `/api/keys/:id` | Revoke an API key. |
 
 ---
 
-## 7. Account Management (Authenticated)
-### `DELETE /api/account`
-Deletes the logged-in user account and associated data immediately.
+## 6. Administrator API Endpoints (Admin Only)
+
+Protected by `requireAdminMiddleware`:
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/admin/stats` | Global user & verification counts and verdict breakdown. |
+| `GET` | `/api/admin/users` | List registered accounts with pagination. |
+| `GET` | `/api/admin/verifications` | Real-time global verification stream. |
+| `DELETE` | `/api/admin/users/:id` | Permanently delete user and all associated records. |
+| `POST` | `/api/admin/disposable/sync` | Trigger live multi-source synchronization of 10+ feeds. |
+| `GET` | `/api/admin/disposable/stats` | View active metadata of the synchronized burner database. |
