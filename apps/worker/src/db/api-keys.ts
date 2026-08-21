@@ -174,7 +174,8 @@ export async function getMonthlyUsage(
 
 export async function incrementMonthlyUsage(
   db: D1Database,
-  userId: string
+  userId: string,
+  count = 1
 ): Promise<{ allowed: boolean; callCount: number; limit: number; remaining: number }> {
   const monthYear = getCurrentMonthYear();
   const now = new Date().toISOString();
@@ -184,12 +185,12 @@ export async function incrementMonthlyUsage(
   await db
     .prepare(`
       INSERT INTO api_usage (id, user_id, month_year, call_count, created_at, updated_at)
-      VALUES (?, ?, ?, 1, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?)
       ON CONFLICT(user_id, month_year) DO UPDATE SET
-        call_count = call_count + 1,
+        call_count = call_count + ?,
         updated_at = ?
     `)
-    .bind(usageId, userId, monthYear, now, now, now)
+    .bind(usageId, userId, monthYear, count, now, now, count, now)
     .run();
 
   const usage = await getMonthlyUsage(db, userId);

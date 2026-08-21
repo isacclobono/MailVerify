@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { User, VerificationResult, BulkJobSummary, ApiKeyItem, MonthlyQuota, GeneratedApiKeyResponse } from "../types";
 import { api } from "../api/client";
 import { 
@@ -13,7 +13,10 @@ import {
   Check, 
   Plus, 
   LayoutDashboard,
-  RefreshCw
+  RefreshCw,
+  Download,
+  FileSpreadsheet,
+  Sparkles
 } from "lucide-react";
 import { VerdictBadge } from "../components/VerdictBadge";
 import { ChecksDetail } from "../components/ChecksDetail";
@@ -42,6 +45,7 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkSummary, setBulkSummary] = useState<BulkJobSummary | null>(null);
   const [bulkError, setBulkError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // History & Stats state
   const [history, setHistory] = useState<VerificationResult[]>([]);
@@ -131,14 +135,62 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
     }
   };
 
+  // Smart client-side email extractor for CSV/Text/JSON
+  const parseEmailsFromText = (raw: string): string[] => {
+    const emailRegex = /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+    const matches = raw.match(emailRegex) || [];
+    // Deduplicate
+    return Array.from(new Set(matches.map((e) => e.trim().toLowerCase())));
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      if (content) {
+        const extracted = parseEmailsFromText(content);
+        if (extracted.length > 0) {
+          setBulkInput(extracted.join("\n"));
+          setBulkError(null);
+        } else {
+          setBulkError("No valid email addresses detected in the uploaded file.");
+        }
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const loadSampleEmails = () => {
+    const samples = [
+      "alex@gmail.com",
+      "contact@stripe.com",
+      "billing@apple.com",
+      "temp-user@mailinator.com",
+      "support@github.com",
+      "test@invalid-domain-xyz.test",
+      "founder@dropbox.com",
+      "info@cloudflare.com",
+    ];
+    setBulkInput(samples.join("\n"));
+    setBulkError(null);
+  };
+
   const handleBulkSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const emails = bulkInput
-      .split(/[\r\n,]+/)
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0);
+    const emails = parseEmailsFromText(bulkInput);
 
-    if (emails.length === 0) return;
+    if (emails.length === 0) {
+      setBulkError("Please enter or upload at least one valid email address.");
+      return;
+    }
+
+    if (emails.length > 200) {
+      setBulkError("Batch size exceeds 200 emails limit per submission.");
+      return;
+    }
 
     setBulkLoading(true);
     setBulkError(null);
@@ -154,6 +206,31 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
     } finally {
       setBulkLoading(false);
     }
+  };
+
+  const downloadResultsCSV = () => {
+    if (!bulkSummary || !bulkSummary.results) return;
+    const header = "Email,Verdict,Score,MX_Status,SPF_Status,DMARC_Status,Disposable\n";
+    const rows = bulkSummary.results
+      .map((r) => `"${r.email}","${r.verdict}",${r.score},"${r.checks.mx}","${r.checks.spf}","${r.checks.dmarc}","${r.checks.disposable}"`)
+      .join("\n");
+    const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `mailverify_batch_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+  };
+
+  const downloadResultsJSON = () => {
+    if (!bulkSummary || !bulkSummary.results) return;
+    const jsonStr = JSON.stringify(bulkSummary.results, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `mailverify_batch_${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
   };
 
   const handleCreateKey = async (e: React.FormEvent) => {
@@ -243,13 +320,11 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
   };
 
   const languages: CodeLang[] = ["curl", "node", "javascript", "python", "php", "ruby", "go", "rust", "java", "c#", "swift"];
-
-  // 24-hour dummy distribution buckets
   const hourlyLabels = ["1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p", "10p", "11p", "12a", "1a", "2a", "3a", "4a", "5a", "6a", "7a", "8a", "9a", "10a", "11a", "12p"];
 
   return (
     <div style={{ maxWidth: "1120px", margin: "0 auto", width: "100%" }}>
-      {/* Top Header Row (matching reference screenshot) */}
+      {/* Top Header Row */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem", flexWrap: "wrap", gap: "1rem" }}>
         <div>
           <h1 style={{ fontSize: "2.1rem", fontWeight: 800, letterSpacing: "-0.02em", color: "#0f172a", marginBottom: "0.25rem" }}>
@@ -316,7 +391,7 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
           onClick={() => setActiveTab("bulk")}
         >
           <Upload size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.35rem" }} />
-          Bulk Batch
+          Bulk Batch Engine
         </button>
 
         <button
@@ -344,7 +419,7 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
         </button>
       </div>
 
-      {/* TAB 1: OVERVIEW (Matching Reference Screenshot) */}
+      {/* TAB 1: OVERVIEW */}
       {activeTab === "overview" && (
         <div>
           {/* Time range selector & Refresh link */}
@@ -722,23 +797,68 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
       {/* TAB 3: Bulk Verification */}
       {activeTab === "bulk" && (
         <div className="card" style={{ padding: "2rem" }}>
-          <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "0.5rem" }}>Bulk Email Batch Engine</h2>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
-            Paste a list of emails (comma or newline separated) or upload a CSV file to inspect multiple records concurrently.
-          </p>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem", flexWrap: "wrap", gap: "1rem" }}>
+            <div>
+              <h2 style={{ fontSize: "1.3rem", fontWeight: 800, marginBottom: "0.3rem" }}>Bulk Email Batch Engine</h2>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
+                Verify up to 200 emails per batch. Paste text, upload CSV/JSON, or load sample records.
+              </p>
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={loadSampleEmails}
+                style={{ fontSize: "0.8rem", padding: "0.4rem 0.75rem", display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
+              >
+                <Sparkles size={13} color="var(--accent-blue)" /> Load 10 Samples
+              </button>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                accept=".csv,.txt,.json,.tsv"
+                style={{ display: "none" }}
+              />
+
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => fileInputRef.current?.click()}
+                style={{ fontSize: "0.8rem", padding: "0.4rem 0.75rem", display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
+              >
+                <FileSpreadsheet size={13} /> Upload CSV / TXT
+              </button>
+            </div>
+          </div>
 
           <form onSubmit={handleBulkSubmit}>
             <textarea
               className="clean-input"
-              style={{ width: "100%", height: "160px", fontFamily: "var(--font-mono)", fontSize: "0.85rem", marginBottom: "1rem" }}
-              placeholder={`user1@domain.com\nuser2@gmail.com\nsupport@company.org`}
+              style={{ width: "100%", height: "150px", fontFamily: "var(--font-mono)", fontSize: "0.85rem", marginBottom: "1rem", lineHeight: 1.5 }}
+              placeholder={`Paste emails separated by newlines or commas:\nalex@gmail.com\ncontact@stripe.com\nsupport@company.org`}
               value={bulkInput}
               onChange={(e) => setBulkInput(e.target.value)}
             />
-            <button type="submit" className="btn btn-black" disabled={bulkLoading || !bulkInput.trim()}>
-              {bulkLoading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-              <span>{bulkLoading ? "Processing Batch..." : "Run Batch Verification"}</span>
-            </button>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+              <button
+                type="submit"
+                className="btn btn-black"
+                disabled={bulkLoading || !bulkInput.trim()}
+                style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.65rem 1.25rem" }}
+              >
+                {bulkLoading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                <span>{bulkLoading ? "Processing Verification Batch..." : "Run Batch Verification"}</span>
+              </button>
+
+              <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                Detected emails: <strong style={{ color: "var(--text-main)" }}>{parseEmailsFromText(bulkInput).length}</strong>
+              </div>
+            </div>
           </form>
 
           {bulkError && (
@@ -747,23 +867,80 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
             </div>
           )}
 
+          {/* Bulk Summary & Full Results Table */}
           {bulkSummary && (
-            <div style={{ marginTop: "2rem", borderTop: "1px solid var(--border-subtle)", paddingTop: "1.5rem" }}>
-              <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "1rem" }}>Batch Processing Summary</h3>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
-                <div className="card" style={{ padding: "1rem", textAlign: "center" }}>
-                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>TOTAL</div>
-                  <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>{bulkSummary.total}</div>
+            <div style={{ marginTop: "2.5rem", borderTop: "1px solid var(--border-subtle)", paddingTop: "2rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
+                <div>
+                  <h3 style={{ fontSize: "1.15rem", fontWeight: 800 }}>Batch Verification Results</h3>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+                    Completed {bulkSummary.processed} verifications ({bulkSummary.successful} deliverable, {bulkSummary.failed} risky/undeliverable).
+                  </p>
                 </div>
-                <div className="card" style={{ padding: "1rem", textAlign: "center" }}>
-                  <div style={{ fontSize: "0.75rem", color: "var(--success)" }}>DELIVERABLE</div>
-                  <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--success)" }}>{bulkSummary.successful}</div>
-                </div>
-                <div className="card" style={{ padding: "1rem", textAlign: "center" }}>
-                  <div style={{ fontSize: "0.75rem", color: "var(--danger)" }}>FAILED / RISKY</div>
-                  <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--danger)" }}>{bulkSummary.failed}</div>
+
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <button className="btn btn-outline" onClick={downloadResultsCSV} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.8rem" }}>
+                    <Download size={14} /> Export CSV
+                  </button>
+                  <button className="btn btn-outline" onClick={downloadResultsJSON} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.8rem" }}>
+                    <Download size={14} /> Export JSON
+                  </button>
                 </div>
               </div>
+
+              {/* Metric Breakdown Row */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "1rem", marginBottom: "1.75rem" }}>
+                <div className="card" style={{ padding: "1rem", textAlign: "center" }}>
+                  <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontWeight: 700 }}>PROCESSED</div>
+                  <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#0f172a" }}>{bulkSummary.total}</div>
+                </div>
+                <div className="card" style={{ padding: "1rem", textAlign: "center" }}>
+                  <div style={{ fontSize: "0.72rem", color: "var(--success)", fontWeight: 700 }}>DELIVERABLE</div>
+                  <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--success)" }}>{bulkSummary.successful}</div>
+                </div>
+                <div className="card" style={{ padding: "1rem", textAlign: "center" }}>
+                  <div style={{ fontSize: "0.72rem", color: "var(--danger)", fontWeight: 700 }}>UNDELIVERABLE / RISKY</div>
+                  <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--danger)" }}>{bulkSummary.failed}</div>
+                </div>
+              </div>
+
+              {/* Detailed Results Table */}
+              {bulkSummary.results && bulkSummary.results.length > 0 && (
+                <div style={{ overflowX: "auto", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
+                    <thead>
+                      <tr style={{ background: "var(--bg-subtle)", borderBottom: "1px solid var(--border-subtle)", textAlign: "left" }}>
+                        <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 700 }}>Email Address</th>
+                        <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 700 }}>Verdict</th>
+                        <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 700 }}>Score</th>
+                        <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 700 }}>MX Record</th>
+                        <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 700 }}>SPF / DMARC</th>
+                        <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 700 }}>Disposable</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {bulkSummary.results.map((r, i) => (
+                        <tr key={i} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                          <td style={{ padding: "0.75rem 1rem", fontWeight: 600 }}>{r.email}</td>
+                          <td style={{ padding: "0.75rem 1rem" }}>
+                            <VerdictBadge verdict={r.verdict} score={r.score} />
+                          </td>
+                          <td style={{ padding: "0.75rem 1rem", fontWeight: 700 }}>{r.score}/100</td>
+                          <td style={{ padding: "0.75rem 1rem", color: r.checks.mx === "MX_FOUND" ? "var(--success)" : "var(--danger)" }}>
+                            {r.checks.mx === "MX_FOUND" ? "✓ Found" : "✗ Missing"}
+                          </td>
+                          <td style={{ padding: "0.75rem 1rem", color: r.checks.spf.includes("PRESENT") ? "var(--success)" : "var(--warning)" }}>
+                            {r.checks.spf.includes("PRESENT") ? "✓ Valid" : "⚠ Missing"}
+                          </td>
+                          <td style={{ padding: "0.75rem 1rem", color: r.checks.disposable === "NOT_DISPOSABLE" ? "var(--text-muted)" : "var(--danger)" }}>
+                            {r.checks.disposable === "NOT_DISPOSABLE" ? "Clean" : "Burner"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
         </div>

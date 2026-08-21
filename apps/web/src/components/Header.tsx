@@ -39,7 +39,6 @@ export const Header = ({
   user,
   onLogout,
   onNavigate,
-  currentView,
 }: HeaderProps) => {
   const [profileOpen, setProfileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -69,7 +68,7 @@ export const Header = ({
     if (email) {
       return email.substring(0, 2).toUpperCase();
     }
-    return "US";
+    return "SK";
   };
 
   const handleMenuClick = (view: AppView) => {
@@ -117,45 +116,8 @@ export const Header = ({
         </div>
       </div>
 
-      {/* Center/Right Nav Links & Profile Dropdown */}
-      <nav className="nav-links" style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
-        {/* Main top links */}
-        <button
-          className={`nav-link ${currentView === "dashboard" ? "active" : ""}`}
-          onClick={() => onNavigate("dashboard")}
-          style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
-        >
-          <LayoutDashboard size={14} /> Dashboard
-        </button>
-
-        <button
-          className={`nav-link ${currentView === "home" ? "active" : ""}`}
-          onClick={() => onNavigate("home")}
-        >
-          Single Verifier
-        </button>
-
-        <button
-          className={`nav-link ${currentView === "dns-mx" ? "active" : ""}`}
-          onClick={() => onNavigate("dns-mx")}
-        >
-          DNS/MX
-        </button>
-
-        <button
-          className={`nav-link ${currentView === "spf-dmarc" ? "active" : ""}`}
-          onClick={() => onNavigate("spf-dmarc")}
-        >
-          SPF/DMARC
-        </button>
-
-        <button
-          className={`nav-link ${currentView === "docs" ? "active" : ""}`}
-          onClick={() => onNavigate("docs")}
-        >
-          Docs
-        </button>
-
+      {/* Right Side: Profile Avatar with Complete Popover Menu */}
+      <nav className="nav-links" style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
         {user ? (
           <div style={{ position: "relative" }} ref={dropdownRef}>
             {/* Circular Profile Avatar Button */}
@@ -171,7 +133,7 @@ export const Header = ({
                 padding: "0.2rem",
                 borderRadius: "9999px",
               }}
-              title="Account & Menu"
+              title="Account Menu"
               aria-expanded={profileOpen}
             >
               {user.avatar_url ? (
@@ -216,7 +178,7 @@ export const Header = ({
               />
             </button>
 
-            {/* Profile Dropdown Popup (matching reference design) */}
+            {/* Profile Dropdown Popup */}
             {profileOpen && (
               <div
                 className="profile-dropdown-menu"
@@ -224,11 +186,11 @@ export const Header = ({
                   position: "absolute",
                   top: "calc(100% + 8px)",
                   right: 0,
-                  width: "260px",
+                  width: "270px",
                   background: "#ffffff",
                   border: "1px solid var(--border-subtle)",
                   borderRadius: "var(--radius-lg)",
-                  boxShadow: "0 12px 30px -4px rgba(15, 23, 42, 0.12), 0 4px 6px -2px rgba(15, 23, 42, 0.05)",
+                  boxShadow: "0 12px 30px -4px rgba(15, 23, 42, 0.14), 0 4px 6px -2px rgba(15, 23, 42, 0.05)",
                   zIndex: 1000,
                   overflow: "hidden",
                   animation: "fadeIn 0.15s ease",
@@ -242,31 +204,31 @@ export const Header = ({
                     borderBottom: "1px solid var(--border-subtle)",
                   }}
                 >
-                  <div style={{ fontWeight: 800, fontSize: "0.92rem", color: "var(--text-main)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "var(--text-main)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {user.name || "Developer Account"}
                   </div>
                   <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: "0.1rem" }}>
                     {user.email}
                   </div>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", marginTop: "0.5rem", padding: "0.15rem 0.5rem", borderRadius: "9999px", background: "rgba(37, 99, 235, 0.1)", color: "var(--accent-blue)", fontSize: "0.7rem", fontWeight: 700 }}>
-                    <Zap size={11} /> Free Tier · 200 Calls/Mo
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", marginTop: "0.5rem", padding: "0.15rem 0.55rem", borderRadius: "9999px", background: "rgba(37, 99, 235, 0.1)", color: "var(--accent-blue)", fontSize: "0.7rem", fontWeight: 700 }}>
+                    <Zap size={11} /> Free Plan · 200/mo
                   </div>
                 </div>
 
                 {/* Dropdown Menu Items */}
-                <div style={{ padding: "0.5rem 0" }}>
+                <div style={{ padding: "0.4rem 0" }}>
                   <button
                     className="dropdown-item"
                     onClick={() => handleMenuClick("dashboard")}
                   >
-                    <LayoutDashboard size={15} /> Dashboard & History
+                    <LayoutDashboard size={15} /> Dashboard Overview
                   </button>
 
                   <button
                     className="dropdown-item"
                     onClick={() => handleMenuClick("dashboard")}
                   >
-                    <Key size={15} /> API Keys Manager
+                    <Key size={15} /> API Keys & Quotas
                   </button>
 
                   <button
@@ -323,7 +285,7 @@ export const Header = ({
                 </div>
 
                 {/* Log Out Button */}
-                <div style={{ borderTop: "1px solid var(--border-subtle)", padding: "0.5rem 0" }}>
+                <div style={{ borderTop: "1px solid var(--border-subtle)", padding: "0.4rem 0" }}>
                   <button
                     className="dropdown-item"
                     onClick={() => {

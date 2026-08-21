@@ -394,12 +394,34 @@ export function createRouter(): Hono<AppContext> {
       );
     }
 
+    // Check Monthly Quota for Authenticated User
+    if (user && c.env.DB) {
+      const currentQuota = await getMonthlyUsage(c.env.DB, user.id);
+      if (currentQuota.remaining <= 0) {
+        return c.json(
+          {
+            success: false,
+            error: {
+              code: "MONTHLY_QUOTA_EXCEEDED",
+              message: `You have reached your Free Plan limit of ${FREE_TIER_MONTHLY_LIMIT} API calls for this month. Quota resets on the 1st.`,
+            },
+          },
+          429
+        );
+      }
+    }
+
     // Create job record in D1
     const job = await createBulkJob(c.env.DB, user.id, emailsToVerify.length);
 
     // Process bulk verification
     const cache = new CacheService(c.env.CACHE);
     const summary = await processBulkVerification(c.env.DB, job.id, user.id, emailsToVerify, cache);
+
+    // Increment monthly quota by processed count
+    if (user && c.env.DB && summary.processed > 0) {
+      await incrementMonthlyUsage(c.env.DB, user.id, summary.processed);
+    }
 
     return c.json({
       success: true,
