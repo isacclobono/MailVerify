@@ -193,75 +193,85 @@ export const Header = ({
                 {/* Dropdown Menu Items */}
                 <div style={{ padding: "0.35rem 0" }}>
                   <button
+                    type="button"
                     className="dropdown-item"
                     onClick={() => handleMenuClick("dashboard")}
                   >
-                    <LayoutDashboard size={14} /> Dashboard Overview
+                    <LayoutDashboard size={14} /> <span>Dashboard Overview</span>
                   </button>
 
                   <button
+                    type="button"
                     className="dropdown-item"
                     onClick={() => handleMenuClick("dashboard", "keys")}
                   >
-                    <Key size={14} /> API Keys & Quotas
+                    <Key size={14} /> <span>API Keys & Quotas</span>
                   </button>
 
                   <button
+                    type="button"
                     className="dropdown-item"
                     onClick={() => handleMenuClick("home")}
                   >
-                    <Search size={14} /> Single Email Verifier
+                    <Search size={14} /> <span>Single Email Verifier</span>
                   </button>
 
                   <button
+                    type="button"
                     className="dropdown-item"
                     onClick={() => handleMenuClick("dashboard", "bulk")}
                   >
-                    <Upload size={14} /> Bulk Batch Engine
+                    <Upload size={14} /> <span>Bulk Batch Engine</span>
                   </button>
 
                   <button
+                    type="button"
                     className="dropdown-item"
                     onClick={() => handleMenuClick("dns-mx")}
                   >
-                    <Server size={14} /> DNS & MX Checker
+                    <Server size={14} /> <span>DNS & MX Checker</span>
                   </button>
 
                   <button
+                    type="button"
                     className="dropdown-item"
                     onClick={() => handleMenuClick("spf-dmarc")}
                   >
-                    <Shield size={14} /> SPF & DMARC Audit
+                    <Shield size={14} /> <span>SPF & DMARC Audit</span>
                   </button>
 
                   <button
+                    type="button"
                     className="dropdown-item"
                     onClick={() => handleMenuClick("pricing")}
                   >
-                    <CreditCard size={14} /> Plans & Quotas
+                    <CreditCard size={14} /> <span>Plans & Quotas</span>
                   </button>
 
                   <button
+                    type="button"
                     className="dropdown-item"
                     onClick={() => handleMenuClick("docs")}
                   >
-                    <BookOpen size={14} /> Developer Docs & FAQ
+                    <BookOpen size={14} /> <span>Developer Docs & FAQ</span>
                   </button>
 
                   {user.is_admin && (
                     <button
+                      type="button"
                       className="dropdown-item"
                       onClick={() => handleMenuClick("admin")}
                       style={{ color: "#d97706", fontWeight: 700 }}
                     >
-                      <ShieldAlert size={15} /> Admin Operations
+                      <ShieldAlert size={14} /> <span>Admin Operations</span>
                     </button>
                   )}
                 </div>
 
                 {/* Log Out Button */}
-                <div style={{ borderTop: "1px solid var(--border-subtle)", padding: "0.4rem 0" }}>
+                <div style={{ borderTop: "1px solid var(--border-subtle)", padding: "0.35rem 0" }}>
                   <button
+                    type="button"
                     className="dropdown-item"
                     onClick={() => {
                       setProfileOpen(false);
@@ -269,7 +279,7 @@ export const Header = ({
                     }}
                     style={{ color: "var(--danger)", fontWeight: 600 }}
                   >
-                    <LogOut size={15} /> Sign out
+                    <LogOut size={14} /> <span>Sign out</span>
                   </button>
                 </div>
               </div>

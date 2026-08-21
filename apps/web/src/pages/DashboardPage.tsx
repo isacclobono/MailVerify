@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { VerdictBadge } from "../components/VerdictBadge";
 import { ChecksDetail } from "../components/ChecksDetail";
+import { Pagination } from "../components/Pagination";
 
 interface DashboardPageProps {
   user: User;
@@ -82,11 +83,15 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkSummary, setBulkSummary] = useState<BulkJobSummary | null>(null);
   const [bulkError, setBulkError] = useState<string | null>(null);
+  const [bulkPage, setBulkPage] = useState(1);
+  const BULK_PAGE_SIZE = 10;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // History & Stats state
   const [history, setHistory] = useState<VerificationResult[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
+  const HISTORY_PAGE_SIZE = 10;
   const [stats, setStats] = useState({
     total: 0,
     deliverable: 0,
@@ -235,6 +240,7 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
     try {
       const res = await api.submitBulkVerification(emails);
       setBulkSummary(res.summary);
+      setBulkPage(1);
       loadHistoryAndStats();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Bulk processing failed.";
@@ -1029,39 +1035,51 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
 
               {/* Detailed Results Table */}
               {bulkSummary.results && bulkSummary.results.length > 0 && (
-                <div style={{ overflowX: "auto", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
-                    <thead>
-                      <tr style={{ background: "var(--bg-subtle)", borderBottom: "1px solid var(--border-subtle)", textAlign: "left" }}>
-                        <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 700 }}>Email Address</th>
-                        <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 700 }}>Verdict</th>
-                        <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 700 }}>Score</th>
-                        <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 700 }}>MX Record</th>
-                        <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 700 }}>SPF / DMARC</th>
-                        <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 700 }}>Disposable</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {bulkSummary.results.map((r, i) => (
-                        <tr key={i} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                          <td style={{ padding: "0.75rem 1rem", fontWeight: 600 }}>{r.email}</td>
-                          <td style={{ padding: "0.75rem 1rem" }}>
-                            <VerdictBadge verdict={r.verdict} score={r.score} />
-                          </td>
-                          <td style={{ padding: "0.75rem 1rem", fontWeight: 700 }}>{r.score}/100</td>
-                          <td style={{ padding: "0.75rem 1rem", color: r.checks.mx === "MX_FOUND" ? "var(--success)" : "var(--danger)" }}>
-                            {r.checks.mx === "MX_FOUND" ? "✓ Found" : "✗ Missing"}
-                          </td>
-                          <td style={{ padding: "0.75rem 1rem", color: r.checks.spf.includes("PRESENT") ? "var(--success)" : "var(--warning)" }}>
-                            {r.checks.spf.includes("PRESENT") ? "✓ Valid" : "⚠ Missing"}
-                          </td>
-                          <td style={{ padding: "0.75rem 1rem", color: r.checks.disposable === "NOT_DISPOSABLE" ? "var(--text-muted)" : "var(--danger)" }}>
-                            {r.checks.disposable === "NOT_DISPOSABLE" ? "Clean" : "Burner"}
-                          </td>
+                <div style={{ border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+                      <thead>
+                        <tr style={{ background: "var(--bg-subtle)", borderBottom: "1px solid var(--border-subtle)", textAlign: "left" }}>
+                          <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>Email Address</th>
+                          <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>Verdict</th>
+                          <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>Score</th>
+                          <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>MX Record</th>
+                          <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>SPF / DMARC</th>
+                          <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>Disposable</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {bulkSummary.results
+                          .slice((bulkPage - 1) * BULK_PAGE_SIZE, bulkPage * BULK_PAGE_SIZE)
+                          .map((r, i) => (
+                            <tr key={i} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                              <td style={{ padding: "0.65rem 0.85rem", fontWeight: 600 }}>{r.email}</td>
+                              <td style={{ padding: "0.65rem 0.85rem" }}>
+                                <VerdictBadge verdict={r.verdict} score={r.score} />
+                              </td>
+                              <td style={{ padding: "0.65rem 0.85rem", fontWeight: 700 }}>{r.score}/100</td>
+                              <td style={{ padding: "0.65rem 0.85rem", color: r.checks.mx === "MX_FOUND" ? "var(--success)" : "var(--danger)" }}>
+                                {r.checks.mx === "MX_FOUND" ? "✓ Found" : "✗ Missing"}
+                              </td>
+                              <td style={{ padding: "0.65rem 0.85rem", color: r.checks.spf.includes("PRESENT") ? "var(--success)" : "var(--warning)" }}>
+                                {r.checks.spf.includes("PRESENT") ? "✓ Valid" : "⚠ Missing"}
+                              </td>
+                              <td style={{ padding: "0.65rem 0.85rem", color: r.checks.disposable === "NOT_DISPOSABLE" ? "var(--text-muted)" : "var(--danger)" }}>
+                                {r.checks.disposable === "NOT_DISPOSABLE" ? "Clean" : "Burner"}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <Pagination
+                    currentPage={bulkPage}
+                    totalPages={Math.ceil(bulkSummary.results.length / BULK_PAGE_SIZE)}
+                    totalItems={bulkSummary.results.length}
+                    pageSize={BULK_PAGE_SIZE}
+                    onPageChange={setBulkPage}
+                  />
                 </div>
               )}
             </div>
@@ -1071,47 +1089,59 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
 
       {/* TAB 4: Audit History */}
       {activeTab === "history" && (
-        <div className="card" style={{ padding: "2rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+        <div className="card" style={{ padding: "1.5rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
             <div>
-              <h2 style={{ fontSize: "1.2rem", fontWeight: 700 }}>5-Day Rolling History</h2>
-              <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+              <h2 style={{ fontSize: "1.05rem", fontWeight: 700 }}>5-Day Rolling History</h2>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.82rem" }}>
                 Records are retained in encrypted storage for 5 days and purged automatically at midnight.
               </p>
             </div>
-            <button className="btn btn-outline" onClick={loadHistoryAndStats} disabled={historyLoading}>
-              <RefreshCw size={14} className={historyLoading ? "animate-spin" : ""} /> Refresh
+            <button className="btn btn-outline" onClick={loadHistoryAndStats} disabled={historyLoading} style={{ fontSize: "0.78rem", padding: "0.3rem 0.65rem" }}>
+              <RefreshCw size={13} className={historyLoading ? "animate-spin" : ""} /> Refresh
             </button>
           </div>
 
           {history.length === 0 ? (
-            <p style={{ color: "var(--text-muted)", textAlign: "center", padding: "2rem" }}>No verifications recorded in the last 5 days.</p>
+            <p style={{ color: "var(--text-muted)", textAlign: "center", padding: "2rem", fontSize: "0.82rem" }}>No verifications recorded in the last 5 days.</p>
           ) : (
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
-                <thead>
-                  <tr style={{ borderBottom: "2px solid var(--border-subtle)", textAlign: "left" }}>
-                    <th style={{ padding: "0.75rem" }}>Email</th>
-                    <th style={{ padding: "0.75rem" }}>Verdict</th>
-                    <th style={{ padding: "0.75rem" }}>Score</th>
-                    <th style={{ padding: "0.75rem" }}>Verified At</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history.map((h, i) => (
-                    <tr key={i} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                      <td style={{ padding: "0.75rem", fontWeight: 600 }}>{h.email}</td>
-                      <td style={{ padding: "0.75rem" }}>
-                        <VerdictBadge verdict={h.verdict} score={h.score} />
-                      </td>
-                      <td style={{ padding: "0.75rem" }}>{h.score}/100</td>
-                      <td style={{ padding: "0.75rem", color: "var(--text-muted)" }}>
-                        {new Date(h.created_at).toLocaleString()}
-                      </td>
+            <div style={{ border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+                  <thead>
+                    <tr style={{ background: "var(--bg-subtle)", borderBottom: "1px solid var(--border-subtle)", textAlign: "left" }}>
+                      <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>Email</th>
+                      <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>Verdict</th>
+                      <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>Score</th>
+                      <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>Verified At</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {history
+                      .slice((historyPage - 1) * HISTORY_PAGE_SIZE, historyPage * HISTORY_PAGE_SIZE)
+                      .map((h, i) => (
+                        <tr key={i} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                          <td style={{ padding: "0.65rem 0.85rem", fontWeight: 600 }}>{h.email}</td>
+                          <td style={{ padding: "0.65rem 0.85rem" }}>
+                            <VerdictBadge verdict={h.verdict} score={h.score} />
+                          </td>
+                          <td style={{ padding: "0.65rem 0.85rem", fontWeight: 700 }}>{h.score}/100</td>
+                          <td style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)" }}>
+                            {new Date(h.created_at).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <Pagination
+                currentPage={historyPage}
+                totalPages={Math.ceil(history.length / HISTORY_PAGE_SIZE)}
+                totalItems={history.length}
+                pageSize={HISTORY_PAGE_SIZE}
+                onPageChange={setHistoryPage}
+              />
             </div>
           )}
         </div>

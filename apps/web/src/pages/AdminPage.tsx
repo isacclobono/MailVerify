@@ -16,6 +16,7 @@ import {
   ShieldCheck, 
   AlertTriangle 
 } from "lucide-react";
+import { Pagination } from "../components/Pagination";
 
 interface AdminPageProps {
   user: User | null;
@@ -76,6 +77,12 @@ export const AdminPage = ({ user, onNavigateHome }: AdminPageProps) => {
   const [error, setError] = useState<string | null>(null);
   const [deleteConfirmUser, setDeleteConfirmUser] = useState<AdminUserRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Pagination states
+  const [usersPage, setUsersPage] = useState(1);
+  const [verifsPage, setVerifsPage] = useState(1);
+  const USERS_PAGE_SIZE = 10;
+  const VERIFS_PAGE_SIZE = 15;
 
   const fetchAdminData = async () => {
     if (!user || !user.is_admin) {
@@ -368,124 +375,151 @@ export const AdminPage = ({ user, onNavigateHome }: AdminPageProps) => {
 
           {/* TAB 2: USERS DIRECTORY */}
           {activeTab === "users" && (
-            <div className="card" style={{ padding: "1.5rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
-                <h3 style={{ fontSize: "1.1rem", fontWeight: 700 }}>Registered Users Directory</h3>
-                <div style={{ position: "relative", minWidth: "260px" }}>
-                  <Search size={16} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+            <div className="card" style={{ padding: "1.25rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "0.75rem" }}>
+                <h3 style={{ fontSize: "1.05rem", fontWeight: 700 }}>Registered Users Directory</h3>
+                <div style={{ position: "relative", minWidth: "240px" }}>
+                  <Search size={14} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
                   <input
                     type="text"
                     placeholder="Search by email, name or ID..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{ width: "100%", padding: "0.5rem 0.75rem 0.5rem 2.25rem", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-subtle)", fontSize: "0.85rem" }}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setUsersPage(1);
+                    }}
+                    style={{ width: "100%", padding: "0.45rem 0.65rem 0.45rem 2rem", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-subtle)", fontSize: "0.82rem" }}
                   />
                 </div>
               </div>
 
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid var(--border-subtle)", textAlign: "left", color: "var(--text-muted)" }}>
-                      <th style={{ padding: "0.75rem" }}>USER</th>
-                      <th style={{ padding: "0.75rem" }}>USER ID</th>
-                      <th style={{ padding: "0.75rem" }}>GOOGLE SUB</th>
-                      <th style={{ padding: "0.75rem" }}>REGISTERED</th>
-                      <th style={{ padding: "0.75rem", textAlign: "right" }}>ACTIONS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredUsers.length > 0 ? (
-                      filteredUsers.map((u) => (
-                        <tr key={u.id} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                          <td style={{ padding: "0.75rem" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                              {u.avatar_url ? (
-                                <img src={u.avatar_url} alt={u.email} style={{ width: "24px", height: "24px", borderRadius: "50%" }} />
-                              ) : (
-                                <Users size={20} color="var(--text-muted)" />
-                              )}
-                              <div>
-                                <div style={{ fontWeight: 600 }}>{u.name || "Anonymous User"}</div>
-                                <div style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>{u.email}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td style={{ padding: "0.75rem", fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                            {u.id}
-                          </td>
-                          <td style={{ padding: "0.75rem", fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                            {u.google_sub ? u.google_sub.substring(0, 10) + "..." : "Local / None"}
-                          </td>
-                          <td style={{ padding: "0.75rem", color: "var(--text-muted)" }}>
-                            {new Date(u.created_at).toLocaleDateString()}
-                          </td>
-                          <td style={{ padding: "0.75rem", textAlign: "right" }}>
-                            <button
-                              className="btn btn-outline"
-                              style={{ color: "var(--danger)", borderColor: "rgba(239, 68, 68, 0.3)", padding: "0.3rem 0.6rem" }}
-                              onClick={() => setDeleteConfirmUser(u)}
-                              title="Delete user and all data"
-                            >
-                              <Trash2 size={13} /> Delete
-                            </button>
+              <div style={{ border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+                    <thead>
+                      <tr style={{ background: "var(--bg-subtle)", borderBottom: "1px solid var(--border-subtle)", textAlign: "left", color: "var(--text-muted)" }}>
+                        <th style={{ padding: "0.65rem 0.85rem" }}>USER</th>
+                        <th style={{ padding: "0.65rem 0.85rem" }}>USER ID</th>
+                        <th style={{ padding: "0.65rem 0.85rem" }}>GOOGLE SUB</th>
+                        <th style={{ padding: "0.65rem 0.85rem" }}>REGISTERED</th>
+                        <th style={{ padding: "0.65rem 0.85rem", textAlign: "right" }}>ACTIONS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredUsers.length > 0 ? (
+                        filteredUsers
+                          .slice((usersPage - 1) * USERS_PAGE_SIZE, usersPage * USERS_PAGE_SIZE)
+                          .map((u) => (
+                            <tr key={u.id} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                              <td style={{ padding: "0.65rem 0.85rem" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
+                                  {u.avatar_url ? (
+                                    <img src={u.avatar_url} alt={u.email} style={{ width: "22px", height: "22px", borderRadius: "50%" }} />
+                                  ) : (
+                                    <Users size={18} color="var(--text-muted)" />
+                                  )}
+                                  <div>
+                                    <div style={{ fontWeight: 600 }}>{u.name || "Anonymous User"}</div>
+                                    <div style={{ color: "var(--text-muted)", fontSize: "0.72rem" }}>{u.email}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td style={{ padding: "0.65rem 0.85rem", fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "var(--text-muted)" }}>
+                                {u.id}
+                              </td>
+                              <td style={{ padding: "0.65rem 0.85rem", fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "var(--text-muted)" }}>
+                                {u.google_sub ? u.google_sub.substring(0, 10) + "..." : "Local / None"}
+                              </td>
+                              <td style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)" }}>
+                                {new Date(u.created_at).toLocaleDateString()}
+                              </td>
+                              <td style={{ padding: "0.65rem 0.85rem", textAlign: "right" }}>
+                                <button
+                                  className="btn btn-outline"
+                                  style={{ color: "var(--danger)", borderColor: "rgba(239, 68, 68, 0.3)", padding: "0.25rem 0.5rem", fontSize: "0.72rem" }}
+                                  onClick={() => setDeleteConfirmUser(u)}
+                                  title="Delete user and all data"
+                                >
+                                  <Trash2 size={12} /> Delete
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                      ) : (
+                        <tr>
+                          <td colSpan={5} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
+                            No users matched your search query.
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={5} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
-                          No users matched your search query.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <Pagination
+                  currentPage={usersPage}
+                  totalPages={Math.ceil(filteredUsers.length / USERS_PAGE_SIZE)}
+                  totalItems={filteredUsers.length}
+                  pageSize={USERS_PAGE_SIZE}
+                  onPageChange={setUsersPage}
+                />
               </div>
             </div>
           )}
 
           {/* TAB 3: VERIFICATIONS STREAM */}
           {activeTab === "verifications" && (
-            <div className="card" style={{ padding: "1.5rem" }}>
-              <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "1.25rem" }}>Global Live Verification Stream (Last 100)</h3>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid var(--border-subtle)", textAlign: "left", color: "var(--text-muted)" }}>
-                      <th style={{ padding: "0.75rem" }}>EMAIL</th>
-                      <th style={{ padding: "0.75rem" }}>VERDICT</th>
-                      <th style={{ padding: "0.75rem" }}>SCORE</th>
-                      <th style={{ padding: "0.75rem" }}>TIMESTAMP</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {verifications.length > 0 ? (
-                      verifications.map((v) => (
-                        <tr key={v.id} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                          <td style={{ padding: "0.75rem", fontWeight: 600 }}>{v.email}</td>
-                          <td style={{ padding: "0.75rem" }}>
-                            <span style={{ fontSize: "0.75rem", fontWeight: 700, padding: "0.2rem 0.5rem", borderRadius: "4px", background: v.verdict.includes("DELIVERABLE") ? "rgba(16, 185, 129, 0.15)" : v.verdict.includes("RISKY") ? "rgba(245, 158, 11, 0.15)" : "rgba(239, 68, 68, 0.15)", color: v.verdict.includes("DELIVERABLE") ? "var(--success)" : v.verdict.includes("RISKY") ? "var(--warning)" : "var(--danger)" }}>
-                              {v.verdict}
-                            </span>
-                          </td>
-                          <td style={{ padding: "0.75rem", fontFamily: "var(--font-mono)" }}>
-                            {v.score}/100
-                          </td>
-                          <td style={{ padding: "0.75rem", color: "var(--text-muted)", fontSize: "0.8rem" }}>
-                            {new Date(v.created_at).toLocaleString()}
+            <div className="card" style={{ padding: "1.25rem" }}>
+              <h3 style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: "1rem" }}>Global Live Verification Stream</h3>
+              <div style={{ border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+                    <thead>
+                      <tr style={{ background: "var(--bg-subtle)", borderBottom: "1px solid var(--border-subtle)", textAlign: "left", color: "var(--text-muted)" }}>
+                        <th style={{ padding: "0.65rem 0.85rem" }}>EMAIL</th>
+                        <th style={{ padding: "0.65rem 0.85rem" }}>VERDICT</th>
+                        <th style={{ padding: "0.65rem 0.85rem" }}>SCORE</th>
+                        <th style={{ padding: "0.65rem 0.85rem" }}>TIMESTAMP</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {verifications.length > 0 ? (
+                        verifications
+                          .slice((verifsPage - 1) * VERIFS_PAGE_SIZE, verifsPage * VERIFS_PAGE_SIZE)
+                          .map((v) => (
+                            <tr key={v.id} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                              <td style={{ padding: "0.65rem 0.85rem", fontWeight: 600 }}>{v.email}</td>
+                              <td style={{ padding: "0.65rem 0.85rem" }}>
+                                <span style={{ fontSize: "0.72rem", fontWeight: 700, padding: "0.15rem 0.45rem", borderRadius: "4px", background: v.verdict.includes("DELIVERABLE") ? "rgba(16, 185, 129, 0.15)" : v.verdict.includes("RISKY") ? "rgba(245, 158, 11, 0.15)" : "rgba(239, 68, 68, 0.15)", color: v.verdict.includes("DELIVERABLE") ? "var(--success)" : v.verdict.includes("RISKY") ? "var(--warning)" : "var(--danger)" }}>
+                                  {v.verdict}
+                                </span>
+                              </td>
+                              <td style={{ padding: "0.65rem 0.85rem", fontFamily: "var(--font-mono)" }}>
+                                {v.score}/100
+                              </td>
+                              <td style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontSize: "0.75rem" }}>
+                                {new Date(v.created_at).toLocaleString()}
+                              </td>
+                            </tr>
+                          ))
+                      ) : (
+                        <tr>
+                          <td colSpan={4} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
+                            No global verification records found.
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={4} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
-                          No global verification records found.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <Pagination
+                  currentPage={verifsPage}
+                  totalPages={Math.ceil(verifications.length / VERIFS_PAGE_SIZE)}
+                  totalItems={verifications.length}
+                  pageSize={VERIFS_PAGE_SIZE}
+                  onPageChange={setVerifsPage}
+                />
               </div>
             </div>
           )}
