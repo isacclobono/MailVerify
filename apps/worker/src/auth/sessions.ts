@@ -24,13 +24,32 @@ export function parseCookies(cookieHeader: string | null): Record<string, string
 }
 
 export function buildSessionCookie(token: string, maxAgeSeconds = 2592000, isSecure = true): string {
-  const secureFlag = isSecure ? "; Secure" : "";
-  return `${SESSION_COOKIE_NAME}=${token}; Path=/; Max-Age=${maxAgeSeconds}; HttpOnly; SameSite=Lax${secureFlag}`;
+  const sameSite = isSecure ? "None" : "Lax";
+  const secureFlag = isSecure ? "; Secure; Partitioned" : "";
+  return `${SESSION_COOKIE_NAME}=${token}; Path=/; Max-Age=${maxAgeSeconds}; HttpOnly; SameSite=${sameSite}${secureFlag}`;
 }
 
 export function buildClearSessionCookie(isSecure = true): string {
-  const secureFlag = isSecure ? "; Secure" : "";
-  return `${SESSION_COOKIE_NAME}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax${secureFlag}`;
+  const sameSite = isSecure ? "None" : "Lax";
+  const secureFlag = isSecure ? "; Secure; Partitioned" : "";
+  return `${SESSION_COOKIE_NAME}=; Path=/; Max-Age=0; HttpOnly; SameSite=${sameSite}${secureFlag}`;
+}
+
+export function extractAuthToken(c: Context<AppContext>): string | null {
+  // 1. Check Authorization header (Bearer token)
+  const authHeader = c.req.header("Authorization");
+  if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
+    return authHeader.substring(7).trim();
+  }
+
+  // 2. Check Cookie
+  const cookieHeader = c.req.header("Cookie") || null;
+  const cookies = parseCookies(cookieHeader);
+  if (cookies[SESSION_COOKIE_NAME]) {
+    return cookies[SESSION_COOKIE_NAME];
+  }
+
+  return null;
 }
 
 export function checkIsAdmin(email: string, adminEmailsConfig?: string): boolean {
@@ -43,9 +62,7 @@ export function checkIsAdmin(email: string, adminEmailsConfig?: string): boolean
 }
 
 export const optionalAuthMiddleware: MiddlewareHandler<AppContext> = async (c, next) => {
-  const cookieHeader = c.req.header("Cookie") || null;
-  const cookies = parseCookies(cookieHeader);
-  const rawToken = cookies[SESSION_COOKIE_NAME];
+  const rawToken = extractAuthToken(c);
 
   if (rawToken && c.env.DB) {
     try {
@@ -70,9 +87,7 @@ export const optionalAuthMiddleware: MiddlewareHandler<AppContext> = async (c, n
 };
 
 export const requireAuthMiddleware: MiddlewareHandler<AppContext> = async (c, next) => {
-  const cookieHeader = c.req.header("Cookie") || null;
-  const cookies = parseCookies(cookieHeader);
-  const rawToken = cookies[SESSION_COOKIE_NAME];
+  const rawToken = extractAuthToken(c);
 
   if (!rawToken || !c.env.DB) {
     return c.json(

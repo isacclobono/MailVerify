@@ -108,7 +108,7 @@ authRoutes.get("/google/callback", async (c) => {
     }`;
 
     const headers = new Headers();
-    headers.set("Location", `${appBaseUrl}/dashboard`);
+    headers.set("Location", `${appBaseUrl}/dashboard?token=${encodeURIComponent(rawToken)}`);
     headers.append("Set-Cookie", sessionCookie);
     headers.append("Set-Cookie", clearStateCookie);
 
@@ -141,9 +141,7 @@ authRoutes.get("/me", requireAuthMiddleware, async (c) => {
 
 // Logout endpoint
 authRoutes.post("/logout", async (c) => {
-  const cookieHeader = c.req.header("Cookie") || null;
-  const cookies = parseCookies(cookieHeader);
-  const rawToken = cookies[SESSION_COOKIE_NAME];
+  const rawToken = extractAuthToken(c);
 
   if (rawToken && c.env.DB) {
     await deleteSessionByToken(c.env.DB, rawToken);

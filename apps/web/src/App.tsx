@@ -17,10 +17,19 @@ export function App() {
   const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if OAuth returned with an error
     const params = new URLSearchParams(window.location.search);
     const errorParam = params.get("error");
+    const tokenParam = params.get("token");
+
+    if (tokenParam) {
+      console.log("[MailVerify Auth] Received token from OAuth redirect.");
+      localStorage.setItem("mv_token", tokenParam);
+      setCurrentView("dashboard");
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     if (errorParam) {
+      console.warn("[MailVerify Auth] Error returned from OAuth:", errorParam);
       setAuthError(decodeURIComponent(errorParam));
       window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -30,11 +39,15 @@ export function App() {
       .getCurrentUser()
       .then((currentUser) => {
         if (currentUser) {
+          console.log("[MailVerify Auth] Authenticated user:", currentUser.email);
           setUser(currentUser);
-          if (window.location.pathname.includes("dashboard")) {
+          if (window.location.pathname.includes("dashboard") || tokenParam) {
             setCurrentView("dashboard");
           }
         }
+      })
+      .catch((err) => {
+        console.warn("[MailVerify Auth] Failed to fetch user session:", err);
       })
       .finally(() => {
         setLoading(false);

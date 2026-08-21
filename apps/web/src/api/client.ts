@@ -1,6 +1,10 @@
-import { User, VerificationResult, BulkJobSummary } from "../types";
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (typeof window !== "undefined" && window.location.hostname.includes("localhost")
+    ? "http://localhost:8787"
+    : "https://mailverify.pulsechat.workers.dev");
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+console.log("[MailVerify API] Initialized with backend:", API_BASE_URL);
 
 async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
@@ -8,6 +12,14 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 
   if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
+  }
+
+  // Attach session Bearer token if present
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("mv_token");
+    if (token && !headers.has("Authorization")) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
   }
 
   const response = await fetch(url, {
@@ -20,6 +32,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 
   if (!response.ok || !data.success) {
     const errorMsg = data?.error?.message || `Request failed with status ${response.status}`;
+    console.warn(`[MailVerify API] Error on ${endpoint}:`, errorMsg);
     throw new Error(errorMsg);
   }
 
@@ -38,7 +51,13 @@ export const api = {
   },
 
   async logout(): Promise<void> {
-    await apiRequest("/api/auth/logout", { method: "POST" });
+    try {
+      await apiRequest("/api/auth/logout", { method: "POST" });
+    } finally {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("mv_token");
+      }
+    }
   },
 
   getGoogleLoginUrl(): string {
