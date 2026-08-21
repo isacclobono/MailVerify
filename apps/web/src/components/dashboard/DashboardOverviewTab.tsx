@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Copy, Check, Sparkles, RefreshCw } from "lucide-react";
+import { Copy, Check, RefreshCw } from "lucide-react";
 import { VerificationResult, MonthlyQuota, ApiKeyItem } from "../../types";
 import { VerdictBadge } from "../VerdictBadge";
 import { formatTimeAgo, formatUtcDateTime } from "../../utils/time";
