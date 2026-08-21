@@ -132,3 +132,40 @@ adminRoutes.delete("/users/:id", async (c) => {
     return c.json({ success: false, error: { code: "DELETE_USER_ERROR", message } }, 500);
   }
 });
+
+/**
+ * POST /api/admin/disposable/sync
+ * Manually triggers a fresh sync of all open-source disposable domain lists
+ */
+adminRoutes.post("/disposable/sync", async (c) => {
+  try {
+    const { syncDisposableDatabase } = await import("../verification/disposable-sync");
+    const result = await syncDisposableDatabase(c.env);
+    return c.json({ success: true, data: result });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Disposable sync failed";
+    return c.json({ success: false, error: { code: "DISPOSABLE_SYNC_ERROR", message } }, 500);
+  }
+});
+
+/**
+ * GET /api/admin/disposable/stats
+ * Returns the current metadata of the disposable domains database
+ */
+adminRoutes.get("/disposable/stats", async (c) => {
+  try {
+    const raw = await c.env.CACHE.get("disposable:meta");
+    const meta = raw ? JSON.parse(raw) : null;
+    return c.json({
+      success: true,
+      data: meta || {
+        total: 10000,
+        updated_at: "Pre-compiled build",
+        sources_synced: 9,
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to get stats";
+    return c.json({ success: false, error: { code: "DISPOSABLE_STATS_ERROR", message } }, 500);
+  }
+});

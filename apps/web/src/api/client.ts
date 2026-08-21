@@ -211,4 +211,22 @@ export const api = {
   async deleteAdminUser(userId: string): Promise<{ success: boolean; message: string }> {
     return apiRequest(`/api/admin/users/${userId}`, { method: "DELETE" });
   },
+
+  async syncDisposableDomains(): Promise<{
+    success: boolean;
+    total_domains_collected: number;
+    sources_synced: number;
+    duration_ms: number;
+    timestamp: string;
+  }> {
+    return apiRequest("/api/admin/disposable/sync", { method: "POST" });
+  },
+
+  async getDisposableStats(): Promise<{
+    total: number;
+    updated_at: string;
+    sources_synced: number;
+  }> {
+    return apiRequest("/api/admin/disposable/stats");
+  },
 };

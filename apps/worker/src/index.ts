@@ -1,6 +1,7 @@
 import { Env } from "./env";
 import { createRouter } from "./router";
 import { runRetentionCleanup } from "./cron/cleanup";
+import { syncDisposableDatabase } from "./verification/disposable-sync";
 
 const app = createRouter();
 
@@ -10,6 +11,11 @@ export default {
   },
 
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
-    ctx.waitUntil(runRetentionCleanup(env.DB));
+    ctx.waitUntil(
+      Promise.allSettled([
+        runRetentionCleanup(env.DB),
+        syncDisposableDatabase(env),
+      ])
+    );
   },
 };
