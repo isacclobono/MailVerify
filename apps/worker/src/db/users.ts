@@ -139,3 +139,42 @@ export async function countTotalUsers(db: D1Database): Promise<number> {
   return result?.count || 0;
 }
 
+export async function findOrCreateAdminUser(
+  db: D1Database,
+  email: string,
+  name = "System Administrator"
+): Promise<User> {
+  const normalizedEmail = email.toLowerCase().trim();
+  const existing = await findUserByEmail(db, normalizedEmail);
+  if (existing) {
+    return existing;
+  }
+
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await db
+    .prepare(
+      "INSERT INTO users (id, google_sub, email, name, avatar_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    )
+    .bind(
+      id,
+      "admin_local",
+      normalizedEmail,
+      name,
+      null,
+      now,
+      now
+    )
+    .run();
+
+  return {
+    id,
+    google_sub: "admin_local",
+    email: normalizedEmail,
+    name,
+    avatar_url: null,
+    created_at: now,
+    updated_at: now,
+  };
+}
+

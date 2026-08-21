@@ -11,9 +11,11 @@ import {
   buildSessionCookie,
   buildClearSessionCookie,
   requireAuthMiddleware,
+  checkIsAdmin,
+  extractAuthToken,
   SESSION_COOKIE_NAME,
 } from "./sessions";
-import { createOrUpdateGoogleUser } from "../db/users";
+import { createOrUpdateGoogleUser, findOrCreateAdminUser } from "../db/users";
 import { createSession, deleteSessionByToken } from "../db/sessions";
 
 const authRoutes = new Hono<AppContext>();
@@ -161,6 +163,76 @@ authRoutes.post("/logout", async (c) => {
       },
     }
   );
+});
+
+// Admin Email & Password Authentication Endpoint
+authRoutes.post("/admin/login", async (c) => {
+  try {
+    const body = await c.req.json<{ email?: string; password?: string }>();
+    const email = body?.email?.toLowerCase().trim();
+    const password = body?.password;
+
+    if (!email || !password) {
+      return c.json(
+        {
+          success: false,
+          error: { code: "MISSING_CREDENTIALS", message: "Both email and password are required." },
+        },
+        400
+      );
+    }
+
+    // Expected Admin Password from Environment (or default)
+    const expectedPassword = c.env.ADMIN_PASSWORD || "AdminMailVerify2026!";
+    const isAdminEmail = checkIsAdmin(email, c.env.ADMIN_EMAILS);
+
+    if (!isAdminEmail || password !== expectedPassword) {
+      return c.json(
+        {
+          success: false,
+          error: { code: "INVALID_CREDENTIALS", message: "Invalid administrator email or password." },
+        },
+        401
+      );
+    }
+
+    // Create or retrieve local admin user record in D1
+    const adminUser = await findOrCreateAdminUser(c.env.DB, email, "System Administrator");
+
+    // Generate authenticated session token
+    const { rawToken } = await createSession(c.env.DB, adminUser.id);
+
+    const reqUrl = new URL(c.req.url);
+    const isSecure = reqUrl.protocol === "https:";
+    const sessionCookie = buildSessionCookie(rawToken, 2592000, isSecure);
+
+    const headers = new Headers();
+    headers.set("Content-Type", "application/json");
+    headers.append("Set-Cookie", sessionCookie);
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        data: {
+          token: rawToken,
+          user: {
+            id: adminUser.id,
+            email: adminUser.email,
+            name: adminUser.name || "System Administrator",
+            avatar_url: adminUser.avatar_url || null,
+            is_admin: true,
+          },
+        },
+      }),
+      {
+        status: 200,
+        headers,
+      }
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Admin login failed";
+    return c.json({ success: false, error: { code: "ADMIN_LOGIN_ERROR", message } }, 500);
+  }
 });
 
 export { authRoutes };

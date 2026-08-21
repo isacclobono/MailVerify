@@ -9,6 +9,7 @@ export interface Env {
   SESSION_SECRET: string;
   APP_BASE_URL: string;
   ADMIN_EMAILS?: string;
+  ADMIN_PASSWORD?: string;
 }
 
 export type AppContext = {

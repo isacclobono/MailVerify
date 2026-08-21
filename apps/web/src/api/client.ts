@@ -43,6 +43,17 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 
 export const api = {
   // Auth
+  async adminLogin(email: string, password: string): Promise<{ token: string; user: User }> {
+    const data = await apiRequest<{ token: string; user: User }>("/api/auth/admin/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+    if (typeof window !== "undefined" && data.token) {
+      localStorage.setItem("mv_token", data.token);
+    }
+    return data;
+  },
+
   async getCurrentUser(): Promise<User | null> {
     try {
       const data = await apiRequest<{ user: User }>("/api/auth/me");
