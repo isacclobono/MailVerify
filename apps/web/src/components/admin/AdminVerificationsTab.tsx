@@ -1,4 +1,5 @@
 import { Pagination } from "../Pagination";
+import { formatTimeAgo, formatUtcDateTime } from "../../utils/time";
 
 interface VerificationRecord {
   id: string;
@@ -70,8 +71,8 @@ export const AdminVerificationsTab = ({
                       <td style={{ fontWeight: 700, fontFamily: "var(--font-mono)" }}>
                         {v.score}/100
                       </td>
-                      <td style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
-                        {new Date(v.created_at).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
+                      <td style={{ color: "var(--text-muted)", fontSize: "0.75rem" }} title={formatUtcDateTime(v.created_at)}>
+                        {formatTimeAgo(v.created_at)}
                       </td>
                     </tr>
                   ))

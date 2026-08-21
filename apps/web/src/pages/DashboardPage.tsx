@@ -22,6 +22,7 @@ import { VerdictBadge } from "../components/VerdictBadge";
 import { ChecksDetail } from "../components/ChecksDetail";
 import { Pagination } from "../components/Pagination";
 import { toast } from "sonner";
+import { formatTimeAgo, formatUtcDateTime } from "../utils/time";
 
 interface DashboardPageProps {
   user: User;
@@ -1153,8 +1154,8 @@ let res = client.post("https://mailverify.sk-builds.workers.dev/api/verify")
                             <VerdictBadge verdict={h.verdict} score={h.score} />
                           </td>
                           <td style={{ fontWeight: 700, fontFamily: "var(--font-mono)" }}>{h.score}/100</td>
-                          <td style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
-                            {new Date(h.created_at).toLocaleString()}
+                          <td style={{ color: "var(--text-muted)", fontSize: "0.75rem" }} title={formatUtcDateTime(h.created_at)}>
+                            {formatTimeAgo(h.created_at)}
                           </td>
                         </tr>
                       ))}
@@ -1253,7 +1254,7 @@ let res = client.post("https://mailverify.sk-builds.workers.dev/api/verify")
                         <tr key={k.id}>
                           <td style={{ fontWeight: 600 }}>{k.name}</td>
                           <td style={{ fontFamily: "var(--font-mono)", color: "var(--text-muted)", fontSize: "0.78rem" }}>{k.key_prefix}...</td>
-                          <td style={{ color: "var(--text-muted)", fontSize: "0.78rem" }}>{new Date(k.created_at).toLocaleDateString()}</td>
+                          <td style={{ color: "var(--text-muted)", fontSize: "0.78rem" }} title={formatUtcDateTime(k.created_at)}>{formatTimeAgo(k.created_at)}</td>
                           <td style={{ textAlign: "right" }}>
                             <button
                               onClick={() => handleDeleteKey(k.id)}

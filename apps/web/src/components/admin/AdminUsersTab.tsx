@@ -1,6 +1,7 @@
 import { Search, Users, Trash2, Sliders } from "lucide-react";
 import { AdminUserRecord } from "../../types";
 import { Pagination } from "../Pagination";
+import { formatTimeAgo, formatUtcDateTime } from "../../utils/time";
 
 interface AdminUsersTabProps {
   users: AdminUserRecord[];
@@ -110,8 +111,8 @@ export const AdminUsersTab = ({
                             {isUnlimited ? "∞ Unlimited" : `${(u.monthly_limit || 200).toLocaleString()} / mo`}
                           </span>
                         </td>
-                        <td style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
-                          {new Date(u.created_at).toLocaleDateString()}
+                        <td style={{ color: "var(--text-muted)", fontSize: "0.75rem" }} title={formatUtcDateTime(u.created_at)}>
+                          {formatTimeAgo(u.created_at)}
                         </td>
                         <td style={{ textAlign: "right" }}>
                           <div style={{ display: "inline-flex", gap: "0.35rem" }}>
