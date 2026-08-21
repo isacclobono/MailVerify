@@ -119,3 +119,23 @@ export async function deleteUser(db: D1Database, userId: string): Promise<boolea
     .run();
   return result.success;
 }
+
+export async function listAllUsers(
+  db: D1Database,
+  limit = 50,
+  offset = 0
+): Promise<User[]> {
+  const { results } = await db
+    .prepare("SELECT id, google_sub, email, name, avatar_url, created_at, updated_at FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?")
+    .bind(limit, offset)
+    .all<User>();
+  return results || [];
+}
+
+export async function countTotalUsers(db: D1Database): Promise<number> {
+  const result = await db
+    .prepare("SELECT COUNT(*) as count FROM users")
+    .first<{ count: number }>();
+  return result?.count || 0;
+}
+

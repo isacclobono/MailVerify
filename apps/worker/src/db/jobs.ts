@@ -92,3 +92,11 @@ export async function deleteOldBulkJobs(db: D1Database, retentionDays = 5): Prom
     .run();
   return result.meta.changes || 0;
 }
+
+export async function countTotalBulkJobs(db: D1Database): Promise<number> {
+  const result = await db
+    .prepare("SELECT COUNT(*) as count FROM bulk_jobs")
+    .first<{ count: number }>();
+  return result?.count || 0;
+}
+

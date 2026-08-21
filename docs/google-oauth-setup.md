@@ -1,6 +1,6 @@
 # 🔑 Google OAuth 2.0 Free Setup Guide
 
-Follow these steps to configure Google OpenID Connect / OAuth login for the Email Verifier.
+Follow these steps to configure Google OpenID Connect / OAuth login and Admin access for MailVerify.
 
 ---
 
@@ -43,21 +43,27 @@ Follow these steps to configure Google OpenID Connect / OAuth login for the Emai
    - `http://localhost:8787/api/auth/google/callback` (for local development)
    - `https://your-worker.your-subdomain.workers.dev/api/auth/google/callback` (for Cloudflare Workers production)
 7. Click **Create**.
-8. Note your **Client ID** and **Client Secret**.
+8. Copy your **Client ID** and **Client Secret**.
 
 ---
 
-## 4. Add Credentials to Cloudflare Worker
+## 4. Set Environment Variables & Admin Accounts
 
-### Local:
-In `apps/worker/.dev.vars`:
+### Local Development:
+In `.env` and `apps/worker/.dev.vars`:
 ```ini
-GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=yyyy
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
+SESSION_SECRET=a-very-secure-random-32-char-string
+APP_BASE_URL=http://localhost:5173
+ADMIN_EMAILS=your.email@gmail.com,admin@yourdomain.com
 ```
 
-### Production:
+### Production Deployment:
 ```bash
+cd apps/worker
 npx wrangler secret put GOOGLE_CLIENT_ID
 npx wrangler secret put GOOGLE_CLIENT_SECRET
+npx wrangler secret put SESSION_SECRET
+npx wrangler secret put ADMIN_EMAILS
 ```

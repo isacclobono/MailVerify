@@ -105,3 +105,39 @@ export async function deleteOldVerifications(db: D1Database, retentionDays = 5):
     .run();
   return result.meta.changes || 0;
 }
+
+export async function countTotalVerifications(db: D1Database): Promise<number> {
+  const result = await db
+    .prepare("SELECT COUNT(*) as count FROM verifications")
+    .first<{ count: number }>();
+  return result?.count || 0;
+}
+
+export async function getVerdictBreakdown(db: D1Database): Promise<Record<string, number>> {
+  const { results } = await db
+    .prepare("SELECT verdict, COUNT(*) as count FROM verifications GROUP BY verdict")
+    .all<{ verdict: string; count: number }>();
+
+  const breakdown: Record<string, number> = {};
+  if (results) {
+    for (const row of results) {
+      breakdown[row.verdict] = row.count;
+    }
+  }
+  return breakdown;
+}
+
+export async function listRecentVerifications(
+  db: D1Database,
+  limit = 50,
+  offset = 0
+): Promise<Array<Omit<VerificationRecord, "result_json">>> {
+  const { results } = await db
+    .prepare(
+      "SELECT id, user_id, email, normalized_email, verdict, score, created_at FROM verifications ORDER BY created_at DESC LIMIT ? OFFSET ?"
+    )
+    .bind(limit, offset)
+    .all<Omit<VerificationRecord, "result_json">>();
+  return results || [];
+}
+

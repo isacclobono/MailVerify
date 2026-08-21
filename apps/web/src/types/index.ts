@@ -36,6 +36,7 @@ export interface User {
   email: string;
   name?: string;
   avatar_url?: string;
+  is_admin?: boolean;
 }
 
 export interface BulkJobSummary {
@@ -45,3 +46,24 @@ export interface BulkJobSummary {
   failed: number;
   results: VerificationResult[];
 }
+
+export interface AdminStats {
+  total_users: number;
+  total_verifications: number;
+  total_bulk_jobs: number;
+  verdict_breakdown: Record<string, number>;
+  edge_runtime: string;
+  cdn_cache_status: string;
+  timestamp: string;
+}
+
+export interface AdminUserRecord {
+  id: string;
+  google_sub: string | null;
+  email: string;
+  name: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+

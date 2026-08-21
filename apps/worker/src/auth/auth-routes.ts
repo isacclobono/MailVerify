@@ -127,7 +127,15 @@ authRoutes.get("/me", requireAuthMiddleware, async (c) => {
   const user = c.get("user");
   return c.json({
     success: true,
-    data: { user },
+    data: {
+      user: {
+        id: user?.id,
+        email: user?.email,
+        name: user?.name,
+        avatar_url: user?.avatar_url,
+        is_admin: Boolean(user?.isAdmin),
+      },
+    },
   });
 });
 

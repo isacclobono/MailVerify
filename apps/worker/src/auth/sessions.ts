@@ -33,6 +33,15 @@ export function buildClearSessionCookie(isSecure = true): string {
   return `${SESSION_COOKIE_NAME}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax${secureFlag}`;
 }
 
+export function checkIsAdmin(email: string, adminEmailsConfig?: string): boolean {
+  if (!adminEmailsConfig || !email) return false;
+  const list = adminEmailsConfig
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  return list.includes(email.toLowerCase());
+}
+
 export const optionalAuthMiddleware: MiddlewareHandler<AppContext> = async (c, next) => {
   const cookieHeader = c.req.header("Cookie") || null;
   const cookies = parseCookies(cookieHeader);
@@ -42,11 +51,13 @@ export const optionalAuthMiddleware: MiddlewareHandler<AppContext> = async (c, n
     try {
       const authData = await findSessionAndUserByToken(c.env.DB, rawToken);
       if (authData) {
+        const isAdmin = checkIsAdmin(authData.user.email, c.env.ADMIN_EMAILS);
         c.set("user", {
           id: authData.user.id,
           email: authData.user.email,
           name: authData.user.name || undefined,
           avatar_url: authData.user.avatar_url || undefined,
+          isAdmin,
         });
         c.set("sessionId", authData.session.id);
       }
@@ -90,13 +101,47 @@ export const requireAuthMiddleware: MiddlewareHandler<AppContext> = async (c, ne
     );
   }
 
+  const isAdmin = checkIsAdmin(authData.user.email, c.env.ADMIN_EMAILS);
   c.set("user", {
     id: authData.user.id,
     email: authData.user.email,
     name: authData.user.name || undefined,
     avatar_url: authData.user.avatar_url || undefined,
+    isAdmin,
   });
   c.set("sessionId", authData.session.id);
 
   await next();
 };
+
+export const requireAdminMiddleware: MiddlewareHandler<AppContext> = async (c, next) => {
+  const user = c.get("user");
+  if (!user) {
+    return c.json(
+      {
+        success: false,
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required.",
+        },
+      },
+      401
+    );
+  }
+
+  if (!user.isAdmin) {
+    return c.json(
+      {
+        success: false,
+        error: {
+          code: "FORBIDDEN",
+          message: "Admin privileges required to access this resource.",
+        },
+      },
+      403
+    );
+  }
+
+  await next();
+};
+

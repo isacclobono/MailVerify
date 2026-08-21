@@ -8,6 +8,7 @@ export interface Env {
   GOOGLE_CLIENT_SECRET: string;
   SESSION_SECRET: string;
   APP_BASE_URL: string;
+  ADMIN_EMAILS?: string;
 }
 
 export type AppContext = {
@@ -18,6 +19,7 @@ export type AppContext = {
       email: string;
       name?: string;
       avatar_url?: string;
+      isAdmin?: boolean;
     };
     sessionId?: string;
   };

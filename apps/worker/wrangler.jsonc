@@ -10,14 +10,14 @@
     {
       "binding": "DB",
       "database_name": "mailverify",
-      "database_id": "YOUR_D1_DATABASE_ID_HERE",
+      "database_id": "adce9a67-ba22-48b8-a3aa-583c1a285a57",
       "migrations_dir": "../../migrations"
     }
   ],
   "kv_namespaces": [
     {
       "binding": "CACHE",
-      "id": "YOUR_KV_NAMESPACE_ID_HERE"
+      "id": "0de8d66a36544e0e92d674ba61caaa15"
     }
   ],
   "triggers": {

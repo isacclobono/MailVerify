@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { AppContext } from "./env";
 import { authRoutes } from "./auth/auth-routes";
+import { adminRoutes } from "./admin/admin-routes";
 import { optionalAuthMiddleware, requireAuthMiddleware } from "./auth/sessions";
 import { securityHeadersMiddleware, corsMiddleware } from "./security/security";
 import { checkRateLimit, ANONYMOUS_CHECK_LIMIT } from "./security/rate-limit";
@@ -21,12 +22,16 @@ export function createRouter(): Hono<AppContext> {
   app.use("*", securityHeadersMiddleware);
   app.use("/api/*", optionalAuthMiddleware);
 
-  // Health check
+  // Health check with CDN edge cache headers
   app.get("/api/health", (c) => {
+    c.header("Cache-Control", "public, max-age=30, s-maxage=60");
+    c.header("CF-Cache-Status", "DYNAMIC");
     return c.json({
       success: true,
       data: {
         status: "healthy",
+        edge_runtime: "Cloudflare Workers",
+        cdn_cache: "enabled",
         timestamp: new Date().toISOString(),
       },
     });
@@ -34,6 +39,9 @@ export function createRouter(): Hono<AppContext> {
 
   // Auth routes
   app.route("/api/auth", authRoutes);
+
+  // Admin routes
+  app.route("/api/admin", adminRoutes);
 
   // Single Verification (Anonymous with 5-check limit & Authenticated)
   app.post("/api/verify", async (c) => {

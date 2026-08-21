@@ -7,3 +7,4 @@ SESSION_SECRET=replace-with-a-random-32-char-secret-string
 
 # Frontend Base URL (for redirecting after OAuth)
 APP_BASE_URL=http://localhost:5173
+ADMIN_EMAILS=admin@example.com,owner@yourdomain.com
