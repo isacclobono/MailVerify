@@ -17,6 +17,7 @@ export type DisposableCheck = "DISPOSABLE" | "NOT_DISPOSABLE" | "UNKNOWN";
 export type RoleCheck = "ROLE_ACCOUNT" | "PERSONAL_ACCOUNT_LIKELY" | "UNKNOWN";
 export type CatchAllCheck = "CATCH_ALL" | "NOT_CATCH_ALL" | "UNKNOWN";
 export type SMTPCheck = "SMTP_EXISTS" | "SMTP_NOT_FOUND" | "UNKNOWN";
+export type FreeProviderCheck = "FREE_PROVIDER" | "BUSINESS_CORPORATE" | "UNKNOWN";
 
 export interface VerificationChecks {
   syntax: SyntaxCheck;
@@ -28,6 +29,7 @@ export interface VerificationChecks {
   role: RoleCheck;
   catch_all: CatchAllCheck;
   smtp: SMTPCheck;
+  free_provider: FreeProviderCheck;
 }
 
 export interface VerificationResult {
@@ -36,6 +38,10 @@ export interface VerificationResult {
   normalized_email: string;
   verdict: Verdict;
   score: number;
+  confidence: number;
+  is_free_provider: boolean;
+  did_you_mean: string | null;
+  reasons: string[];
   checks: VerificationChecks;
   created_at: string;
   remaining_anonymous_checks?: number;

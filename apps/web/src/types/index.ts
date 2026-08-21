@@ -18,6 +18,7 @@ export interface VerificationChecks {
   role: "ROLE_ACCOUNT" | "PERSONAL_ACCOUNT_LIKELY" | "UNKNOWN";
   catch_all: "CATCH_ALL" | "NOT_CATCH_ALL" | "UNKNOWN";
   smtp: "SMTP_EXISTS" | "SMTP_NOT_FOUND" | "UNKNOWN";
+  free_provider?: "FREE_PROVIDER" | "BUSINESS_CORPORATE" | "UNKNOWN";
 }
 
 export interface VerificationResult {
@@ -26,6 +27,10 @@ export interface VerificationResult {
   normalized_email: string;
   verdict: Verdict;
   score: number;
+  confidence?: number;
+  is_free_provider?: boolean;
+  did_you_mean?: string | null;
+  reasons?: string[];
   checks: VerificationChecks;
   created_at: string;
   remaining_anonymous_checks?: number;
@@ -92,6 +97,3 @@ export interface AdminUserRecord {
   created_at: string;
   updated_at: string;
 }
-
-
-

@@ -1,5 +1,5 @@
 import { VerificationChecks } from "../types";
-import { Check, X, HelpCircle, Shield, Server, FileText, Lock, UserCheck } from "lucide-react";
+import { Check, X, HelpCircle, Shield, Server, FileText, Lock, UserCheck, Mail } from "lucide-react";
 
 interface ChecksDetailProps {
   checks: VerificationChecks;
@@ -14,7 +14,7 @@ export const ChecksDetail = ({ checks }: ChecksDetailProps) => {
   const getStatusText = (status: string) => {
     switch (status) {
       case "PASS":
-        return { text: "Valid Syntax", passed: true };
+        return { text: "Valid RFC Syntax", passed: true };
       case "FAIL":
         return { text: "Syntax Error", passed: false };
       case "DOMAIN_EXISTS":
@@ -38,13 +38,17 @@ export const ChecksDetail = ({ checks }: ChecksDetailProps) => {
       case "DMARC_INVALID":
         return { text: "DMARC Invalid", passed: false };
       case "NOT_DISPOSABLE":
-        return { text: "Standard Provider", passed: true };
+        return { text: "Standard Domain", passed: true };
       case "DISPOSABLE":
-        return { text: "Temporary / Disposable", passed: false };
+        return { text: "Temporary / Burner", passed: false };
       case "PERSONAL_ACCOUNT_LIKELY":
-        return { text: "Personal / Direct Mailbox", passed: true };
+        return { text: "Personal / Direct", passed: true };
       case "ROLE_ACCOUNT":
         return { text: "Generic Role (e.g. support@)", passed: false };
+      case "FREE_PROVIDER":
+        return { text: "Free Consumer Mailbox", passed: true };
+      case "BUSINESS_CORPORATE":
+        return { text: "Corporate / Business Domain", passed: true };
       default:
         return { text: status, unknown: true, passed: false };
     }
@@ -56,8 +60,9 @@ export const ChecksDetail = ({ checks }: ChecksDetailProps) => {
     { title: "MX Routing", icon: <Server size={16} />, status: checks.mx },
     { title: "SPF Record", icon: <Shield size={16} />, status: checks.spf },
     { title: "DMARC Policy", icon: <Lock size={16} />, status: checks.dmarc },
-    { title: "Disposable Domain", icon: <Shield size={16} />, status: checks.disposable },
+    { title: "Disposable Check", icon: <Shield size={16} />, status: checks.disposable },
     { title: "Account Type", icon: <UserCheck size={16} />, status: checks.role },
+    { title: "Provider Class", icon: <Mail size={16} />, status: checks.free_provider || "BUSINESS_CORPORATE" },
   ];
 
   return (

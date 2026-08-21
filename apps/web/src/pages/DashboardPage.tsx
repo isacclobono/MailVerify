@@ -139,7 +139,6 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
   const parseEmailsFromText = (raw: string): string[] => {
     const emailRegex = /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
     const matches = raw.match(emailRegex) || [];
-    // Deduplicate
     return Array.from(new Set(matches.map((e) => e.trim().toLowerCase())));
   };
 
@@ -210,9 +209,9 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
 
   const downloadResultsCSV = () => {
     if (!bulkSummary || !bulkSummary.results) return;
-    const header = "Email,Verdict,Score,MX_Status,SPF_Status,DMARC_Status,Disposable\n";
+    const header = "Email,Verdict,Score,MX_Status,SPF_Status,DMARC_Status,Disposable,Provider_Type\n";
     const rows = bulkSummary.results
-      .map((r) => `"${r.email}","${r.verdict}",${r.score},"${r.checks.mx}","${r.checks.spf}","${r.checks.dmarc}","${r.checks.disposable}"`)
+      .map((r) => `"${r.email}","${r.verdict}",${r.score},"${r.checks.mx}","${r.checks.spf}","${r.checks.dmarc}","${r.checks.disposable}","${r.is_free_provider ? "FREE" : "BUSINESS"}"`)
       .join("\n");
     const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -291,7 +290,7 @@ print(res.json())`;
         return `$ch = curl_init("https://mailverify.pulsechat.workers.dev/api/verify");
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     "Content-Type: application/json",
-    "X-API-Key: ${key}"
+    "X-API-Key": "${key}"
 ]);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(["email" => "contact@domain.com"]));
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -781,14 +780,68 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
 
           {singleResult && (
             <div className="result-card" style={{ marginTop: "1.5rem" }}>
+              {singleResult.did_you_mean && (
+                <div
+                  style={{
+                    background: "rgba(245, 158, 11, 0.1)",
+                    border: "1px solid rgba(245, 158, 11, 0.3)",
+                    padding: "0.75rem 1rem",
+                    borderRadius: "var(--radius-md)",
+                    marginBottom: "1.25rem",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <div style={{ fontSize: "0.88rem", color: "#92400e" }}>
+                    💡 Possible typo detected. Did you mean <strong>{singleResult.did_you_mean}</strong>?
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={() => {
+                      setSingleEmail(singleResult.did_you_mean || "");
+                    }}
+                    style={{ fontSize: "0.78rem", padding: "0.3rem 0.65rem", borderColor: "#f59e0b", color: "#b45309" }}
+                  >
+                    Apply {singleResult.did_you_mean} →
+                  </button>
+                </div>
+              )}
+
               <div className="result-header">
                 <div>
-                  <span className="section-eyebrow">VERDICT</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+                    <span className="section-eyebrow">VERDICT</span>
+                    {singleResult.confidence !== undefined && (
+                      <span style={{ fontSize: "0.72rem", padding: "0.15rem 0.5rem", borderRadius: "9999px", background: "rgba(37, 99, 235, 0.1)", color: "var(--accent-blue)", fontWeight: 700 }}>
+                        {Math.round(singleResult.confidence * 100)}% Confidence
+                      </span>
+                    )}
+                    {singleResult.is_free_provider && (
+                      <span style={{ fontSize: "0.72rem", padding: "0.15rem 0.5rem", borderRadius: "9999px", background: "rgba(100, 116, 139, 0.1)", color: "var(--text-muted)", fontWeight: 600 }}>
+                        Consumer Mailbox
+                      </span>
+                    )}
+                  </div>
                   <div className="result-email">{singleResult.email}</div>
                 </div>
                 <VerdictBadge verdict={singleResult.verdict} score={singleResult.score} />
               </div>
+
               <ChecksDetail checks={singleResult.checks} />
+
+              {singleResult.reasons && singleResult.reasons.length > 0 && (
+                <div style={{ marginTop: "1rem", display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                  {singleResult.reasons.map((r, i) => (
+                    <span key={i} style={{ fontSize: "0.68rem", padding: "0.15rem 0.45rem", borderRadius: "4px", background: "var(--bg-subtle)", color: "var(--text-muted)", border: "1px solid var(--border-subtle)", fontFamily: "var(--font-mono)" }}>
+                      {r.replace("REASON_", "")}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -137,15 +137,68 @@ export const HomePage = ({ user, onNavigateDashboard }: HomePageProps) => {
         {/* Live Verification Result Box */}
         {result && (
           <div className="result-card">
+            {result.did_you_mean && (
+              <div
+                style={{
+                  background: "rgba(245, 158, 11, 0.1)",
+                  border: "1px solid rgba(245, 158, 11, 0.3)",
+                  padding: "0.75rem 1rem",
+                  borderRadius: "var(--radius-md)",
+                  marginBottom: "1.25rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "0.5rem",
+                }}
+              >
+                <div style={{ fontSize: "0.88rem", color: "#92400e" }}>
+                  💡 Possible typo detected. Did you mean <strong>{result.did_you_mean}</strong>?
+                </div>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => {
+                    setEmail(result.did_you_mean || "");
+                    handleTryEmail(result.did_you_mean || "");
+                  }}
+                  style={{ fontSize: "0.78rem", padding: "0.3rem 0.65rem", borderColor: "#f59e0b", color: "#b45309" }}
+                >
+                  Verify {result.did_you_mean} →
+                </button>
+              </div>
+            )}
+
             <div className="result-header">
               <div>
-                <span className="section-eyebrow">VERDICT</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+                  <span className="section-eyebrow">VERDICT</span>
+                  {result.confidence !== undefined && (
+                    <span style={{ fontSize: "0.72rem", padding: "0.15rem 0.5rem", borderRadius: "9999px", background: "rgba(37, 99, 235, 0.1)", color: "var(--accent-blue)", fontWeight: 700 }}>
+                      {Math.round(result.confidence * 100)}% Confidence
+                    </span>
+                  )}
+                  {result.is_free_provider && (
+                    <span style={{ fontSize: "0.72rem", padding: "0.15rem 0.5rem", borderRadius: "9999px", background: "rgba(100, 116, 139, 0.1)", color: "var(--text-muted)", fontWeight: 600 }}>
+                      Consumer Mailbox
+                    </span>
+                  )}
+                </div>
                 <div className="result-email">{result.email}</div>
               </div>
               <VerdictBadge verdict={result.verdict} score={result.score} />
             </div>
 
             <ChecksDetail checks={result.checks} />
+
+            {result.reasons && result.reasons.length > 0 && (
+              <div style={{ marginTop: "1rem", display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                {result.reasons.map((r, i) => (
+                  <span key={i} style={{ fontSize: "0.68rem", padding: "0.15rem 0.45rem", borderRadius: "4px", background: "var(--bg-subtle)", color: "var(--text-muted)", border: "1px solid var(--border-subtle)", fontFamily: "var(--font-mono)" }}>
+                    {r.replace("REASON_", "")}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
