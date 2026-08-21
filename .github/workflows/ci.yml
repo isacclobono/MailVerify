@@ -1,0 +1,45 @@
+name: CI - Test & Build MailVerify
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-and-test:
+    name: 🧪 Lint, Typecheck & Run Unit Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x]
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: 📦 Install Monorepo Dependencies
+        run: npm ci || npm install
+
+      - name: 🔍 Typecheck Cloudflare Worker Backend
+        run: npx tsc --noEmit --project apps/worker/tsconfig.json
+
+      - name: 🔍 Typecheck React Vite Frontend
+        run: npx tsc --noEmit --project apps/web/tsconfig.json
+
+      - name: ⚡ Run Backend Unit Tests (Vitest)
+        run: npm run test --workspace=apps/worker
+
+      - name: 🏗️ Build Frontend Static Assets (Vite)
+        run: npm run build --workspace=apps/web
