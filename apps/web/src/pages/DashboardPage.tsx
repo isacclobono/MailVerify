@@ -724,31 +724,33 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
                 </div>
               </div>
             ) : (
-              <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
-                  <thead>
-                    <tr style={{ background: "var(--bg-subtle)", borderBottom: "1px solid var(--border-subtle)", textAlign: "left" }}>
-                      <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 600 }}>Email</th>
-                      <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 600 }}>Verdict</th>
-                      <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 600 }}>Score</th>
-                      <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 600 }}>Time</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {history.slice(0, 5).map((item, idx) => (
-                      <tr key={idx} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                        <td style={{ padding: "0.85rem 1rem", fontWeight: 600 }}>{item.email}</td>
-                        <td style={{ padding: "0.85rem 1rem" }}>
-                          <VerdictBadge verdict={item.verdict} score={item.score} />
-                        </td>
-                        <td style={{ padding: "0.85rem 1rem" }}>{item.score}/100</td>
-                        <td style={{ padding: "0.85rem 1rem", color: "var(--text-muted)" }}>
-                          {new Date(item.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                        </td>
+              <div className="data-table-wrapper">
+                <div className="data-table-scroll">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Email</th>
+                        <th>Verdict</th>
+                        <th>Score</th>
+                        <th>Time</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {history.slice(0, 5).map((item, idx) => (
+                        <tr key={idx}>
+                          <td style={{ fontWeight: 600, fontFamily: "var(--font-mono)", fontSize: "0.78rem" }}>{item.email}</td>
+                          <td>
+                            <VerdictBadge verdict={item.verdict} score={item.score} />
+                          </td>
+                          <td style={{ fontWeight: 700, fontFamily: "var(--font-mono)" }}>{item.score}/100</td>
+                          <td style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
+                            {new Date(item.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
@@ -1035,37 +1037,43 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
 
               {/* Detailed Results Table */}
               {bulkSummary.results && bulkSummary.results.length > 0 && (
-                <div style={{ border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
-                  <div style={{ overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+                <div className="data-table-wrapper">
+                  <div className="data-table-scroll">
+                    <table className="data-table">
                       <thead>
-                        <tr style={{ background: "var(--bg-subtle)", borderBottom: "1px solid var(--border-subtle)", textAlign: "left" }}>
-                          <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>Email Address</th>
-                          <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>Verdict</th>
-                          <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>Score</th>
-                          <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>MX Record</th>
-                          <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>SPF / DMARC</th>
-                          <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>Disposable</th>
+                        <tr>
+                          <th>Email Address</th>
+                          <th>Verdict</th>
+                          <th>Score</th>
+                          <th>MX Record</th>
+                          <th>SPF / DMARC</th>
+                          <th>Disposable</th>
                         </tr>
                       </thead>
                       <tbody>
                         {bulkSummary.results
                           .slice((bulkPage - 1) * BULK_PAGE_SIZE, bulkPage * BULK_PAGE_SIZE)
                           .map((r, i) => (
-                            <tr key={i} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                              <td style={{ padding: "0.65rem 0.85rem", fontWeight: 600 }}>{r.email}</td>
-                              <td style={{ padding: "0.65rem 0.85rem" }}>
+                            <tr key={i}>
+                              <td style={{ fontWeight: 600, fontFamily: "var(--font-mono)", fontSize: "0.78rem" }}>{r.email}</td>
+                              <td>
                                 <VerdictBadge verdict={r.verdict} score={r.score} />
                               </td>
-                              <td style={{ padding: "0.65rem 0.85rem", fontWeight: 700 }}>{r.score}/100</td>
-                              <td style={{ padding: "0.65rem 0.85rem", color: r.checks.mx === "MX_FOUND" ? "var(--success)" : "var(--danger)" }}>
-                                {r.checks.mx === "MX_FOUND" ? "✓ Found" : "✗ Missing"}
+                              <td style={{ fontWeight: 700, fontFamily: "var(--font-mono)" }}>{r.score}/100</td>
+                              <td>
+                                <span className={`table-pill ${r.checks.mx === "MX_FOUND" ? "table-pill-success" : "table-pill-danger"}`}>
+                                  {r.checks.mx === "MX_FOUND" ? "✓ Found" : "✗ Missing"}
+                                </span>
                               </td>
-                              <td style={{ padding: "0.65rem 0.85rem", color: r.checks.spf.includes("PRESENT") ? "var(--success)" : "var(--warning)" }}>
-                                {r.checks.spf.includes("PRESENT") ? "✓ Valid" : "⚠ Missing"}
+                              <td>
+                                <span className={`table-pill ${r.checks.spf.includes("PRESENT") ? "table-pill-success" : "table-pill-warning"}`}>
+                                  {r.checks.spf.includes("PRESENT") ? "✓ Valid" : "⚠ Missing"}
+                                </span>
                               </td>
-                              <td style={{ padding: "0.65rem 0.85rem", color: r.checks.disposable === "NOT_DISPOSABLE" ? "var(--text-muted)" : "var(--danger)" }}>
-                                {r.checks.disposable === "NOT_DISPOSABLE" ? "Clean" : "Burner"}
+                              <td>
+                                <span className={`table-pill ${r.checks.disposable === "NOT_DISPOSABLE" ? "table-pill-muted" : "table-pill-danger"}`}>
+                                  {r.checks.disposable === "NOT_DISPOSABLE" ? "Clean" : "Burner"}
+                                </span>
                               </td>
                             </tr>
                           ))}
@@ -1105,28 +1113,28 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
           {history.length === 0 ? (
             <p style={{ color: "var(--text-muted)", textAlign: "center", padding: "2rem", fontSize: "0.82rem" }}>No verifications recorded in the last 5 days.</p>
           ) : (
-            <div style={{ border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+            <div className="data-table-wrapper">
+              <div className="data-table-scroll">
+                <table className="data-table">
                   <thead>
-                    <tr style={{ background: "var(--bg-subtle)", borderBottom: "1px solid var(--border-subtle)", textAlign: "left" }}>
-                      <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>Email</th>
-                      <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>Verdict</th>
-                      <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>Score</th>
-                      <th style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>Verified At</th>
+                    <tr>
+                      <th>Email</th>
+                      <th>Verdict</th>
+                      <th>Score</th>
+                      <th>Verified At</th>
                     </tr>
                   </thead>
                   <tbody>
                     {history
                       .slice((historyPage - 1) * HISTORY_PAGE_SIZE, historyPage * HISTORY_PAGE_SIZE)
                       .map((h, i) => (
-                        <tr key={i} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                          <td style={{ padding: "0.65rem 0.85rem", fontWeight: 600 }}>{h.email}</td>
-                          <td style={{ padding: "0.65rem 0.85rem" }}>
+                        <tr key={i}>
+                          <td style={{ fontWeight: 600, fontFamily: "var(--font-mono)", fontSize: "0.78rem" }}>{h.email}</td>
+                          <td>
                             <VerdictBadge verdict={h.verdict} score={h.score} />
                           </td>
-                          <td style={{ padding: "0.65rem 0.85rem", fontWeight: 700 }}>{h.score}/100</td>
-                          <td style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)" }}>
+                          <td style={{ fontWeight: 700, fontFamily: "var(--font-mono)" }}>{h.score}/100</td>
+                          <td style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
                             {new Date(h.created_at).toLocaleString()}
                           </td>
                         </tr>
@@ -1151,13 +1159,13 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
       {activeTab === "keys" && (
         <div>
           {/* Top Key Generation Box */}
-          <div className="card" style={{ padding: "2rem", marginBottom: "2rem" }}>
-            <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "0.5rem" }}>Generate New API Key</h2>
-            <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", marginBottom: "1.5rem" }}>
+          <div className="card" style={{ padding: "1.5rem", marginBottom: "1.5rem" }}>
+            <h2 style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: "0.35rem" }}>Generate New API Key</h2>
+            <p style={{ color: "var(--text-muted)", fontSize: "0.82rem", marginBottom: "1.25rem" }}>
               Authenticate backend requests via <code>X-API-Key: mv_live_...</code> or <code>Authorization: Bearer &lt;key&gt;</code>.
             </p>
 
-            <form onSubmit={handleCreateKey} style={{ display: "flex", gap: "0.75rem", maxWidth: "520px" }}>
+            <form onSubmit={handleCreateKey} style={{ display: "flex", gap: "0.65rem", maxWidth: "520px" }}>
               <input
                 type="text"
                 className="clean-input"
@@ -1167,19 +1175,19 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
                 required
                 disabled={generatingKey || apiKeys.length >= 5}
               />
-              <button type="submit" className="btn btn-black" disabled={generatingKey || !newKeyName.trim() || apiKeys.length >= 5} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", whiteSpace: "nowrap" }}>
-                {generatingKey ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+              <button type="submit" className="btn btn-black" disabled={generatingKey || !newKeyName.trim() || apiKeys.length >= 5} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", whiteSpace: "nowrap", fontSize: "0.8rem", padding: "0.55rem 1rem" }}>
+                {generatingKey ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                 <span>Create Key</span>
               </button>
             </form>
 
             {createdKey && (
-              <div style={{ marginTop: "1.5rem", padding: "1rem 1.25rem", background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: "var(--radius-md)" }}>
-                <div style={{ fontWeight: 700, color: "var(--success)", fontSize: "0.9rem", marginBottom: "0.4rem" }}>
+              <div style={{ marginTop: "1.25rem", padding: "0.85rem 1rem", background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: "var(--radius-md)" }}>
+                <div style={{ fontWeight: 700, color: "var(--success)", fontSize: "0.85rem", marginBottom: "0.35rem" }}>
                   🎉 API Key Created! Copy it now (it won't be displayed again):
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <code style={{ background: "#0f172a", color: "#34d399", padding: "0.5rem 0.75rem", borderRadius: "var(--radius-sm)", fontSize: "0.85rem", fontFamily: "var(--font-mono)", flex: 1, overflowX: "auto" }}>
+                  <code style={{ background: "#0f172a", color: "#34d399", padding: "0.45rem 0.65rem", borderRadius: "var(--radius-sm)", fontSize: "0.82rem", fontFamily: "var(--font-mono)", flex: 1, overflowX: "auto" }}>
                     {createdKey.raw_key}
                   </code>
                   <button
@@ -1189,9 +1197,9 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
                       setCopiedToken(true);
                       setTimeout(() => setCopiedToken(false), 2000);
                     }}
-                    style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
+                    style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", fontSize: "0.78rem", padding: "0.45rem 0.75rem" }}
                   >
-                    {copiedToken ? <Check size={14} /> : <Copy size={14} />}
+                    {copiedToken ? <Check size={13} /> : <Copy size={13} />}
                     <span>{copiedToken ? "Copied" : "Copy"}</span>
                   </button>
                 </div>
@@ -1200,42 +1208,46 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
           </div>
 
           {/* Active Keys List */}
-          <div className="card" style={{ padding: "2rem" }}>
-            <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "1rem" }}>Active API Keys ({apiKeys.length}/5)</h3>
+          <div className="card" style={{ padding: "1.5rem" }}>
+            <h3 style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: "0.85rem" }}>Active API Keys ({apiKeys.length}/5)</h3>
             {keysLoading ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--text-muted)" }}>
-                <Loader2 size={16} className="animate-spin" /> Loading keys...
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--text-muted)", fontSize: "0.82rem" }}>
+                <Loader2 size={14} className="animate-spin" /> Loading keys...
               </div>
             ) : apiKeys.length === 0 ? (
-              <p style={{ color: "var(--text-muted)" }}>No API keys generated yet. Create one above to get started.</p>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.82rem" }}>No API keys generated yet. Create one above to get started.</p>
             ) : (
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
-                <thead>
-                  <tr style={{ borderBottom: "2px solid var(--border-subtle)", textAlign: "left" }}>
-                    <th style={{ padding: "0.75rem" }}>Label</th>
-                    <th style={{ padding: "0.75rem" }}>Prefix</th>
-                    <th style={{ padding: "0.75rem" }}>Created</th>
-                    <th style={{ padding: "0.75rem", textAlign: "right" }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {apiKeys.map((k) => (
-                    <tr key={k.id} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                      <td style={{ padding: "0.75rem", fontWeight: 600 }}>{k.name}</td>
-                      <td style={{ padding: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>{k.key_prefix}...</td>
-                      <td style={{ padding: "0.75rem", color: "var(--text-muted)" }}>{new Date(k.created_at).toLocaleDateString()}</td>
-                      <td style={{ padding: "0.75rem", textAlign: "right" }}>
-                        <button
-                          onClick={() => handleDeleteKey(k.id)}
-                          style={{ background: "none", border: "none", color: "var(--danger)", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}
-                        >
-                          <Trash2 size={14} /> Revoke
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="data-table-wrapper">
+                <div className="data-table-scroll">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Label</th>
+                        <th>Prefix</th>
+                        <th>Created</th>
+                        <th style={{ textAlign: "right" }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {apiKeys.map((k) => (
+                        <tr key={k.id}>
+                          <td style={{ fontWeight: 600 }}>{k.name}</td>
+                          <td style={{ fontFamily: "var(--font-mono)", color: "var(--text-muted)", fontSize: "0.78rem" }}>{k.key_prefix}...</td>
+                          <td style={{ color: "var(--text-muted)", fontSize: "0.78rem" }}>{new Date(k.created_at).toLocaleDateString()}</td>
+                          <td style={{ textAlign: "right" }}>
+                            <button
+                              onClick={() => handleDeleteKey(k.id)}
+                              style={{ background: "none", border: "none", color: "var(--danger)", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.25rem", fontSize: "0.75rem", fontWeight: 600 }}
+                            >
+                              <Trash2 size={13} /> Revoke
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             )}
           </div>
         </div>

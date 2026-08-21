@@ -345,26 +345,34 @@ export const DocsPage = () => {
 
               {/* Query / Body Parameters */}
               <h3 style={{ fontSize: "0.95rem", fontWeight: 700, marginBottom: "0.5rem" }}>Request Parameters</h3>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem", marginBottom: "1.5rem" }}>
-                <thead>
-                  <tr style={{ background: "var(--bg-subtle)", borderBottom: "1px solid var(--border-subtle)", textAlign: "left" }}>
-                    <th style={{ padding: "0.5rem 0.75rem" }}>Parameter</th>
-                    <th style={{ padding: "0.5rem 0.75rem" }}>Type</th>
-                    <th style={{ padding: "0.5rem 0.75rem" }}>In</th>
-                    <th style={{ padding: "0.5rem 0.75rem" }}>Required</th>
-                    <th style={{ padding: "0.5rem 0.75rem" }}>Description</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                    <td style={{ padding: "0.5rem 0.75rem", fontFamily: "var(--font-mono)", fontWeight: 700 }}>email</td>
-                    <td style={{ padding: "0.5rem 0.75rem", color: "var(--accent-blue)" }}>string</td>
-                    <td style={{ padding: "0.5rem 0.75rem" }}>Body / Query</td>
-                    <td style={{ padding: "0.5rem 0.75rem", color: "var(--danger)", fontWeight: 700 }}>Yes</td>
-                    <td style={{ padding: "0.5rem 0.75rem", color: "var(--text-muted)" }}>Target email address to inspect (e.g. <code>alex@example.com</code>).</td>
-                  </tr>
-                </tbody>
-              </table>
+              <div className="data-table-wrapper" style={{ marginBottom: "1.5rem" }}>
+                <div className="data-table-scroll">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Parameter</th>
+                        <th>Type</th>
+                        <th>In</th>
+                        <th>Required</th>
+                        <th>Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>email</td>
+                        <td style={{ color: "var(--accent-blue)", fontFamily: "var(--font-mono)" }}>string</td>
+                        <td>
+                          <span className="table-pill table-pill-muted">Body / Query</span>
+                        </td>
+                        <td>
+                          <span className="table-pill table-pill-danger">Required</span>
+                        </td>
+                        <td style={{ color: "var(--text-muted)" }}>Target email address to inspect (e.g. <code>alex@example.com</code>).</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
               {/* Complete JSON Response */}
               <h3 style={{ fontSize: "0.95rem", fontWeight: 700, marginBottom: "0.5rem" }}>200 OK Response Schema</h3>
@@ -568,38 +576,48 @@ Authorization: Bearer mv_live_8994cf5f2b0645589f2fe0d786140cf8`}
                 MailVerify provides a normalized 0–100 risk score and categorical verdicts for straightforward filtering.
               </p>
 
-              <div style={{ border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
-                  <thead>
-                    <tr style={{ background: "var(--bg-subtle)", borderBottom: "1px solid var(--border-subtle)", textAlign: "left" }}>
-                      <th style={{ padding: "0.65rem 0.85rem" }}>Verdict</th>
-                      <th style={{ padding: "0.65rem 0.85rem" }}>Risk Score</th>
-                      <th style={{ padding: "0.65rem 0.85rem" }}>Meaning & Recommended Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                      <td style={{ padding: "0.65rem 0.85rem", fontWeight: 700, color: "var(--success)" }}>LIKELY_DELIVERABLE</td>
-                      <td style={{ padding: "0.65rem 0.85rem", fontWeight: 700 }}>0 – 29</td>
-                      <td style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)" }}>Safe to send. Active MX routing, resolved host, valid SPF/DMARC policies.</td>
-                    </tr>
-                    <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                      <td style={{ padding: "0.65rem 0.85rem", fontWeight: 700, color: "var(--warning)" }}>RISKY</td>
-                      <td style={{ padding: "0.65rem 0.85rem", fontWeight: 700 }}>30 – 69</td>
-                      <td style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)" }}>Send with caution. Missing anti-spoofing policies or degraded DNS host configuration.</td>
-                    </tr>
-                    <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                      <td style={{ padding: "0.65rem 0.85rem", fontWeight: 700, color: "var(--danger)" }}>LIKELY_INVALID</td>
-                      <td style={{ padding: "0.65rem 0.85rem", fontWeight: 700 }}>70 – 100</td>
-                      <td style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)" }}>Do not send. Non-existent domain or severe deliverability failure.</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: "0.65rem 0.85rem", fontWeight: 700, color: "var(--danger)" }}>DISPOSABLE</td>
-                      <td style={{ padding: "0.65rem 0.85rem", fontWeight: 700 }}>95</td>
-                      <td style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)" }}>Temporary burner inbox provider (e.g. Mailinator, GuerrillaMail). High bounce risk.</td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div className="data-table-wrapper">
+                <div className="data-table-scroll">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Verdict</th>
+                        <th>Risk Score</th>
+                        <th>Meaning & Recommended Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <span className="table-pill table-pill-success">LIKELY_DELIVERABLE</span>
+                        </td>
+                        <td style={{ fontWeight: 700, fontFamily: "var(--font-mono)" }}>0 – 29</td>
+                        <td style={{ color: "var(--text-muted)" }}>Safe to send. Active MX routing, resolved host, valid SPF/DMARC policies.</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span className="table-pill table-pill-warning">RISKY</span>
+                        </td>
+                        <td style={{ fontWeight: 700, fontFamily: "var(--font-mono)" }}>30 – 69</td>
+                        <td style={{ color: "var(--text-muted)" }}>Send with caution. Missing anti-spoofing policies or degraded DNS host configuration.</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span className="table-pill table-pill-danger">LIKELY_INVALID</span>
+                        </td>
+                        <td style={{ fontWeight: 700, fontFamily: "var(--font-mono)" }}>70 – 100</td>
+                        <td style={{ color: "var(--text-muted)" }}>Do not send. Non-existent domain or severe deliverability failure.</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span className="table-pill table-pill-danger">DISPOSABLE</span>
+                        </td>
+                        <td style={{ fontWeight: 700, fontFamily: "var(--font-mono)" }}>95</td>
+                        <td style={{ color: "var(--text-muted)" }}>Temporary burner inbox provider (e.g. Mailinator, GuerrillaMail). High bounce risk.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}

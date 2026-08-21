@@ -114,40 +114,50 @@ export const InfrastructurePage = () => {
       </div>
 
       {/* Live SLA & Bill Comparison */}
-      <div className="card" style={{ padding: "2.5rem", background: "var(--bg-subtle)" }}>
-        <h2 style={{ fontSize: "1.3rem", fontWeight: 800, marginBottom: "1rem" }}>Why Zero-Cost Architecture Wins</h2>
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
-            <thead>
-              <tr style={{ borderBottom: "1px solid var(--border-subtle)", textAlign: "left", color: "var(--text-muted)" }}>
-                <th style={{ padding: "0.75rem" }}>FEATURE</th>
-                <th style={{ padding: "0.75rem" }}>TRADITIONAL EMAIL VERIFIER</th>
-                <th style={{ padding: "0.75rem", color: "var(--accent-blue)" }}>MAILVERIFY ON CLOUDFLARE</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                <td style={{ padding: "0.75rem", fontWeight: 600 }}>Monthly Hosting Cost</td>
-                <td style={{ padding: "0.75rem", color: "var(--danger)" }}>$40 - $200 / month (VPS, Redis, RDS)</td>
-                <td style={{ padding: "0.75rem", fontWeight: 700, color: "var(--success)" }}>$0.00 / month (100% Free Tier)</td>
-              </tr>
-              <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                <td style={{ padding: "0.75rem", fontWeight: 600 }}>Global Edge Locations</td>
-                <td style={{ padding: "0.75rem" }}>1 - 2 data center regions</td>
-                <td style={{ padding: "0.75rem", fontWeight: 700, color: "var(--success)" }}>280+ cities worldwide</td>
-              </tr>
-              <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                <td style={{ padding: "0.75rem", fontWeight: 600 }}>Cold Start Latency</td>
-                <td style={{ padding: "0.75rem" }}>500ms - 2,000ms (Container cold start)</td>
-                <td style={{ padding: "0.75rem", fontWeight: 700, color: "var(--success)" }}>&lt; 5ms (V8 Isolates)</td>
-              </tr>
-              <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                <td style={{ padding: "0.75rem", fontWeight: 600 }}>Privacy & Retention</td>
-                <td style={{ padding: "0.75rem" }}>Data hoarded indefinitely</td>
-                <td style={{ padding: "0.75rem", fontWeight: 700, color: "var(--success)" }}>Automated 5-day purge cron</td>
-              </tr>
-            </tbody>
-          </table>
+      <div style={{ marginTop: "2rem" }}>
+        <h2 style={{ fontSize: "1.25rem", fontWeight: 800, marginBottom: "0.85rem" }}>Why Zero-Cost Architecture Wins</h2>
+        <div className="data-table-wrapper">
+          <div className="data-table-scroll">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>FEATURE</th>
+                  <th>TRADITIONAL EMAIL VERIFIER</th>
+                  <th style={{ color: "var(--accent-blue)" }}>MAILVERIFY ON CLOUDFLARE</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style={{ fontWeight: 600 }}>Monthly Hosting Cost</td>
+                  <td style={{ color: "var(--danger)" }}>$40 - $200 / month (VPS, Redis, RDS)</td>
+                  <td>
+                    <span className="table-pill table-pill-success">$0.00 / month (100% Free Tier)</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ fontWeight: 600 }}>Global Edge Locations</td>
+                  <td>1 - 2 data center regions</td>
+                  <td>
+                    <span className="table-pill table-pill-success">280+ cities worldwide</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ fontWeight: 600 }}>Cold Start Latency</td>
+                  <td>500ms - 2,000ms (Container cold start)</td>
+                  <td>
+                    <span className="table-pill table-pill-success">&lt; 5ms (V8 Isolates)</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ fontWeight: 600 }}>Privacy & Retention</td>
+                  <td>Data hoarded indefinitely</td>
+                  <td>
+                    <span className="table-pill table-pill-success">Automated 5-day purge cron</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

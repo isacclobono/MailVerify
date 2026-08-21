@@ -393,16 +393,16 @@ export const AdminPage = ({ user, onNavigateHome }: AdminPageProps) => {
                 </div>
               </div>
 
-              <div style={{ border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+              <div className="data-table-wrapper">
+                <div className="data-table-scroll">
+                  <table className="data-table">
                     <thead>
-                      <tr style={{ background: "var(--bg-subtle)", borderBottom: "1px solid var(--border-subtle)", textAlign: "left", color: "var(--text-muted)" }}>
-                        <th style={{ padding: "0.65rem 0.85rem" }}>USER</th>
-                        <th style={{ padding: "0.65rem 0.85rem" }}>USER ID</th>
-                        <th style={{ padding: "0.65rem 0.85rem" }}>GOOGLE SUB</th>
-                        <th style={{ padding: "0.65rem 0.85rem" }}>REGISTERED</th>
-                        <th style={{ padding: "0.65rem 0.85rem", textAlign: "right" }}>ACTIONS</th>
+                      <tr>
+                        <th>USER</th>
+                        <th>USER ID</th>
+                        <th>GOOGLE SUB</th>
+                        <th>REGISTERED</th>
+                        <th style={{ textAlign: "right" }}>ACTIONS</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -410,8 +410,8 @@ export const AdminPage = ({ user, onNavigateHome }: AdminPageProps) => {
                         filteredUsers
                           .slice((usersPage - 1) * USERS_PAGE_SIZE, usersPage * USERS_PAGE_SIZE)
                           .map((u) => (
-                            <tr key={u.id} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                              <td style={{ padding: "0.65rem 0.85rem" }}>
+                            <tr key={u.id}>
+                              <td>
                                 <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
                                   {u.avatar_url ? (
                                     <img src={u.avatar_url} alt={u.email} style={{ width: "22px", height: "22px", borderRadius: "50%" }} />
@@ -424,16 +424,16 @@ export const AdminPage = ({ user, onNavigateHome }: AdminPageProps) => {
                                   </div>
                                 </div>
                               </td>
-                              <td style={{ padding: "0.65rem 0.85rem", fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "var(--text-muted)" }}>
+                              <td style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "var(--text-muted)" }}>
                                 {u.id}
                               </td>
-                              <td style={{ padding: "0.65rem 0.85rem", fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "var(--text-muted)" }}>
+                              <td style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "var(--text-muted)" }}>
                                 {u.google_sub ? u.google_sub.substring(0, 10) + "..." : "Local / None"}
                               </td>
-                              <td style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)" }}>
+                              <td style={{ color: "var(--text-muted)" }}>
                                 {new Date(u.created_at).toLocaleDateString()}
                               </td>
-                              <td style={{ padding: "0.65rem 0.85rem", textAlign: "right" }}>
+                              <td style={{ textAlign: "right" }}>
                                 <button
                                   className="btn btn-outline"
                                   style={{ color: "var(--danger)", borderColor: "rgba(239, 68, 68, 0.3)", padding: "0.25rem 0.5rem", fontSize: "0.72rem" }}
@@ -471,15 +471,15 @@ export const AdminPage = ({ user, onNavigateHome }: AdminPageProps) => {
           {activeTab === "verifications" && (
             <div className="card" style={{ padding: "1.25rem" }}>
               <h3 style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: "1rem" }}>Global Live Verification Stream</h3>
-              <div style={{ border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+              <div className="data-table-wrapper">
+                <div className="data-table-scroll">
+                  <table className="data-table">
                     <thead>
-                      <tr style={{ background: "var(--bg-subtle)", borderBottom: "1px solid var(--border-subtle)", textAlign: "left", color: "var(--text-muted)" }}>
-                        <th style={{ padding: "0.65rem 0.85rem" }}>EMAIL</th>
-                        <th style={{ padding: "0.65rem 0.85rem" }}>VERDICT</th>
-                        <th style={{ padding: "0.65rem 0.85rem" }}>SCORE</th>
-                        <th style={{ padding: "0.65rem 0.85rem" }}>TIMESTAMP</th>
+                      <tr>
+                        <th>EMAIL</th>
+                        <th>VERDICT</th>
+                        <th>SCORE</th>
+                        <th>TIMESTAMP</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -487,17 +487,17 @@ export const AdminPage = ({ user, onNavigateHome }: AdminPageProps) => {
                         verifications
                           .slice((verifsPage - 1) * VERIFS_PAGE_SIZE, verifsPage * VERIFS_PAGE_SIZE)
                           .map((v) => (
-                            <tr key={v.id} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                              <td style={{ padding: "0.65rem 0.85rem", fontWeight: 600 }}>{v.email}</td>
-                              <td style={{ padding: "0.65rem 0.85rem" }}>
-                                <span style={{ fontSize: "0.72rem", fontWeight: 700, padding: "0.15rem 0.45rem", borderRadius: "4px", background: v.verdict.includes("DELIVERABLE") ? "rgba(16, 185, 129, 0.15)" : v.verdict.includes("RISKY") ? "rgba(245, 158, 11, 0.15)" : "rgba(239, 68, 68, 0.15)", color: v.verdict.includes("DELIVERABLE") ? "var(--success)" : v.verdict.includes("RISKY") ? "var(--warning)" : "var(--danger)" }}>
+                            <tr key={v.id}>
+                              <td style={{ fontWeight: 600, fontFamily: "var(--font-mono)", fontSize: "0.78rem" }}>{v.email}</td>
+                              <td>
+                                <span className={`table-pill ${v.verdict.includes("DELIVERABLE") ? "table-pill-success" : v.verdict.includes("RISKY") ? "table-pill-warning" : "table-pill-danger"}`}>
                                   {v.verdict}
                                 </span>
                               </td>
-                              <td style={{ padding: "0.65rem 0.85rem", fontFamily: "var(--font-mono)" }}>
+                              <td style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>
                                 {v.score}/100
                               </td>
-                              <td style={{ padding: "0.65rem 0.85rem", color: "var(--text-muted)", fontSize: "0.75rem" }}>
+                              <td style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
                                 {new Date(v.created_at).toLocaleString()}
                               </td>
                             </tr>
