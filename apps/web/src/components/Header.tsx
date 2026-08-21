@@ -12,8 +12,7 @@ import {
   Server, 
   Shield, 
   BookOpen, 
-  CreditCard,
-  ChevronDown
+  CreditCard 
 } from "lucide-react";
 
 export type AppView =
@@ -131,7 +130,7 @@ export const Header = ({
       {/* Header Right Actions */}
       <nav className="nav-links">
         {user ? (
-          <div style={{ position: "relative" }} ref={profileRef}>
+          <div style={{ position: "relative" }} ref={dropdownRef}>
             {/* Minimalist Circular Avatar Trigger */}
             <button
               onClick={() => setProfileOpen(!profileOpen)}
