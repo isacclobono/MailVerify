@@ -1,4 +1,5 @@
 import { AppView } from "./Header";
+import { api } from "../api/client";
 
 interface FooterProps {
   onNavigate?: (view: AppView) => void;
@@ -21,48 +22,48 @@ export const Footer = ({ onNavigate }: FooterProps) => {
             <ul className="footer-col-list">
               <li><button onClick={() => handleNav("home")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Single Verifier</button></li>
               <li><button onClick={() => handleNav("dashboard")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Bulk Batch Engine</button></li>
-              <li><button onClick={() => handleNav("docs")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>DNS & MX Checker</button></li>
-              <li><button onClick={() => handleNav("pricing")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Free Tier Quotas</button></li>
+              <li><button onClick={() => handleNav("dns-mx")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>DNS & MX Checker</button></li>
+              <li><button onClick={() => handleNav("spf-dmarc")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>SPF & DMARC Audit</button></li>
             </ul>
           </div>
 
           <div>
             <div className="footer-col-title">INFRASTRUCTURE</div>
             <ul className="footer-col-list">
-              <li><a href="https://workers.cloudflare.com" target="_blank" rel="noreferrer" className="footer-link">Cloudflare Workers</a></li>
-              <li><a href="https://developers.cloudflare.com/d1/" target="_blank" rel="noreferrer" className="footer-link">Cloudflare D1 SQL</a></li>
-              <li><a href="https://developers.cloudflare.com/kv/" target="_blank" rel="noreferrer" className="footer-link">Cloudflare KV Cache</a></li>
-              <li><a href="https://cloudflare-dns.com" target="_blank" rel="noreferrer" className="footer-link">DNS over HTTPS</a></li>
+              <li><button onClick={() => handleNav("infra")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Cloudflare Workers</button></li>
+              <li><button onClick={() => handleNav("infra")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Cloudflare D1 SQL</button></li>
+              <li><button onClick={() => handleNav("infra")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Cloudflare KV</button></li>
+              <li><button onClick={() => handleNav("infra")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>DNS over HTTPS</button></li>
             </ul>
           </div>
 
           <div>
             <div className="footer-col-title">DOCUMENTATION</div>
             <ul className="footer-col-list">
-              <li><button onClick={() => handleNav("docs")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>REST API Guide</button></li>
-              <li><button onClick={() => handleNav("docs")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>cURL & Fetch Examples</button></li>
-              <li><button onClick={() => handleNav("docs")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Deliverability Verdicts</button></li>
+              <li><button onClick={() => handleNav("docs")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>cURL Guide</button></li>
+              <li><button onClick={() => handleNav("docs")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>JavaScript Client</button></li>
+              <li><button onClick={() => handleNav("docs")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Python SDK</button></li>
               <li><button onClick={() => handleNav("docs")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Error Codes</button></li>
             </ul>
           </div>
 
           <div>
-            <div className="footer-col-title">ADMIN & ACCESS</div>
+            <div className="footer-col-title">ACCOUNT</div>
             <ul className="footer-col-list">
-              <li><button onClick={() => handleNav("admin")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Admin Portal</button></li>
-              <li><button onClick={() => handleNav("dashboard")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>User Dashboard</button></li>
-              <li><a href="https://github.com/isacclobono/MailVerify" target="_blank" rel="noreferrer" className="footer-link">GitHub Repository</a></li>
-              <li><button onClick={() => handleNav("pricing")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Pricing & SLA</button></li>
+              <li><a href={api.getGoogleLoginUrl()} className="footer-link">Google Login</a></li>
+              <li><button onClick={() => handleNav("account-quotas")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>5-Check Guest Quota</button></li>
+              <li><button onClick={() => handleNav("account-quotas")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Bulk CSV / JSON</button></li>
+              <li><button onClick={() => handleNav("account-quotas")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>5-Day Rolling History</button></li>
             </ul>
           </div>
 
           <div>
             <div className="footer-col-title">PRIVACY & TERMS</div>
             <ul className="footer-col-list">
-              <li><button onClick={() => handleNav("privacy")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>5-Day Auto Purge Policy</button></li>
+              <li><button onClick={() => handleNav("privacy")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>5-Day Auto Retention Purge</button></li>
               <li><button onClick={() => handleNav("privacy")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Zero Data Hoarding</button></li>
-              <li><button onClick={() => handleNav("privacy")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>GDPR & CCPA Conformance</button></li>
-              <li><button onClick={() => handleNav("privacy")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>Terms of Service</button></li>
+              <li><button onClick={() => handleNav("privacy")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>GDPR Conforming</button></li>
+              <li><button onClick={() => handleNav("pricing")} className="footer-link" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>100% Free SLA</button></li>
             </ul>
           </div>
         </div>

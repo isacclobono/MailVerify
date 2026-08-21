@@ -1,8 +1,18 @@
 import { User } from "../types";
 import { api } from "../api/client";
-import { LogOut, LayoutDashboard, ShieldCheck, ShieldAlert, Zap, BookOpen, Tag } from "lucide-react";
+import { LogOut, LayoutDashboard, ShieldCheck, ShieldAlert, Zap, BookOpen, Tag, Server, Shield } from "lucide-react";
 
-export type AppView = "home" | "dashboard" | "docs" | "pricing" | "privacy" | "admin";
+export type AppView =
+  | "home"
+  | "dashboard"
+  | "docs"
+  | "pricing"
+  | "privacy"
+  | "admin"
+  | "dns-mx"
+  | "spf-dmarc"
+  | "infra"
+  | "account-quotas";
 
 interface HeaderProps {
   user: User | null;
@@ -38,8 +48,10 @@ export const Header = ({
             border: "1px solid rgba(16, 185, 129, 0.25)",
             color: "#34d399",
             fontWeight: 500,
+            cursor: "pointer",
           }}
-          title="Connected to Cloudflare Global Edge Network"
+          onClick={() => onNavigate("infra")}
+          title="Click to view Cloudflare Edge Network status"
         >
           <span
             style={{
@@ -59,7 +71,23 @@ export const Header = ({
           className={`nav-link ${currentView === "home" ? "active" : ""}`}
           onClick={() => onNavigate("home")}
         >
-          Verifier
+          Single
+        </button>
+
+        <button
+          className={`nav-link ${currentView === "dns-mx" ? "active" : ""}`}
+          onClick={() => onNavigate("dns-mx")}
+          style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem" }}
+        >
+          <Server size={14} /> DNS/MX
+        </button>
+
+        <button
+          className={`nav-link ${currentView === "spf-dmarc" ? "active" : ""}`}
+          onClick={() => onNavigate("spf-dmarc")}
+          style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem" }}
+        >
+          <Shield size={14} /> SPF/DMARC
         </button>
 
         <button

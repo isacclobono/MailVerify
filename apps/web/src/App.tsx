@@ -9,6 +9,10 @@ import { DocsPage } from "./pages/DocsPage";
 import { PricingPage } from "./pages/PricingPage";
 import { PrivacyTermsPage } from "./pages/PrivacyTermsPage";
 import { AdminPage } from "./pages/AdminPage";
+import { DnsMxCheckerPage } from "./pages/DnsMxCheckerPage";
+import { SpfDmarcAuditPage } from "./pages/SpfDmarcAuditPage";
+import { InfrastructurePage } from "./pages/InfrastructurePage";
+import { AccountQuotasPage } from "./pages/AccountQuotasPage";
 import { useHourlyFont } from "./hooks/useHourlyFont";
 import { AlertCircle, Loader2 } from "lucide-react";
 
@@ -28,8 +32,18 @@ export function App() {
 
     // Check pathname or query param for initial view
     const pathname = window.location.pathname.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+
     if (pathname.includes("admin") || viewParam === "admin") {
       setCurrentView("admin");
+    } else if (pathname.includes("dns") || pathname.includes("mx") || viewParam === "dns-mx" || hash.includes("dns")) {
+      setCurrentView("dns-mx");
+    } else if (pathname.includes("spf") || pathname.includes("dmarc") || viewParam === "spf-dmarc" || hash.includes("spf")) {
+      setCurrentView("spf-dmarc");
+    } else if (pathname.includes("infra") || viewParam === "infra") {
+      setCurrentView("infra");
+    } else if (pathname.includes("quota") || pathname.includes("account") || viewParam === "account-quotas") {
+      setCurrentView("account-quotas");
     } else if (pathname.includes("docs") || viewParam === "docs") {
       setCurrentView("docs");
     } else if (pathname.includes("pricing") || viewParam === "pricing") {
@@ -114,6 +128,14 @@ export function App() {
           </div>
         ) : currentView === "admin" ? (
           <AdminPage user={user} onNavigateHome={() => handleNavigate("home")} />
+        ) : currentView === "dns-mx" ? (
+          <DnsMxCheckerPage onNavigateHome={() => handleNavigate("home")} />
+        ) : currentView === "spf-dmarc" ? (
+          <SpfDmarcAuditPage onNavigateHome={() => handleNavigate("home")} />
+        ) : currentView === "infra" ? (
+          <InfrastructurePage />
+        ) : currentView === "account-quotas" ? (
+          <AccountQuotasPage user={user} onNavigateDashboard={() => handleNavigate("dashboard")} />
         ) : currentView === "docs" ? (
           <DocsPage />
         ) : currentView === "pricing" ? (
