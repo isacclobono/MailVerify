@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
+import { toast } from "sonner";
 
 interface CodeSnippetProps {
   emailSample?: string;
@@ -48,6 +49,7 @@ console.log(data);`;
   const handleCopy = () => {
     navigator.clipboard.writeText(getSnippet());
     setCopied(true);
+    toast.info("Code snippet copied to clipboard!");
     setTimeout(() => setCopied(false), 2000);
   };
 

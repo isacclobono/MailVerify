@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Lock, Mail, KeyRound, Eye, EyeOff, Loader2 } from "lucide-react";
 import { api } from "../../api/client";
+import { toast } from "sonner";
 
 interface AdminLoginCardProps {
   onNavigateHome: () => void;
@@ -17,16 +18,19 @@ export const AdminLoginCard = ({ onNavigateHome }: AdminLoginCardProps) => {
     e.preventDefault();
     if (!adminEmail.trim() || !adminPassword) {
       setLoginError("Please provide both email and password.");
+      toast.error("Please provide both email and password.");
       return;
     }
     setLoginLoading(true);
     setLoginError(null);
     try {
       await api.adminLogin(adminEmail.trim(), adminPassword);
+      toast.success("Administrator authentication successful!");
       window.location.reload();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Invalid administrator email or password.";
       setLoginError(msg);
+      toast.error(msg);
     } finally {
       setLoginLoading(false);
     }

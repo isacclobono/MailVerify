@@ -15,6 +15,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { api } from "../api/client";
+import { toast } from "sonner";
 
 type DocsSection = 
   | "quickstart" 
@@ -83,12 +84,14 @@ export const DocsPage = () => {
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedCodeId(id);
+    toast.info("Code example copied to clipboard!");
     setTimeout(() => setCopiedCodeId(null), 2000);
   };
 
   const handleCopyBaseUrl = () => {
     navigator.clipboard.writeText(BASE_URL);
     setCopiedBaseUrl(true);
+    toast.info("Base URL copied to clipboard!");
     setTimeout(() => setCopiedBaseUrl(false), 2000);
   };
 

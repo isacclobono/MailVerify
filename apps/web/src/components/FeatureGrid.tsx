@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, ExternalLink, Terminal, Check, Copy, Loader2, Play } from "lucide-react";
+import { toast } from "sonner";
 
 interface FeatureCard {
   tag: string;
@@ -137,6 +138,7 @@ export const FeatureGrid = ({ onTryEmail }: { onTryEmail: (email: string) => voi
   const handleCopyCurl = (curl: string) => {
     navigator.clipboard.writeText(curl);
     setCopiedCurl(true);
+    toast.info("cURL command copied to clipboard!");
     setTimeout(() => setCopiedCurl(false), 2000);
   };
 

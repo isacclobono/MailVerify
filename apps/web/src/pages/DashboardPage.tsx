@@ -21,6 +21,7 @@ import {
 import { VerdictBadge } from "../components/VerdictBadge";
 import { ChecksDetail } from "../components/ChecksDetail";
 import { Pagination } from "../components/Pagination";
+import { toast } from "sonner";
 
 interface DashboardPageProps {
   user: User;
@@ -157,6 +158,35 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
     loadApiKeys();
   }, []);
 
+  const handleCreateKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newKeyName.trim()) return;
+    setGeneratingKey(true);
+    try {
+      const res = await api.createApiKey(newKeyName.trim());
+      setCreatedKey(res);
+      setNewKeyName("");
+      toast.success("API key created successfully!");
+      loadApiKeys();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to generate API key.";
+      toast.error(msg);
+    } finally {
+      setGeneratingKey(false);
+    }
+  };
+
+  const handleDeleteKey = async (keyId: string) => {
+    try {
+      await api.deleteApiKey(keyId);
+      setApiKeys((prev) => prev.filter((k) => k.id !== keyId));
+      toast.success("API key revoked.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to revoke API key.";
+      toast.error(msg);
+    }
+  };
+
   const handleSingleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!singleEmail.trim()) return;
@@ -168,10 +198,18 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
     try {
       const res = await api.verifyEmail(singleEmail.trim());
       setSingleResult(res);
+      if (res.verdict === "LIKELY_DELIVERABLE") {
+        toast.success(`Verification complete: ${res.email} is deliverable (${res.score}/100)`);
+      } else if (res.verdict.includes("RISKY") || res.verdict.includes("ROLE")) {
+        toast.warning(`Notice: ${res.email} flagged as ${res.verdict} (${res.score}/100)`);
+      } else {
+        toast.error(`Warning: ${res.email} is undeliverable (${res.verdict})`);
+      }
       loadHistoryAndStats();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Verification request failed.";
       setSingleError(msg);
+      toast.error(msg);
     } finally {
       setSingleLoading(false);
     }
@@ -241,10 +279,12 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
       const res = await api.submitBulkVerification(emails);
       setBulkSummary(res.summary);
       setBulkPage(1);
+      toast.success(`Batch completed! ${res.summary.total} emails verified (${res.summary.successful} deliverable).`);
       loadHistoryAndStats();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Bulk processing failed.";
       setBulkError(msg);
+      toast.error(msg);
     } finally {
       setBulkLoading(false);
     }
@@ -262,6 +302,7 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
     link.href = url;
     link.download = `mailverify_batch_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
+    toast.info("Exported verification results as CSV.");
   };
 
   const downloadResultsTXT = () => {
@@ -275,6 +316,7 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
     link.href = url;
     link.download = `mailverify_batch_${new Date().toISOString().slice(0, 10)}.txt`;
     link.click();
+    toast.info("Exported verification results as TXT.");
   };
 
   const downloadDeliverableOnlyTXT = () => {
@@ -289,6 +331,7 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
     link.href = url;
     link.download = `mailverify_clean_only_${new Date().toISOString().slice(0, 10)}.txt`;
     link.click();
+    toast.success(`Exported ${cleanEmails.length} deliverable clean email addresses.`);
   };
 
   const downloadResultsJSON = () => {
@@ -300,32 +343,14 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
     link.href = url;
     link.download = `mailverify_batch_${new Date().toISOString().slice(0, 10)}.json`;
     link.click();
+    toast.info("Exported batch report as JSON.");
   };
 
-  const handleCreateKey = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newKeyName.trim()) return;
-    setGeneratingKey(true);
-    try {
-      const res = await api.createApiKey(newKeyName.trim());
-      setCreatedKey(res);
-      setNewKeyName("");
-      loadApiKeys();
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to generate key.");
-    } finally {
-      setGeneratingKey(false);
-    }
-  };
-
-  const handleDeleteKey = async (keyId: string) => {
-    if (!confirm("Are you sure you want to revoke this API key? Applications using it will be blocked.")) return;
-    try {
-      await api.deleteApiKey(keyId);
-      loadApiKeys();
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to delete key.");
-    }
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(getCodeSnippet(selectedLang));
+    setCopiedCode(true);
+    toast.info(`${selectedLang.toUpperCase()} code snippet copied to clipboard!`);
+    setTimeout(() => setCopiedCode(false), 2000);
   };
 
   const activeKeyPrefix = apiKeys.length > 0 ? `${apiKeys[0].key_prefix}...` : "mv_live_8994cf5f2b0645589f2fe0d786140cf8";
@@ -1195,6 +1220,7 @@ let res = client.post("https://mailverify.sk-builds.workers.dev/api/verify")
                     onClick={() => {
                       navigator.clipboard.writeText(createdKey.raw_key);
                       setCopiedToken(true);
+                      toast.success("API Key copied to clipboard!");
                       setTimeout(() => setCopiedToken(false), 2000);
                     }}
                     style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", fontSize: "0.78rem", padding: "0.45rem 0.75rem" }}

@@ -3,6 +3,7 @@ import { api } from "../api/client";
 import { Server, Search, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { VerificationResult } from "../types";
 import { FaqSection } from "../components/FaqSection";
+import { toast } from "sonner";
 
 export const DnsMxCheckerPage = ({ onNavigateHome }: { onNavigateHome: () => void }) => {
   const [domainInput, setDomainInput] = useState("google.com");
@@ -24,9 +25,15 @@ export const DnsMxCheckerPage = ({ onNavigateHome }: { onNavigateHome: () => voi
       const probeEmail = `probe@${raw}`;
       const data = await api.verifyEmail(probeEmail);
       setResult(data);
+      if (data.checks.mx === "MX_FOUND") {
+        toast.success(`DNS & MX records found for ${raw}`);
+      } else {
+        toast.warning(`No active MX records found for ${raw}`);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to resolve DNS records for domain.";
       setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

@@ -15,6 +15,7 @@ import { InfrastructurePage } from "./pages/InfrastructurePage";
 import { AccountQuotasPage } from "./pages/AccountQuotasPage";
 import { useHourlyFont } from "./hooks/useHourlyFont";
 import { AlertCircle, Loader2 } from "lucide-react";
+import { Toaster } from "sonner";
 
 function getPathForView(view: AppView): string {
   switch (view) {
@@ -145,6 +146,7 @@ export function App() {
 
   return (
     <div className="app-container">
+      <Toaster position="top-right" richColors closeButton />
       <Header
         user={user}
         onLogout={handleLogout}

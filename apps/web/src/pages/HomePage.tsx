@@ -1,6 +1,7 @@
 import { useState, FormEvent } from "react";
 import { User, VerificationResult } from "../types";
 import { api } from "../api/client";
+import { toast } from "sonner";
 import { HeroSection } from "../components/HeroSection";
 import { StatsBar } from "../components/StatsBar";
 import { LiveTester } from "../components/LiveTester";
@@ -38,9 +39,17 @@ export const HomePage = ({ user, onNavigateDashboard }: HomePageProps) => {
       if (data.remaining_anonymous_checks !== undefined) {
         setRemainingChecks(data.remaining_anonymous_checks);
       }
+      if (data.verdict === "LIKELY_DELIVERABLE") {
+        toast.success(`Verification complete: ${data.email} is deliverable (${data.score}/100)`);
+      } else if (data.verdict.includes("RISKY") || data.verdict.includes("ROLE")) {
+        toast.warning(`Notice: ${data.email} flagged as ${data.verdict} (${data.score}/100)`);
+      } else {
+        toast.error(`Warning: ${data.email} is undeliverable (${data.verdict})`);
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Verification request failed";
       setError(message);
+      toast.error(message);
       if (message.includes("limit") || message.includes("sign in")) {
         setLoginRequired(true);
         setRemainingChecks(0);

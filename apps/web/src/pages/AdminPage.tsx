@@ -17,6 +17,7 @@ import { AdminVerificationsTab } from "../components/admin/AdminVerificationsTab
 import { AdminInfraTab } from "../components/admin/AdminInfraTab";
 import { AdminPlanModal } from "../components/admin/AdminPlanModal";
 import { AdminDeleteUserModal } from "../components/admin/AdminDeleteUserModal";
+import { toast } from "sonner";
 
 interface AdminPageProps {
   user: User | null;
@@ -122,10 +123,11 @@ export const AdminPage = ({ user, onNavigateHome }: AdminPageProps) => {
     try {
       await api.deleteAdminUser(deleteConfirmUser.id);
       setUsers((prev) => prev.filter((u) => u.id !== deleteConfirmUser.id));
+      toast.success(`User ${deleteConfirmUser.email} deleted successfully.`);
       setDeleteConfirmUser(null);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to delete user account.";
-      alert(msg);
+      toast.error(msg);
     } finally {
       setDeleting(false);
     }
@@ -138,15 +140,21 @@ export const AdminPage = ({ user, onNavigateHome }: AdminPageProps) => {
   const handleSyncDisposable = async () => {
     setSyncingDisposable(true);
     setSyncMessage(null);
+    const toastId = toast.loading("Syncing 10+ open-source disposable domain intelligence feeds...");
     try {
       const res = await api.syncDisposableDomains();
       if (res.success) {
-        setSyncMessage(`✓ Synced ${res.total_domains_collected.toLocaleString()} domains from ${res.sources_synced} live feeds in ${res.duration_ms}ms.`);
+        const msg = `✓ Synced ${res.total_domains_collected.toLocaleString()} domains from ${res.sources_synced} live feeds in ${res.duration_ms}ms.`;
+        setSyncMessage(msg);
+        toast.success(msg, { id: toastId });
       } else {
         setSyncMessage("Sync completed with warnings.");
+        toast.warning("Sync completed with warnings.", { id: toastId });
       }
     } catch (err) {
-      setSyncMessage(err instanceof Error ? `Sync failed: ${err.message}` : "Sync failed.");
+      const errMsg = err instanceof Error ? `Sync failed: ${err.message}` : "Sync failed.";
+      setSyncMessage(errMsg);
+      toast.error(errMsg, { id: toastId });
     } finally {
       setSyncingDisposable(false);
     }
@@ -194,10 +202,12 @@ export const AdminPage = ({ user, onNavigateHome }: AdminPageProps) => {
             : u
         )
       );
+      toast.success(`Plan for ${editingUserPlan.email} updated to ${selectedPlan.toUpperCase()} (${limit === -1 ? 'Unlimited' : `${limit.toLocaleString()}/mo`})`);
       setEditingUserPlan(null);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to update user plan.";
       setPlanSaveError(msg);
+      toast.error(msg);
     } finally {
       setSavingPlan(false);
     }
@@ -227,7 +237,10 @@ export const AdminPage = ({ user, onNavigateHome }: AdminPageProps) => {
         <div style={{ display: "flex", gap: "0.75rem" }}>
           <button
             className="btn btn-outline"
-            onClick={fetchAdminData}
+            onClick={() => {
+              fetchAdminData();
+              toast.info("Refreshing telemetry & records...");
+            }}
             disabled={loading}
             style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", fontSize: "0.82rem" }}
           >
