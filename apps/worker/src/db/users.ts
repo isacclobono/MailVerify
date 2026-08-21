@@ -170,7 +170,27 @@ export async function updateUserPlanAndLimit(
       .bind(plan, monthlyLimit, now, userId)
       .run();
     return result.success;
-  } catch {
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    // If column doesn't exist yet on production D1, add them dynamically
+    if (errMsg.includes("no such column") || errMsg.includes("has no column")) {
+      try {
+        await db.prepare("ALTER TABLE users ADD COLUMN plan TEXT NOT NULL DEFAULT 'free'").run();
+      } catch {}
+      try {
+        await db.prepare("ALTER TABLE users ADD COLUMN monthly_limit INTEGER NOT NULL DEFAULT 200").run();
+      } catch {}
+
+      try {
+        const retryResult = await db
+          .prepare("UPDATE users SET plan = ?, monthly_limit = ?, updated_at = ? WHERE id = ?")
+          .bind(plan, monthlyLimit, now, userId)
+          .run();
+        return retryResult.success;
+      } catch {
+        return false;
+      }
+    }
     return false;
   }
 }

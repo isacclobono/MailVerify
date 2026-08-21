@@ -15,9 +15,8 @@ export const Pagination = ({
   pageSize,
   onPageChange,
 }: PaginationProps) => {
-  if (totalPages <= 1) return null;
-
-  const startItem = Math.min((currentPage - 1) * pageSize + 1, totalItems);
+  const effectiveTotalPages = Math.max(1, totalPages);
+  const startItem = totalItems === 0 ? 0 : Math.min((currentPage - 1) * pageSize + 1, totalItems);
   const endItem = Math.min(currentPage * pageSize, totalItems);
 
   // Generate page numbers window (max 5 visible)
@@ -92,7 +91,7 @@ export const Pagination = ({
           type="button"
           className="pagination-btn"
           onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
+          disabled={currentPage >= effectiveTotalPages}
           title="Next Page"
         >
           <ChevronRight size={14} />
@@ -102,8 +101,8 @@ export const Pagination = ({
         <button
           type="button"
           className="pagination-btn"
-          onClick={() => onPageChange(totalPages)}
-          disabled={currentPage === totalPages}
+          onClick={() => onPageChange(effectiveTotalPages)}
+          disabled={currentPage >= effectiveTotalPages}
           title="Last Page"
         >
           <ChevronsRight size={14} />
