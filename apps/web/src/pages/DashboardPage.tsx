@@ -407,12 +407,6 @@ let res = client.post("https://mailverify.sk-builds.workers.dev/api/verify")
     }
   };
 
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(getCodeSnippet(selectedLang));
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2000);
-  };
-
   const languages: CodeLang[] = ["curl", "node", "javascript", "python", "php", "ruby", "go", "rust", "java", "c#", "swift"];
   const hourlyLabels = ["1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p", "10p", "11p", "12a", "1a", "2a", "3a", "4a", "5a", "6a", "7a", "8a", "9a", "10a", "11a", "12p"];
 
