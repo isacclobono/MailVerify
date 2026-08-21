@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { CodeSnippet } from "../components/CodeSnippet";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Terminal, Layers } from "lucide-react";
 
 export const DocsPage = () => {
-  const [activeSection, setActiveSection] = useState<"quickstart" | "verify" | "bulk" | "auth" | "verdicts" | "errors">("quickstart");
+  const [activeSection, setActiveSection] = useState<"quickstart" | "verify" | "pipeline" | "bulk" | "auth" | "verdicts" | "errors">("quickstart");
 
   return (
     <div style={{ maxWidth: "1120px", margin: "0 auto", width: "100%" }}>
@@ -14,7 +14,7 @@ export const DocsPage = () => {
         </div>
         <h1 style={{ fontSize: "2.25rem", fontWeight: 800, letterSpacing: "-0.02em" }}>MailVerify Developer Documentation</h1>
         <p style={{ color: "var(--text-muted)", fontSize: "1rem", maxWidth: "700px" }}>
-          Integrate high-precision email validation, MX resolution, SPF/DMARC checks, and disposable detection into your applications.
+          Integrate high-precision email validation, sub-pipeline checks, MX resolution, SPF/DMARC audits, and disposable detection into your applications.
         </p>
       </div>
 
@@ -38,6 +38,13 @@ export const DocsPage = () => {
             POST /api/verify
           </button>
           <button
+            style={{ display: "block", width: "100%", textAlign: "left", padding: "0.5rem 0.75rem", borderRadius: "var(--radius-sm)", border: "none", background: activeSection === "pipeline" ? "var(--bg-subtle)" : "transparent", color: activeSection === "pipeline" ? "var(--accent-blue)" : "var(--text-main)", fontWeight: activeSection === "pipeline" ? 700 : 500, cursor: "pointer", fontSize: "0.9rem", marginBottom: "0.25rem" }}
+            onClick={() => setActiveSection("pipeline")}
+          >
+            <Layers size={13} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.35rem" }} />
+            Sub-Pipeline Checks
+          </button>
+          <button
             style={{ display: "block", width: "100%", textAlign: "left", padding: "0.5rem 0.75rem", borderRadius: "var(--radius-sm)", border: "none", background: activeSection === "bulk" ? "var(--bg-subtle)" : "transparent", color: activeSection === "bulk" ? "var(--accent-blue)" : "var(--text-main)", fontWeight: activeSection === "bulk" ? 700 : 500, cursor: "pointer", fontSize: "0.9rem", marginBottom: "0.25rem" }}
             onClick={() => setActiveSection("bulk")}
           >
@@ -51,7 +58,7 @@ export const DocsPage = () => {
             style={{ display: "block", width: "100%", textAlign: "left", padding: "0.5rem 0.75rem", borderRadius: "var(--radius-sm)", border: "none", background: activeSection === "auth" ? "var(--bg-subtle)" : "transparent", color: activeSection === "auth" ? "var(--accent-blue)" : "var(--text-main)", fontWeight: activeSection === "auth" ? 700 : 500, cursor: "pointer", fontSize: "0.9rem", marginBottom: "0.25rem" }}
             onClick={() => setActiveSection("auth")}
           >
-            Google OAuth & Sessions
+            API Keys & Quotas
           </button>
           <button
             style={{ display: "block", width: "100%", textAlign: "left", padding: "0.5rem 0.75rem", borderRadius: "var(--radius-sm)", border: "none", background: activeSection === "verdicts" ? "var(--bg-subtle)" : "transparent", color: activeSection === "verdicts" ? "var(--accent-blue)" : "var(--text-main)", fontWeight: activeSection === "verdicts" ? 700 : 500, cursor: "pointer", fontSize: "0.9rem", marginBottom: "0.25rem" }}
@@ -73,7 +80,7 @@ export const DocsPage = () => {
             <div>
               <h2 style={{ fontSize: "1.5rem", fontWeight: 800, marginBottom: "1rem" }}>Quick Start Guide</h2>
               <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: "1.5rem" }}>
-                All endpoints operate over HTTPS with JSON request/response formats. Anonymous visitors receive 5 free checks per IP; authenticated developers receive unlimited checks with 30 requests/min burst capacity.
+                All endpoints operate over HTTPS with JSON request/response formats. Anonymous visitors receive 5 free checks per IP; registered developers receive 200 free checks per month with full API keys.
               </p>
 
               <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "0.75rem" }}>Live API Base URL</h3>
@@ -88,9 +95,9 @@ export const DocsPage = () => {
 
           {activeSection === "verify" && (
             <div>
-              <h2 style={{ fontSize: "1.5rem", fontWeight: 800, marginBottom: "1rem" }}>Single Verification Endpoint</h2>
+              <h2 style={{ fontSize: "1.5rem", fontWeight: 800, marginBottom: "1rem" }}>Full Verification Endpoint</h2>
               <div style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: "rgba(37,99,235,0.1)", color: "var(--accent-blue)", padding: "0.25rem 0.6rem", borderRadius: "4px", fontFamily: "var(--font-mono)", fontSize: "0.85rem", fontWeight: 700, marginBottom: "1.5rem" }}>
-                POST /api/verify
+                POST /api/verify or GET /api/verify?email=...
               </div>
 
               <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "0.5rem" }}>Request Payload</h3>
@@ -100,16 +107,25 @@ export const DocsPage = () => {
 }`}
               </pre>
 
-              <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "0.5rem" }}>Response Payload</h3>
-              <pre style={{ background: "#0f172a", color: "#f8fafc", padding: "1rem", borderRadius: "var(--radius-md)", fontSize: "0.85rem", fontFamily: "var(--font-mono)" }}>
+              <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "0.5rem" }}>Complete Intelligence Response</h3>
+              <pre style={{ background: "#0f172a", color: "#38bdf8", padding: "1rem", borderRadius: "var(--radius-md)", fontSize: "0.82rem", fontFamily: "var(--font-mono)", overflowX: "auto" }}>
 {`{
   "success": true,
   "data": {
-    "id": "ver_9a8b7c6d5e",
     "email": "user@domain.com",
     "normalized_email": "user@domain.com",
     "verdict": "LIKELY_DELIVERABLE",
     "score": 10,
+    "confidence": 0.98,
+    "is_free_provider": false,
+    "did_you_mean": null,
+    "reasons": [
+      "REASON_BUSINESS_CORPORATE_DOMAIN",
+      "REASON_DOMAIN_ACTIVE",
+      "REASON_MX_SERVERS_CONFIGURED",
+      "REASON_SPF_POLICY_VALID",
+      "REASON_DMARC_POLICY_ENFORCED"
+    ],
     "checks": {
       "syntax": "PASS",
       "domain": "DOMAIN_EXISTS",
@@ -117,66 +133,173 @@ export const DocsPage = () => {
       "spf": "SPF_PRESENT",
       "dmarc": "DMARC_PRESENT",
       "disposable": "NOT_DISPOSABLE",
-      "role": "PERSONAL_ACCOUNT_LIKELY"
+      "role": "PERSONAL_ACCOUNT_LIKELY",
+      "catch_all": "UNKNOWN",
+      "smtp": "UNKNOWN",
+      "free_provider": "BUSINESS_CORPORATE"
     },
-    "created_at": "2026-08-21T12:00:00.000Z"
+    "created_at": "2026-08-21T13:25:00.000Z"
   }
 }`}
               </pre>
             </div>
           )}
 
+          {activeSection === "pipeline" && (
+            <div>
+              <h2 style={{ fontSize: "1.5rem", fontWeight: 800, marginBottom: "0.5rem" }}>Dedicated Sub-Pipeline Endpoints</h2>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: "1.5rem" }}>
+                Execute specific verification stages independently without running the full pipeline.
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                <div className="card" style={{ padding: "1.25rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                    <strong>1. Syntax & RFC Boundary Check</strong>
+                    <code style={{ background: "var(--bg-subtle)", padding: "0.2rem 0.5rem", borderRadius: "4px", fontSize: "0.8rem" }}>GET /api/check/syntax?email=...</code>
+                  </div>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", margin: "0 0 0.5rem" }}>Checks local/domain lengths, double dots, unquoted spaces, and valid TLD format.</p>
+                  <pre style={{ background: "#0f172a", color: "#38bdf8", padding: "0.75rem", borderRadius: "var(--radius-sm)", fontSize: "0.78rem", margin: 0 }}>
+{`curl "https://mailverify.pulsechat.workers.dev/api/check/syntax?email=alex@gmail.com"`}
+                  </pre>
+                </div>
+
+                <div className="card" style={{ padding: "1.25rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                    <strong>2. DNS & Host Resolution</strong>
+                    <code style={{ background: "var(--bg-subtle)", padding: "0.2rem 0.5rem", borderRadius: "4px", fontSize: "0.8rem" }}>GET /api/check/dns?domain=...</code>
+                  </div>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", margin: "0 0 0.5rem" }}>Queries Cloudflare DoH for active A and AAAA address records.</p>
+                  <pre style={{ background: "#0f172a", color: "#38bdf8", padding: "0.75rem", borderRadius: "var(--radius-sm)", fontSize: "0.78rem", margin: 0 }}>
+{`curl "https://mailverify.pulsechat.workers.dev/api/check/dns?domain=stripe.com"`}
+                  </pre>
+                </div>
+
+                <div className="card" style={{ padding: "1.25rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                    <strong>3. MX Routing & Server Priority</strong>
+                    <code style={{ background: "var(--bg-subtle)", padding: "0.2rem 0.5rem", borderRadius: "4px", fontSize: "0.8rem" }}>GET /api/check/mx?domain=...</code>
+                  </div>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", margin: "0 0 0.5rem" }}>Returns sorted Mail Exchangers by priority and checks RFC 7505 Null-MX.</p>
+                  <pre style={{ background: "#0f172a", color: "#38bdf8", padding: "0.75rem", borderRadius: "var(--radius-sm)", fontSize: "0.78rem", margin: 0 }}>
+{`curl "https://mailverify.pulsechat.workers.dev/api/check/mx?domain=apple.com"`}
+                  </pre>
+                </div>
+
+                <div className="card" style={{ padding: "1.25rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                    <strong>4. SPF & DMARC Policy Inspection</strong>
+                    <code style={{ background: "var(--bg-subtle)", padding: "0.2rem 0.5rem", borderRadius: "4px", fontSize: "0.8rem" }}>GET /api/check/security?domain=...</code>
+                  </div>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", margin: "0 0 0.5rem" }}>Inspects anti-spoofing declarations and DMARC enforcement policies.</p>
+                  <pre style={{ background: "#0f172a", color: "#38bdf8", padding: "0.75rem", borderRadius: "var(--radius-sm)", fontSize: "0.78rem", margin: 0 }}>
+{`curl "https://mailverify.pulsechat.workers.dev/api/check/security?domain=github.com"`}
+                  </pre>
+                </div>
+
+                <div className="card" style={{ padding: "1.25rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                    <strong>5. Disposable & Burner Detection</strong>
+                    <code style={{ background: "var(--bg-subtle)", padding: "0.2rem 0.5rem", borderRadius: "4px", fontSize: "0.8rem" }}>GET /api/check/disposable?domain=...</code>
+                  </div>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", margin: "0 0 0.5rem" }}>Identifies temporary 10-minute mailboxes via memory sets and MX matching.</p>
+                  <pre style={{ background: "#0f172a", color: "#38bdf8", padding: "0.75rem", borderRadius: "var(--radius-sm)", fontSize: "0.78rem", margin: 0 }}>
+{`curl "https://mailverify.pulsechat.workers.dev/api/check/disposable?domain=mailinator.com"`}
+                  </pre>
+                </div>
+
+                <div className="card" style={{ padding: "1.25rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                    <strong>6. Role & Provider Classification</strong>
+                    <code style={{ background: "var(--bg-subtle)", padding: "0.2rem 0.5rem", borderRadius: "4px", fontSize: "0.8rem" }}>GET /api/check/provider?email=...</code>
+                  </div>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", margin: "0 0 0.5rem" }}>Detects corporate vs free consumer mailbox and role aliases (support@, admin@).</p>
+                  <pre style={{ background: "#0f172a", color: "#38bdf8", padding: "0.75rem", borderRadius: "var(--radius-sm)", fontSize: "0.78rem", margin: 0 }}>
+{`curl "https://mailverify.pulsechat.workers.dev/api/check/provider?email=sales@stripe.com"`}
+                  </pre>
+                </div>
+
+                <div className="card" style={{ padding: "1.25rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                    <strong>7. Typo Detection & Suggestions</strong>
+                    <code style={{ background: "var(--bg-subtle)", padding: "0.2rem 0.5rem", borderRadius: "4px", fontSize: "0.8rem" }}>GET /api/check/typo?email=...</code>
+                  </div>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", margin: "0 0 0.5rem" }}>Detects domain misspellings and suggests corrections (e.g. gmial.com &rarr; gmail.com).</p>
+                  <pre style={{ background: "#0f172a", color: "#38bdf8", padding: "0.75rem", borderRadius: "var(--radius-sm)", fontSize: "0.78rem", margin: 0 }}>
+{`curl "https://mailverify.pulsechat.workers.dev/api/check/typo?email=alex@gmial.com"`}
+                  </pre>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeSection === "bulk" && (
             <div>
               <h2 style={{ fontSize: "1.5rem", fontWeight: 800, marginBottom: "1rem" }}>Bulk Batch Verification</h2>
-              <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: "1.5rem" }}>
-                Authenticated users can upload CSV, TXT, or JSON files of up to 500 emails per batch.
-              </p>
               <div style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: "rgba(37,99,235,0.1)", color: "var(--accent-blue)", padding: "0.25rem 0.6rem", borderRadius: "4px", fontFamily: "var(--font-mono)", fontSize: "0.85rem", fontWeight: 700, marginBottom: "1.5rem" }}>
                 POST /api/bulk
               </div>
-              <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
-                Accepts <code>Content-Type: text/csv</code> or <code>Content-Type: application/json</code> with <code>{`{ "emails": ["a@test.com", "b@test.com"] }`}</code>.
+              <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: "1.5rem" }}>
+                Submit up to 200 emails per batch. The engine executes concurrent subrequests in chunks of 5 and tracks monthly quota usage.
               </p>
+              <pre style={{ background: "#0f172a", color: "#f8fafc", padding: "1rem", borderRadius: "var(--radius-md)", fontSize: "0.85rem", fontFamily: "var(--font-mono)", marginBottom: "1.5rem" }}>
+{`{
+  "emails": [
+    "user1@gmail.com",
+    "contact@stripe.com",
+    "burner@mailinator.com"
+  ]
+}`}
+              </pre>
+            </div>
+          )}
+
+          {activeSection === "auth" && (
+            <div>
+              <h2 style={{ fontSize: "1.5rem", fontWeight: 800, marginBottom: "1rem" }}>API Keys & Monthly Quotas</h2>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: "1.5rem" }}>
+                Registered developers on the Free Plan receive <strong>200 API calls per month</strong>. You can generate up to 5 active API keys in your Dashboard.
+              </p>
+              <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "0.5rem" }}>Authentication Header</h3>
+              <pre style={{ background: "#0f172a", color: "#38bdf8", padding: "1rem", borderRadius: "var(--radius-md)", fontSize: "0.85rem", fontFamily: "var(--font-mono)" }}>
+{`X-API-Key: mv_live_8994cf5f2b0645589f2fe0d786140cf8
+# Or via standard Bearer token:
+Authorization: Bearer mv_live_8994cf5f2b0645589f2fe0d786140cf8`}
+              </pre>
             </div>
           )}
 
           {activeSection === "verdicts" && (
             <div>
-              <h2 style={{ fontSize: "1.5rem", fontWeight: 800, marginBottom: "1rem" }}>Deliverability Verdicts</h2>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem", marginTop: "1rem" }}>
+              <h2 style={{ fontSize: "1.5rem", fontWeight: 800, marginBottom: "1rem" }}>Verdicts & Classification Codes</h2>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem", marginTop: "1rem" }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid var(--border-subtle)", textAlign: "left" }}>
-                    <th style={{ padding: "0.75rem" }}>VERDICT</th>
-                    <th style={{ padding: "0.75rem" }}>RISK SCORE</th>
-                    <th style={{ padding: "0.75rem" }}>MEANING</th>
+                  <tr style={{ borderBottom: "2px solid var(--border-subtle)", textAlign: "left" }}>
+                    <th style={{ padding: "0.75rem" }}>Verdict</th>
+                    <th style={{ padding: "0.75rem" }}>Score Range</th>
+                    <th style={{ padding: "0.75rem" }}>Meaning</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
                     <td style={{ padding: "0.75rem", fontWeight: 700, color: "var(--success)" }}>LIKELY_DELIVERABLE</td>
-                    <td style={{ padding: "0.75rem" }}>0 - 20</td>
-                    <td style={{ padding: "0.75rem", color: "var(--text-muted)" }}>Valid syntax, active domain, valid MX exchanger, clean provider.</td>
+                    <td style={{ padding: "0.75rem" }}>0 – 29</td>
+                    <td style={{ padding: "0.75rem", color: "var(--text-muted)" }}>Valid RFC format, active MX records, resolving domain, and safe provider.</td>
                   </tr>
                   <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
                     <td style={{ padding: "0.75rem", fontWeight: 700, color: "var(--warning)" }}>RISKY</td>
-                    <td style={{ padding: "0.75rem" }}>25 - 60</td>
-                    <td style={{ padding: "0.75rem", color: "var(--text-muted)" }}>Missing SPF/DMARC or unconfirmed mailbox routing.</td>
+                    <td style={{ padding: "0.75rem" }}>30 – 69</td>
+                    <td style={{ padding: "0.75rem", color: "var(--text-muted)" }}>Missing SPF/DMARC policies or DNS resolution degradation.</td>
+                  </tr>
+                  <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                    <td style={{ padding: "0.75rem", fontWeight: 700, color: "var(--danger)" }}>LIKELY_INVALID</td>
+                    <td style={{ padding: "0.75rem" }}>70 – 100</td>
+                    <td style={{ padding: "0.75rem", color: "var(--text-muted)" }}>Non-existent domain or severe deliverability failure.</td>
                   </tr>
                   <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
                     <td style={{ padding: "0.75rem", fontWeight: 700, color: "var(--danger)" }}>DISPOSABLE</td>
-                    <td style={{ padding: "0.75rem" }}>90 - 100</td>
-                    <td style={{ padding: "0.75rem", color: "var(--text-muted)" }}>Temporary burner email address (Mailinator, GuerrillaMail, etc.).</td>
-                  </tr>
-                  <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                    <td style={{ padding: "0.75rem", fontWeight: 700, color: "var(--danger)" }}>NO_MX</td>
-                    <td style={{ padding: "0.75rem" }}>100</td>
-                    <td style={{ padding: "0.75rem", color: "var(--text-muted)" }}>Domain has no configured mail exchange server.</td>
-                  </tr>
-                  <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                    <td style={{ padding: "0.75rem", fontWeight: 700, color: "var(--danger)" }}>INVALID_SYNTAX</td>
-                    <td style={{ padding: "0.75rem" }}>100</td>
-                    <td style={{ padding: "0.75rem", color: "var(--text-muted)" }}>Failed RFC 5322 structural email requirements.</td>
+                    <td style={{ padding: "0.75rem" }}>95</td>
+                    <td style={{ padding: "0.75rem", color: "var(--text-muted)" }}>Temporary burner inbox provider. High bounce risk.</td>
                   </tr>
                 </tbody>
               </table>
@@ -185,28 +308,20 @@ export const DocsPage = () => {
 
           {activeSection === "errors" && (
             <div>
-              <h2 style={{ fontSize: "1.5rem", fontWeight: 800, marginBottom: "1rem" }}>Status Codes & Quotas</h2>
-              <ul style={{ listStyle: "none", fontSize: "0.9rem", color: "var(--text-muted)", lineHeight: 2.2 }}>
-                <li><code style={{ color: "var(--text-main)", fontWeight: 700 }}>200 OK</code> — Successful verification result.</li>
-                <li><code style={{ color: "var(--text-main)", fontWeight: 700 }}>400 Bad Request</code> — Malformed email syntax or invalid JSON body.</li>
-                <li><code style={{ color: "var(--text-main)", fontWeight: 700 }}>401 Unauthorized</code> — Missing, invalid, or revoked API Key (<code>X-API-Key</code>).</li>
-                <li><code style={{ color: "var(--text-main)", fontWeight: 700 }}>403 Forbidden</code> — Anonymous 5-check limit reached (sign in with Google to get 200 monthly calls).</li>
-                <li><code style={{ color: "var(--text-main)", fontWeight: 700 }}>429 Monthly Quota Exceeded</code> — You have reached the Free Plan limit of 200 API calls for this month. Quota resets on the 1st.</li>
-              </ul>
-            </div>
-          )}
-
-          {activeSection === "auth" && (
-            <div>
-              <h2 style={{ fontSize: "1.5rem", fontWeight: 800, marginBottom: "1rem" }}>API Keys & Authorization</h2>
-              <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: "1.5rem" }}>
-                Generate your private API keys (<code>mv_live_...</code>) from your account Dashboard. Authenticate requests using the <code>X-API-Key</code> header or <code>Authorization: Bearer &lt;key&gt;</code>.
-              </p>
-              <div style={{ background: "var(--bg-subtle)", padding: "1.25rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border-subtle)" }}>
-                <h4 style={{ fontWeight: 700, marginBottom: "0.5rem" }}>Header Syntax:</h4>
-                <pre style={{ background: "#0f172a", color: "#f8fafc", padding: "0.85rem", borderRadius: "var(--radius-sm)", fontSize: "0.85rem", fontFamily: "var(--font-mono)" }}>
-{`X-API-Key: mv_live_xxxxxxxxxxxxxxxxxxxxxxxx`}
-                </pre>
+              <h2 style={{ fontSize: "1.5rem", fontWeight: 800, marginBottom: "1rem" }}>Status Codes & Quota Limits</h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <div className="card" style={{ padding: "1rem" }}>
+                  <strong>429 MONTHLY_QUOTA_EXCEEDED</strong>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", margin: "0.25rem 0 0" }}>
+                    Returned when an authenticated account exceeds the 200 monthly free API calls limit. Quota resets on the 1st of every month.
+                  </p>
+                </div>
+                <div className="card" style={{ padding: "1rem" }}>
+                  <strong>403 LOGIN_REQUIRED</strong>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", margin: "0.25rem 0 0" }}>
+                    Returned when an anonymous IP exceeds 5 free tester checks. Sign in with Google to get 200 free API calls and an API key.
+                  </p>
+                </div>
               </div>
             </div>
           )}

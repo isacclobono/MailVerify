@@ -3,6 +3,7 @@ import { AppContext } from "./env";
 import { authRoutes } from "./auth/auth-routes";
 import { adminRoutes } from "./admin/admin-routes";
 import { keyRoutes } from "./keys/key-routes";
+import { checkRoutes } from "./check-routes";
 import { optionalAuthMiddleware, requireAuthMiddleware } from "./auth/sessions";
 import { securityHeadersMiddleware, corsMiddleware } from "./security/security";
 import { checkRateLimit, ANONYMOUS_CHECK_LIMIT } from "./security/rate-limit";
@@ -200,8 +201,11 @@ export function createRouter(): Hono<AppContext> {
   // API Key management routes
   app.route("/api/keys", keyRoutes);
 
+  // Dedicated sub-checker pipeline routes
+  app.route("/api/check", checkRoutes);
+
   // Single Verification (Anonymous with 5-check limit & Authenticated 200/mo limit)
-  app.post("/api/verify", async (c) => {
+  app.all("/api/verify", async (c) => {
     const user = c.get("user");
 
     // 1. Check Monthly Quota for Authenticated User (Session or API Key)
@@ -255,30 +259,45 @@ export function createRouter(): Hono<AppContext> {
       }
     }
 
-    // 2. Validate input
-    let body: unknown;
-    try {
-      body = await c.req.json();
-    } catch {
+    // 2. Validate input (from query ?email= or JSON body)
+    let emailToVerify = c.req.query("email");
+    if (!emailToVerify && c.req.method === "POST") {
+      try {
+        const body = await c.req.json();
+        const validated = validateEmailInput(body);
+        if (validated.valid) {
+          emailToVerify = validated.email;
+        } else {
+          return c.json(
+            {
+              success: false,
+              error: { code: "INVALID_EMAIL", message: validated.error || "Invalid email parameter." },
+            },
+            400
+          );
+        }
+      } catch {
+        return c.json(
+          {
+            success: false,
+            error: { code: "INVALID_BODY", message: "Invalid JSON in request body." },
+          },
+          400
+        );
+      }
+    }
+
+    if (!emailToVerify) {
       return c.json(
         {
           success: false,
-          error: { code: "INVALID_BODY", message: "Invalid JSON in request body." },
+          error: { code: "INVALID_EMAIL", message: "Please provide an email address via ?email= or JSON body { email }." },
         },
         400
       );
     }
 
-    const { valid, email, error } = validateEmailInput(body);
-    if (!valid) {
-      return c.json(
-        {
-          success: false,
-          error: { code: "INVALID_EMAIL", message: error || "Invalid email parameter." },
-        },
-        400
-      );
-    }
+    const email = emailToVerify.trim();
 
     // 3. Perform Verification
     const cache = new CacheService(c.env.CACHE);
