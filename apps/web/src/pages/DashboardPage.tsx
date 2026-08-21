@@ -209,15 +209,42 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
 
   const downloadResultsCSV = () => {
     if (!bulkSummary || !bulkSummary.results) return;
-    const header = "Email,Verdict,Score,MX_Status,SPF_Status,DMARC_Status,Disposable,Provider_Type\n";
+    const header = "Email,Verdict,Score,Confidence,MX_Status,SPF_Status,DMARC_Status,Disposable,Provider_Type\n";
     const rows = bulkSummary.results
-      .map((r) => `"${r.email}","${r.verdict}",${r.score},"${r.checks.mx}","${r.checks.spf}","${r.checks.dmarc}","${r.checks.disposable}","${r.is_free_provider ? "FREE" : "BUSINESS"}"`)
+      .map((r) => `"${r.email}","${r.verdict}",${r.score},"${Math.round((r.confidence || 0.95) * 100)}%","${r.checks.mx}","${r.checks.spf}","${r.checks.dmarc}","${r.checks.disposable}","${r.is_free_provider ? "FREE" : "BUSINESS"}"`)
       .join("\n");
     const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
     link.download = `mailverify_batch_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+  };
+
+  const downloadResultsTXT = () => {
+    if (!bulkSummary || !bulkSummary.results) return;
+    const lines = bulkSummary.results
+      .map((r) => `${r.email} | ${r.verdict} | Score: ${r.score}/100 | ${r.checks.mx} | ${r.is_free_provider ? "CONSUMER" : "BUSINESS"}`)
+      .join("\n");
+    const blob = new Blob([lines], { type: "text/plain;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `mailverify_batch_${new Date().toISOString().slice(0, 10)}.txt`;
+    link.click();
+  };
+
+  const downloadDeliverableOnlyTXT = () => {
+    if (!bulkSummary || !bulkSummary.results) return;
+    const cleanEmails = bulkSummary.results
+      .filter((r) => r.verdict === "LIKELY_DELIVERABLE")
+      .map((r) => r.email)
+      .join("\n");
+    const blob = new Blob([cleanEmails], { type: "text/plain;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `mailverify_clean_only_${new Date().toISOString().slice(0, 10)}.txt`;
     link.click();
   };
 
@@ -931,11 +958,17 @@ let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
                   </p>
                 </div>
 
-                <div style={{ display: "flex", gap: "0.5rem" }}>
-                  <button className="btn btn-outline" onClick={downloadResultsCSV} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.8rem" }}>
+                <div style={{ display: "flex", gap: "0.45rem", flexWrap: "wrap" }}>
+                  <button className="btn btn-outline" onClick={downloadResultsCSV} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.75rem" }}>
                     <Download size={14} /> Export CSV
                   </button>
-                  <button className="btn btn-outline" onClick={downloadResultsJSON} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.8rem" }}>
+                  <button className="btn btn-outline" onClick={downloadResultsTXT} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.75rem" }}>
+                    <Download size={14} /> Export TXT
+                  </button>
+                  <button className="btn btn-outline" onClick={downloadDeliverableOnlyTXT} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.75rem", borderColor: "var(--success)", color: "var(--success)" }}>
+                    <Download size={14} /> Clean Only (.txt)
+                  </button>
+                  <button className="btn btn-outline" onClick={downloadResultsJSON} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.75rem" }}>
                     <Download size={14} /> Export JSON
                   </button>
                 </div>

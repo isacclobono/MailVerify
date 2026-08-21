@@ -1,63 +1,78 @@
-export function parseEmailsMultiFormat(input: string | unknown, maxEmails = 500): string[] {
+const EMAIL_REGEX = /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+
+export function parseEmailsMultiFormat(input: unknown, maxEmails = 500): string[] {
   if (!input) return [];
 
   const emailsSet = new Set<string>();
 
-  // 1. If input is already an array or parsed object
+  // Helper to add matching email
+  const addEmail = (str: string) => {
+    if (emailsSet.size >= maxEmails) return;
+    const matches = str.match(EMAIL_REGEX);
+    if (matches) {
+      for (const m of matches) {
+        if (emailsSet.size >= maxEmails) break;
+        emailsSet.add(m.trim().toLowerCase());
+      }
+    }
+  };
+
+  // 1. If input is an Array
   if (Array.isArray(input)) {
     for (const item of input) {
       if (emailsSet.size >= maxEmails) break;
-      if (typeof item === "string" && item.includes("@")) {
-        emailsSet.add(item.trim());
+      if (typeof item === "string") {
+        addEmail(item);
       } else if (item && typeof item === "object") {
-        const candidate = findEmailInObject(item as Record<string, unknown>);
-        if (candidate) emailsSet.add(candidate);
+        findAndAddEmailsInObject(item as Record<string, unknown>, addEmail);
       }
     }
     return Array.from(emailsSet);
   }
 
-  // 2. If input is a string
+  // 2. If input is an Object (e.g. { emails: [...] } or { data: [...] })
+  if (typeof input === "object" && input !== null) {
+    const obj = input as Record<string, unknown>;
+    
+    // Check common container keys: emails, data, list, items
+    if (Array.isArray(obj.emails)) {
+      return parseEmailsMultiFormat(obj.emails, maxEmails);
+    }
+    if (Array.isArray(obj.data)) {
+      return parseEmailsMultiFormat(obj.data, maxEmails);
+    }
+    if (Array.isArray(obj.list)) {
+      return parseEmailsMultiFormat(obj.list, maxEmails);
+    }
+    if (Array.isArray(obj.items)) {
+      return parseEmailsMultiFormat(obj.items, maxEmails);
+    }
+
+    findAndAddEmailsInObject(obj, addEmail);
+    return Array.from(emailsSet);
+  }
+
+  // 3. If input is a String (Text, CSV, TSV, JSON string)
   if (typeof input === "string") {
     const trimmed = input.trim();
+    if (!trimmed) return [];
 
-    // Check if it's JSON
+    // Check if it's a JSON string
     if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
       try {
         const parsed = JSON.parse(trimmed);
         return parseEmailsMultiFormat(parsed, maxEmails);
       } catch {
-        // Not valid JSON, continue with text/CSV parsing
+        // Continue with text/csv parsing
       }
     }
 
-    // Parse as CSV / Delimited text
-    const lines = trimmed.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-    if (lines.length === 0) return [];
-
-    // Check if first line is a header
-    const firstLineCols = lines[0].split(/[,\t;]/).map((c) => c.trim().replace(/^["']|["']$/g, "").toLowerCase());
-    let emailColIdx = firstLineCols.findIndex((col) => col.includes("email") || col.includes("mail"));
-
-    let startIndex = 0;
-    if (emailColIdx !== -1) {
-      startIndex = 1;
-    } else {
-      emailColIdx = 0;
-    }
-
-    for (let i = startIndex; i < lines.length; i++) {
-      if (emailsSet.size >= maxEmails) break;
-      const row = lines[i];
-      const cols = row.split(/[,\t;]/).map((c) => c.trim().replace(/^["']|["']$/g, ""));
-      const candidate = cols[emailColIdx] || cols[0];
-
-      if (candidate && candidate.includes("@")) {
-        // Extract plain email address in case of "Name <email@domain.com>" format
-        const match = candidate.match(/[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-        if (match) {
-          emailsSet.add(match[0].trim());
-        }
+    // Direct regex extraction across all text / CSV lines
+    const matches = trimmed.match(EMAIL_REGEX);
+    if (matches) {
+      for (const m of matches) {
+        if (emailsSet.size >= maxEmails) break;
+        emailsSet.add(m.trim().toLowerCase());
       }
     }
   }
@@ -65,12 +80,14 @@ export function parseEmailsMultiFormat(input: string | unknown, maxEmails = 500)
   return Array.from(emailsSet);
 }
 
-function findEmailInObject(obj: Record<string, unknown>): string | null {
-  for (const [key, value] of Object.entries(obj)) {
-    if (typeof value === "string" && (key.toLowerCase().includes("email") || key.toLowerCase().includes("mail") || value.includes("@"))) {
-      const match = value.match(/[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-      if (match) return match[0].trim();
+function findAndAddEmailsInObject(obj: Record<string, unknown>, addFn: (str: string) => void) {
+  for (const [_, value] of Object.entries(obj)) {
+    if (typeof value === "string") {
+      addFn(value);
+    } else if (Array.isArray(value)) {
+      for (const v of value) {
+        if (typeof v === "string") addFn(v);
+      }
     }
   }
-  return null;
 }
