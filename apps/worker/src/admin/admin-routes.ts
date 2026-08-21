@@ -59,10 +59,28 @@ adminRoutes.get("/users", async (c) => {
       countTotalUsers(c.env.DB),
     ]);
 
+    const adminEmails = (c.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+
+    const enrichedUsers = users.map((u) => {
+      const isAdmin =
+        adminEmails.includes(u.email.toLowerCase()) ||
+        u.plan === "admin" ||
+        u.email.toLowerCase().includes("admin@mailverify.com");
+      return {
+        ...u,
+        plan: isAdmin ? "admin" : (u.plan || "free"),
+        monthly_limit: isAdmin ? -1 : (typeof u.monthly_limit === "number" ? u.monthly_limit : 200),
+        is_admin: isAdmin,
+      };
+    });
+
     return c.json({
       success: true,
       data: {
-        users,
+        users: enrichedUsers,
         pagination: {
           total,
           limit,

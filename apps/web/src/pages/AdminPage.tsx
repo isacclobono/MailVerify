@@ -258,7 +258,7 @@ export const AdminPage = ({ user, onNavigateHome }: AdminPageProps) => {
       )}
 
       {/* Admin Tabs */}
-      <div style={{ display: "flex", gap: "0.5rem", borderBottom: "1px solid var(--border-subtle)", marginBottom: "1.5rem", overflowX: "auto" }}>
+      <div style={{ display: "flex", gap: "0.5rem", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "0.75rem", marginBottom: "1.5rem", overflowX: "auto" }}>
         <button
           className={`tab-btn ${activeTab === "overview" ? "active" : ""}`}
           onClick={() => setActiveTab("overview")}

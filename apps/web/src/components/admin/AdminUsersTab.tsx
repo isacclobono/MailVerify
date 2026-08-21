@@ -41,14 +41,15 @@ export const AdminUsersTab = ({
             Inspect accounts, modify plan limits, and manage permissions.
           </p>
         </div>
-        <div style={{ position: "relative", minWidth: "240px" }}>
+        <div style={{ position: "relative", minWidth: "260px" }}>
           <Search size={14} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
           <input
             type="text"
+            className="clean-input"
             placeholder="Search by email, name or ID..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            style={{ width: "100%", padding: "0.45rem 0.65rem 0.45rem 2rem", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-subtle)", fontSize: "0.82rem" }}
+            style={{ width: "100%", padding: "0.45rem 0.65rem 0.45rem 2rem", fontSize: "0.82rem" }}
           />
         </div>
       </div>
@@ -70,8 +71,9 @@ export const AdminUsersTab = ({
                 filteredUsers
                   .slice((usersPage - 1) * pageSize, usersPage * pageSize)
                   .map((u) => {
-                    const isUnlimited = u.monthly_limit === -1 || u.plan === "admin" || u.plan === "unlimited";
-                    const planLabel = (u.plan || "free").toUpperCase();
+                    const isAdmin = u.is_admin || u.plan === "admin" || u.email.toLowerCase().includes("admin@mailverify.com");
+                    const isUnlimited = u.monthly_limit === -1 || u.plan === "unlimited" || isAdmin;
+                    const planLabel = isAdmin ? "ADMIN" : (u.plan || "free").toUpperCase();
                     return (
                       <tr key={u.id}>
                         <td>
@@ -94,6 +96,8 @@ export const AdminUsersTab = ({
                                 ? "table-pill-purple"
                                 : planLabel === "PRO" || planLabel === "ENTERPRISE"
                                 ? "table-pill-success"
+                                : planLabel === "STARTER"
+                                ? "table-pill-blue"
                                 : "table-pill-muted"
                             }`}
                             style={{ fontWeight: 700 }}

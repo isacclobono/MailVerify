@@ -100,6 +100,7 @@ export interface AdminUserRecord {
   avatar_url: string | null;
   plan?: string;
   monthly_limit?: number;
+  is_admin?: boolean;
   created_at: string;
   updated_at: string;
 }
