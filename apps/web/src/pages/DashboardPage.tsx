@@ -350,16 +350,16 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
       {activeTab === "single" && (
         <div className="live-tester-card">
           <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "1rem" }}>Inspect Single Address</h2>
-          <form onSubmit={handleSingleVerify} className="search-form">
+          <form onSubmit={handleSingleVerify} className="search-input-group" style={{ maxWidth: "620px" }}>
             <input
               type="email"
-              className="search-input"
+              className="clean-input"
               placeholder="e.g. alex@company.com"
               value={singleEmail}
               onChange={(e) => setSingleEmail(e.target.value)}
               required
             />
-            <button type="submit" className="btn btn-black" disabled={singleLoading}>
+            <button type="submit" className="btn btn-black" disabled={singleLoading} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", whiteSpace: "nowrap", padding: "0.75rem 1.25rem" }}>
               {singleLoading ? <Loader2 size={16} className="animate-spin" /> : "Verify Now"}
             </button>
           </form>

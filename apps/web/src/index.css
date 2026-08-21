@@ -833,3 +833,60 @@ body {
   color: var(--text-muted);
 }
 
+/* Profile Dropdown & Header Menu */
+.dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 1.25rem;
+  background: transparent;
+  border: none;
+  font-size: 0.85rem;
+  color: var(--text-main);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.dropdown-item:hover {
+  background: var(--bg-subtle);
+  color: var(--accent-blue);
+}
+
+.nav-link {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm);
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.nav-link:hover {
+  color: var(--text-main);
+  background: var(--bg-subtle);
+}
+
+.nav-link.active {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.06);
+  font-weight: 700;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
