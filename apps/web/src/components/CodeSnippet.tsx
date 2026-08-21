@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 
 interface CodeSnippetProps {
   emailSample?: string;
 }
 
-export const CodeSnippet: React.FC<CodeSnippetProps> = ({ emailSample = "alex@example.com" }) => {
+export const CodeSnippet = ({ emailSample = "alex@example.com" }: CodeSnippetProps) => {
   const [activeLang, setActiveLang] = useState<"curl" | "javascript" | "python" | "node">("curl");
   const [copied, setCopied] = useState(false);
 

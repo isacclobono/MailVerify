@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { User, VerificationResult, BulkJobSummary } from "../types";
 import { api } from "../api/client";
 import { 
@@ -22,7 +22,7 @@ interface DashboardPageProps {
   onLogout: () => void;
 }
 
-export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout }) => {
+export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
   const [activeTab, setActiveTab] = useState<"single" | "bulk" | "history" | "settings">("single");
 
   // Single verify state
@@ -33,7 +33,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout }) 
 
   // Bulk verify state
   const [bulkInput, setBulkInput] = useState("");
-  const [bulkFormat, setBulkFormat] = useState<"auto" | "csv" | "json" | "txt">("auto");
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkSummary, setBulkSummary] = useState<BulkJobSummary | null>(null);
   const [bulkError, setBulkError] = useState<string | null>(null);

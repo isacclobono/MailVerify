@@ -1,4 +1,3 @@
-import React from "react";
 import { VerificationChecks } from "../types";
 import { Check, X, HelpCircle, Shield, Server, FileText, Lock, UserCheck } from "lucide-react";
 
@@ -6,7 +5,7 @@ interface ChecksDetailProps {
   checks: VerificationChecks;
 }
 
-export const ChecksDetail: React.FC<ChecksDetailProps> = ({ checks }) => {
+export const ChecksDetail = ({ checks }: ChecksDetailProps) => {
   const getStatusIcon = (passed: boolean, unknown = false) => {
     if (unknown) return <HelpCircle size={16} color="#94a3b8" />;
     return passed ? <Check size={16} color="#34d399" /> : <X size={16} color="#f87171" />;

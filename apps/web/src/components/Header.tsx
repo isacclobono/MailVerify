@@ -1,4 +1,3 @@
-import React from "react";
 import { User } from "../types";
 import { api } from "../api/client";
 import { LogOut, LayoutDashboard, ShieldCheck } from "lucide-react";
@@ -26,7 +25,10 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <nav className="nav-links">
-        <button className="nav-link" onClick={onNavigateHome}>
+        <button
+          className={`nav-link ${currentView === "home" ? "active" : ""}`}
+          onClick={onNavigateHome}
+        >
           API
         </button>
         <a
@@ -41,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
         {user ? (
           <>
             <button
-              className={`btn btn-outline`}
+              className={`btn ${currentView === "dashboard" ? "btn-black" : "btn-outline"}`}
               onClick={onNavigateDashboard}
             >
               <LayoutDashboard size={14} /> Dashboard

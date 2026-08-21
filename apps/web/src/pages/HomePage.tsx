@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, FormEvent } from "react";
 import { User, VerificationResult } from "../types";
 import { api } from "../api/client";
 import { StatsBar } from "../components/StatsBar";
@@ -14,7 +14,7 @@ interface HomePageProps {
   onNavigateDashboard: () => void;
 }
 
-export const HomePage: React.FC<HomePageProps> = ({ user, onNavigateDashboard }) => {
+export const HomePage = ({ user, onNavigateDashboard }: HomePageProps) => {
   const [email, setEmail] = useState("alex@example.com");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<VerificationResult | null>(null);
@@ -22,7 +22,7 @@ export const HomePage: React.FC<HomePageProps> = ({ user, onNavigateDashboard })
   const [remainingChecks, setRemainingChecks] = useState<number | null>(5);
   const [loginRequired, setLoginRequired] = useState(false);
 
-  const handleVerify = async (e?: React.FormEvent, customEmail?: string) => {
+  const handleVerify = async (e?: FormEvent, customEmail?: string) => {
     if (e) e.preventDefault();
     const targetEmail = (customEmail || email).trim();
     if (!targetEmail) return;

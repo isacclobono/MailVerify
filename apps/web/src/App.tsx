@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { User } from "./types";
 import { api } from "./api/client";
 import { Header } from "./components/Header";
@@ -6,6 +6,7 @@ import { Footer } from "./components/Footer";
 import { HomePage } from "./pages/HomePage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { useHourlyFont } from "./hooks/useHourlyFont";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 export function App() {
   useHourlyFont(); // Automatically applies Poppins on even hours & Zain on odd hours
@@ -70,7 +71,12 @@ export function App() {
       )}
 
       <main className="main-content">
-        {currentView === "dashboard" && user ? (
+        {loading ? (
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh", gap: "0.75rem", color: "var(--text-muted)" }}>
+            <Loader2 size={24} className="animate-spin" />
+            <span>Loading MailVerify...</span>
+          </div>
+        ) : currentView === "dashboard" && user ? (
           <DashboardPage user={user} onLogout={handleLogout} />
         ) : (
           <HomePage

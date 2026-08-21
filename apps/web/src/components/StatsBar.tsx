@@ -1,6 +1,4 @@
-import React from "react";
-
-export const StatsBar: React.FC = () => {
+export const StatsBar = () => {
   const stats = [
     {
       color: "#d97706", // Gold

@@ -1,6 +1,4 @@
-import React from "react";
-
-export const FaqSection: React.FC = () => {
+export const FaqSection = () => {
   const faqs = [
     {
       q: "How many emails can I check without signing in?",

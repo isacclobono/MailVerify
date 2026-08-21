@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { CodeSnippet } from "./CodeSnippet";
 import { X, ExternalLink } from "lucide-react";
 
@@ -11,7 +11,7 @@ interface FeatureCard {
   details: string;
 }
 
-export const FeatureGrid: React.FC<{ onTryEmail: (email: string) => void }> = ({ onTryEmail }) => {
+export const FeatureGrid = ({ onTryEmail }: { onTryEmail: (email: string) => void }) => {
   const [selectedFeature, setSelectedFeature] = useState<FeatureCard | null>(null);
 
   const features: FeatureCard[] = [

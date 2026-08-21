@@ -1,4 +1,3 @@
-import React from "react";
 import { Verdict } from "../types";
 import { CheckCircle2, AlertTriangle, XCircle, ShieldAlert } from "lucide-react";
 
@@ -7,7 +6,7 @@ interface VerdictBadgeProps {
   score?: number;
 }
 
-export const VerdictBadge: React.FC<VerdictBadgeProps> = ({ verdict, score }) => {
+export const VerdictBadge = ({ verdict, score }: VerdictBadgeProps) => {
   switch (verdict) {
     case "LIKELY_DELIVERABLE":
       return (
