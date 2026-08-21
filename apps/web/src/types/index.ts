@@ -41,6 +41,8 @@ export interface User {
   email: string;
   name?: string;
   avatar_url?: string;
+  plan?: string;
+  monthly_limit?: number;
   is_admin?: boolean;
 }
 
@@ -64,9 +66,11 @@ export interface AdminStats {
 
 export interface MonthlyQuota {
   current_month: string;
+  plan?: string;
   calls_used: number;
   monthly_limit: number;
   remaining_calls: number;
+  is_unlimited?: boolean;
 }
 
 export interface ApiKeyItem {
@@ -94,6 +98,8 @@ export interface AdminUserRecord {
   email: string;
   name: string | null;
   avatar_url: string | null;
+  plan?: string;
+  monthly_limit?: number;
   created_at: string;
   updated_at: string;
 }

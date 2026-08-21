@@ -210,9 +210,9 @@ export function createRouter(): Hono<AppContext> {
 
     // 1. Check Monthly Quota for Authenticated User (Session or API Key)
     if (user && c.env.DB) {
-      const usage = await incrementMonthlyUsage(c.env.DB, user.id);
-      c.res.headers.set("X-RateLimit-Monthly-Limit", usage.limit.toString());
-      c.res.headers.set("X-RateLimit-Monthly-Remaining", usage.remaining.toString());
+      const usage = await incrementMonthlyUsage(c.env.DB, user.id, 1, user.isAdmin);
+      c.res.headers.set("X-RateLimit-Monthly-Limit", usage.limit === -1 ? "unlimited" : usage.limit.toString());
+      c.res.headers.set("X-RateLimit-Monthly-Remaining", usage.remaining === -1 ? "unlimited" : usage.remaining.toString());
 
       if (!usage.allowed) {
         return c.json(
@@ -220,7 +220,7 @@ export function createRouter(): Hono<AppContext> {
             success: false,
             error: {
               code: "MONTHLY_QUOTA_EXCEEDED",
-              message: `You have reached your Free Plan limit of ${FREE_TIER_MONTHLY_LIMIT} API calls for this month. Your quota will reset on the 1st of next month.`,
+              message: `You have reached your monthly plan limit of ${usage.limit} API calls for this month. Your quota will reset on the 1st of next month.`,
             },
           },
           429
@@ -347,7 +347,7 @@ export function createRouter(): Hono<AppContext> {
     const user = c.get("user")!;
     const [history, monthlyUsage] = await Promise.all([
       getUserVerifications(c.env.DB, user.id, 100, 0),
-      getMonthlyUsage(c.env.DB, user.id),
+      getMonthlyUsage(c.env.DB, user.id, user.isAdmin),
     ]);
 
     const total = history.length;
@@ -365,9 +365,11 @@ export function createRouter(): Hono<AppContext> {
         retention_days: 5,
         monthly_quota: {
           current_month: monthlyUsage.monthYear,
+          plan: monthlyUsage.plan,
           calls_used: monthlyUsage.callCount,
           monthly_limit: monthlyUsage.limit,
           remaining_calls: monthlyUsage.remaining,
+          is_unlimited: user.isAdmin || monthlyUsage.limit === -1,
         },
       },
     });
@@ -415,14 +417,14 @@ export function createRouter(): Hono<AppContext> {
 
     // Check Monthly Quota for Authenticated User
     if (user && c.env.DB) {
-      const currentQuota = await getMonthlyUsage(c.env.DB, user.id);
-      if (currentQuota.remaining <= 0) {
+      const currentQuota = await getMonthlyUsage(c.env.DB, user.id, user.isAdmin);
+      if (!user.isAdmin && currentQuota.limit !== -1 && currentQuota.remaining <= 0) {
         return c.json(
           {
             success: false,
             error: {
               code: "MONTHLY_QUOTA_EXCEEDED",
-              message: `You have reached your Free Plan limit of ${FREE_TIER_MONTHLY_LIMIT} API calls for this month. Quota resets on the 1st.`,
+              message: `You have reached your monthly plan limit of ${currentQuota.limit} API calls. Quota resets on the 1st.`,
             },
           },
           429
@@ -439,7 +441,7 @@ export function createRouter(): Hono<AppContext> {
 
     // Increment monthly quota by processed count
     if (user && c.env.DB && summary.processed > 0) {
-      await incrementMonthlyUsage(c.env.DB, user.id, summary.processed);
+      await incrementMonthlyUsage(c.env.DB, user.id, summary.processed, user.isAdmin);
     }
 
     return c.json({

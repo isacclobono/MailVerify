@@ -223,6 +223,18 @@ export const api = {
     return apiRequest(`/api/admin/users/${userId}`, { method: "DELETE" });
   },
 
+  async updateAdminUserPlan(userId: string, plan: string, monthlyLimit: number): Promise<{
+    user_id: string;
+    plan: string;
+    monthly_limit: number;
+    is_unlimited: boolean;
+  }> {
+    return apiRequest(`/api/admin/users/${userId}/plan`, {
+      method: "PUT",
+      body: JSON.stringify({ plan, monthly_limit: monthlyLimit }),
+    });
+  },
+
   async syncDisposableDomains(): Promise<{
     success: boolean;
     total_domains_collected: number;

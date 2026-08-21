@@ -134,6 +134,43 @@ adminRoutes.delete("/users/:id", async (c) => {
 });
 
 /**
+ * PUT /api/admin/users/:id/plan
+ * Update a user's subscription plan and monthly API call limit
+ */
+adminRoutes.put("/users/:id/plan", async (c) => {
+  const userId = c.req.param("id");
+  if (!userId) {
+    return c.json({ success: false, error: { code: "MISSING_ID", message: "User ID required" } }, 400);
+  }
+
+  try {
+    const body = await c.req.json<{ plan?: string; monthly_limit?: number }>();
+    const plan = body?.plan || "custom";
+    const monthlyLimit = typeof body?.monthly_limit === "number" ? body.monthly_limit : 200;
+
+    const { updateUserPlanAndLimit } = await import("../db/users");
+    const success = await updateUserPlanAndLimit(c.env.DB, userId, plan, monthlyLimit);
+
+    if (!success) {
+      return c.json({ success: false, error: { code: "UPDATE_FAILED", message: "Failed to update user plan" } }, 500);
+    }
+
+    return c.json({
+      success: true,
+      data: {
+        user_id: userId,
+        plan,
+        monthly_limit: monthlyLimit,
+        is_unlimited: monthlyLimit === -1,
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to update plan";
+    return c.json({ success: false, error: { code: "PLAN_UPDATE_ERROR", message } }, 500);
+  }
+});
+
+/**
  * POST /api/admin/disposable/sync
  * Manually triggers a fresh sync of all open-source disposable domain lists
  */

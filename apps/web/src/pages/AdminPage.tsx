@@ -18,7 +18,8 @@ import {
   Eye,
   EyeOff,
   Mail,
-  KeyRound
+  KeyRound,
+  Sliders
 } from "lucide-react";
 import { Pagination } from "../components/Pagination";
 
@@ -132,6 +133,7 @@ export const AdminPage = ({ user, onNavigateHome }: AdminPageProps) => {
       setDeleting(false);
     }
   };
+  // Disposable Sync State
   const [syncingDisposable, setSyncingDisposable] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
@@ -149,6 +151,57 @@ export const AdminPage = ({ user, onNavigateHome }: AdminPageProps) => {
       setSyncMessage(err instanceof Error ? `Sync failed: ${err.message}` : "Sync failed.");
     } finally {
       setSyncingDisposable(false);
+    }
+  };
+
+  // Plan Editing State
+  const [editingUserPlan, setEditingUserPlan] = useState<AdminUserRecord | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState("free");
+  const [customLimitInput, setCustomLimitInput] = useState("200");
+  const [savingPlan, setSavingPlan] = useState(false);
+  const [planSaveError, setPlanSaveError] = useState<string | null>(null);
+
+  const handleOpenPlanModal = (targetUser: AdminUserRecord) => {
+    setEditingUserPlan(targetUser);
+    setSelectedPlan(targetUser.plan || "free");
+    setCustomLimitInput(
+      typeof targetUser.monthly_limit === "number" ? targetUser.monthly_limit.toString() : "200"
+    );
+    setPlanSaveError(null);
+  };
+
+  const handleSaveUserPlan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUserPlan) return;
+    setSavingPlan(true);
+    setPlanSaveError(null);
+
+    let limit = 200;
+    if (selectedPlan === "free") limit = 200;
+    else if (selectedPlan === "starter") limit = 1000;
+    else if (selectedPlan === "pro") limit = 10000;
+    else if (selectedPlan === "enterprise") limit = 100000;
+    else if (selectedPlan === "admin" || selectedPlan === "unlimited") limit = -1;
+    else {
+      const parsed = parseInt(customLimitInput, 10);
+      limit = isNaN(parsed) ? 200 : parsed;
+    }
+
+    try {
+      await api.updateAdminUserPlan(editingUserPlan.id, selectedPlan, limit);
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === editingUserPlan.id
+            ? { ...u, plan: selectedPlan, monthly_limit: limit }
+            : u
+        )
+      );
+      setEditingUserPlan(null);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to update user plan.";
+      setPlanSaveError(msg);
+    } finally {
+      setSavingPlan(false);
     }
   };
 
@@ -480,8 +533,8 @@ export const AdminPage = ({ user, onNavigateHome }: AdminPageProps) => {
                     <thead>
                       <tr>
                         <th>USER</th>
-                        <th>USER ID</th>
-                        <th>GOOGLE SUB</th>
+                        <th>PLAN</th>
+                        <th>MONTHLY LIMIT</th>
                         <th>REGISTERED</th>
                         <th style={{ textAlign: "right" }}>ACTIONS</th>
                       </tr>
@@ -490,42 +543,69 @@ export const AdminPage = ({ user, onNavigateHome }: AdminPageProps) => {
                       {filteredUsers.length > 0 ? (
                         filteredUsers
                           .slice((usersPage - 1) * USERS_PAGE_SIZE, usersPage * USERS_PAGE_SIZE)
-                          .map((u) => (
-                            <tr key={u.id}>
-                              <td>
-                                <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
-                                  {u.avatar_url ? (
-                                    <img src={u.avatar_url} alt={u.email} style={{ width: "22px", height: "22px", borderRadius: "50%" }} />
-                                  ) : (
-                                    <Users size={18} color="var(--text-muted)" />
-                                  )}
-                                  <div>
-                                    <div style={{ fontWeight: 600 }}>{u.name || "Anonymous User"}</div>
-                                    <div style={{ color: "var(--text-muted)", fontSize: "0.72rem" }}>{u.email}</div>
+                          .map((u) => {
+                            const isUnlimited = u.monthly_limit === -1 || u.plan === "admin";
+                            const planLabel = (u.plan || "free").toUpperCase();
+                            return (
+                              <tr key={u.id}>
+                                <td>
+                                  <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
+                                    {u.avatar_url ? (
+                                      <img src={u.avatar_url} alt={u.email} style={{ width: "22px", height: "22px", borderRadius: "50%" }} />
+                                    ) : (
+                                      <Users size={18} color="var(--text-muted)" />
+                                    )}
+                                    <div>
+                                      <div style={{ fontWeight: 600 }}>{u.name || "Anonymous User"}</div>
+                                      <div style={{ color: "var(--text-muted)", fontSize: "0.72rem", fontFamily: "var(--font-mono)" }}>{u.email}</div>
+                                    </div>
                                   </div>
-                                </div>
-                              </td>
-                              <td style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "var(--text-muted)" }}>
-                                {u.id}
-                              </td>
-                              <td style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "var(--text-muted)" }}>
-                                {u.google_sub ? u.google_sub.substring(0, 10) + "..." : "Local / None"}
-                              </td>
-                              <td style={{ color: "var(--text-muted)" }}>
-                                {new Date(u.created_at).toLocaleDateString()}
-                              </td>
-                              <td style={{ textAlign: "right" }}>
-                                <button
-                                  className="btn btn-outline"
-                                  style={{ color: "var(--danger)", borderColor: "rgba(239, 68, 68, 0.3)", padding: "0.25rem 0.5rem", fontSize: "0.72rem" }}
-                                  onClick={() => setDeleteConfirmUser(u)}
-                                  title="Delete user and all data"
-                                >
-                                  <Trash2 size={12} /> Delete
-                                </button>
-                              </td>
-                            </tr>
-                          ))
+                                </td>
+                                <td>
+                                  <span
+                                    className={`table-pill ${
+                                      planLabel === "ADMIN" || planLabel === "UNLIMITED"
+                                        ? "table-pill-purple"
+                                        : planLabel === "PRO" || planLabel === "ENTERPRISE"
+                                        ? "table-pill-success"
+                                        : "table-pill-muted"
+                                    }`}
+                                    style={{ fontWeight: 700 }}
+                                  >
+                                    {planLabel}
+                                  </span>
+                                </td>
+                                <td>
+                                  <span style={{ fontWeight: 700, fontFamily: "var(--font-mono)", fontSize: "0.8rem", color: isUnlimited ? "var(--accent-purple)" : "#0f172a" }}>
+                                    {isUnlimited ? "∞ Unlimited" : `${(u.monthly_limit || 200).toLocaleString()} / mo`}
+                                  </span>
+                                </td>
+                                <td style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
+                                  {new Date(u.created_at).toLocaleDateString()}
+                                </td>
+                                <td style={{ textAlign: "right" }}>
+                                  <div style={{ display: "inline-flex", gap: "0.35rem" }}>
+                                    <button
+                                      className="btn btn-outline"
+                                      style={{ padding: "0.25rem 0.5rem", fontSize: "0.72rem", display: "inline-flex", alignItems: "center", gap: "0.25rem" }}
+                                      onClick={() => handleOpenPlanModal(u)}
+                                      title="Edit Plan & Quota Limit"
+                                    >
+                                      <Sliders size={12} /> Plan
+                                    </button>
+                                    <button
+                                      className="btn btn-outline"
+                                      style={{ color: "var(--danger)", borderColor: "rgba(239, 68, 68, 0.3)", padding: "0.25rem 0.5rem", fontSize: "0.72rem", display: "inline-flex", alignItems: "center", gap: "0.25rem" }}
+                                      onClick={() => setDeleteConfirmUser(u)}
+                                      title="Delete user and all data"
+                                    >
+                                      <Trash2 size={12} /> Delete
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
                       ) : (
                         <tr>
                           <td colSpan={5} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
@@ -714,6 +794,97 @@ export const AdminPage = ({ user, onNavigateHome }: AdminPageProps) => {
                 {deleting ? "Deleting..." : "Permanently Delete"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Plan & Quota Modal */}
+      {editingUserPlan && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "1rem" }}>
+          <div className="card" style={{ maxWidth: "480px", width: "100%", padding: "2rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+              <Sliders size={20} color="var(--accent-blue)" />
+              <h3 style={{ fontSize: "1.2rem", fontWeight: 800 }}>
+                Manage User Plan & Quota
+              </h3>
+            </div>
+            <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "1.25rem" }}>
+              User: <strong style={{ color: "var(--text-main)", fontFamily: "var(--font-mono)" }}>{editingUserPlan.email}</strong>
+            </p>
+
+            {planSaveError && (
+              <div style={{ padding: "0.6rem 0.85rem", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "var(--radius-sm)", color: "var(--danger)", fontSize: "0.8rem", fontWeight: 600, marginBottom: "1rem" }}>
+                {planSaveError}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveUserPlan} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--text-main)", marginBottom: "0.35rem" }}>
+                  SELECT SUBSCRIPTION PLAN
+                </label>
+                <select
+                  value={selectedPlan}
+                  onChange={(e) => {
+                    const p = e.target.value;
+                    setSelectedPlan(p);
+                    if (p === "free") setCustomLimitInput("200");
+                    else if (p === "starter") setCustomLimitInput("1000");
+                    else if (p === "pro") setCustomLimitInput("10000");
+                    else if (p === "enterprise") setCustomLimitInput("100000");
+                    else if (p === "unlimited" || p === "admin") setCustomLimitInput("-1");
+                  }}
+                  className="clean-input"
+                  style={{ width: "100%", padding: "0.55rem 0.75rem", fontSize: "0.85rem" }}
+                  disabled={savingPlan}
+                >
+                  <option value="free">Free Tier (200 checks / mo)</option>
+                  <option value="starter">Starter Tier (1,000 checks / mo)</option>
+                  <option value="pro">Pro Tier (10,000 checks / mo)</option>
+                  <option value="enterprise">Enterprise Tier (100,000 checks / mo)</option>
+                  <option value="unlimited">Unlimited Plan (∞ No Limits)</option>
+                  <option value="custom">Custom Quota Limit</option>
+                </select>
+              </div>
+
+              {selectedPlan === "custom" && (
+                <div>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--text-main)", marginBottom: "0.35rem" }}>
+                    CUSTOM MONTHLY CALL LIMIT (Enter -1 for Unlimited)
+                  </label>
+                  <input
+                    type="number"
+                    className="clean-input"
+                    value={customLimitInput}
+                    onChange={(e) => setCustomLimitInput(e.target.value)}
+                    required
+                    min={-1}
+                    disabled={savingPlan}
+                    style={{ width: "100%", padding: "0.55rem 0.75rem", fontSize: "0.85rem" }}
+                  />
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end", marginTop: "0.5rem" }}>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setEditingUserPlan(null)}
+                  disabled={savingPlan}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-black"
+                  disabled={savingPlan}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
+                >
+                  {savingPlan ? <Loader2 size={14} className="animate-spin" /> : null}
+                  <span>{savingPlan ? "Saving..." : "Save Plan Changes"}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -153,30 +153,59 @@ export async function findUserByApiKey(
 
 export async function getMonthlyUsage(
   db: D1Database,
-  userId: string
-): Promise<{ monthYear: string; callCount: number; limit: number; remaining: number }> {
+  userId: string,
+  isAdmin?: boolean
+): Promise<{ monthYear: string; callCount: number; limit: number; remaining: number; plan: string }> {
   const monthYear = getCurrentMonthYear();
+
+  let userPlan = "free";
+  let userLimit = FREE_TIER_MONTHLY_LIMIT;
+
+  if (isAdmin) {
+    userPlan = "admin";
+    userLimit = -1;
+  } else {
+    try {
+      const userRow = await db
+        .prepare("SELECT plan, monthly_limit FROM users WHERE id = ?")
+        .bind(userId)
+        .first<{ plan?: string; monthly_limit?: number }>();
+
+      if (userRow) {
+        userPlan = userRow.plan || "free";
+        if (typeof userRow.monthly_limit === "number") {
+          userLimit = userRow.monthly_limit;
+        }
+      }
+    } catch {
+      // Default fallback
+    }
+  }
+
   const row = await db
     .prepare("SELECT call_count FROM api_usage WHERE user_id = ? AND month_year = ?")
     .bind(userId, monthYear)
     .first<{ call_count: number }>();
 
   const callCount = row ? row.call_count : 0;
-  const remaining = Math.max(0, FREE_TIER_MONTHLY_LIMIT - callCount);
+  const isUnlimited = isAdmin || userLimit === -1;
+  const remaining = isUnlimited ? -1 : Math.max(0, userLimit - callCount);
 
   return {
     monthYear,
     callCount,
-    limit: FREE_TIER_MONTHLY_LIMIT,
+    limit: userLimit,
     remaining,
+    plan: userPlan,
   };
 }
 
 export async function incrementMonthlyUsage(
   db: D1Database,
   userId: string,
-  count = 1
-): Promise<{ allowed: boolean; callCount: number; limit: number; remaining: number }> {
+  count = 1,
+  isAdmin?: boolean
+): Promise<{ allowed: boolean; callCount: number; limit: number; remaining: number; plan: string }> {
   const monthYear = getCurrentMonthYear();
   const now = new Date().toISOString();
   const usageId = `usg_${crypto.randomUUID()}`;
@@ -193,12 +222,14 @@ export async function incrementMonthlyUsage(
     .bind(usageId, userId, monthYear, count, now, now, count, now)
     .run();
 
-  const usage = await getMonthlyUsage(db, userId);
+  const usage = await getMonthlyUsage(db, userId, isAdmin);
+  const isUnlimited = isAdmin || usage.limit === -1;
 
   return {
-    allowed: usage.callCount <= FREE_TIER_MONTHLY_LIMIT,
+    allowed: isUnlimited || usage.callCount <= usage.limit,
     callCount: usage.callCount,
-    limit: FREE_TIER_MONTHLY_LIMIT,
+    limit: usage.limit,
     remaining: usage.remaining,
+    plan: usage.plan,
   };
 }
