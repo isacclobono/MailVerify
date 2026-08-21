@@ -138,7 +138,9 @@ export const FeatureGrid = ({ onTryEmail }: { onTryEmail: (email: string) => voi
   const handleCopyCurl = (curl: string) => {
     navigator.clipboard.writeText(curl);
     setCopiedCurl(true);
-    toast.info("cURL command copied to clipboard!");
+    toast.info("cURL Command Copied", {
+      description: "Terminal request copied to clipboard.",
+    });
     setTimeout(() => setCopiedCurl(false), 2000);
   };
 

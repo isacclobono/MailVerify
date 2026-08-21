@@ -25,14 +25,20 @@ export const SpfDmarcAuditPage = ({ onNavigateHome }: { onNavigateHome: () => vo
       const data = await api.verifyEmail(probeEmail);
       setResult(data);
       if (data.checks.spf.includes("PRESENT") && data.checks.dmarc.includes("PRESENT")) {
-        toast.success(`Domain ${raw} is fully protected with SPF & DMARC.`);
+        toast.success("Domain Authentication Enforced", {
+          description: `Domain ${raw} publishes valid SPF records and strict DMARC anti-spoofing policy.`,
+        });
       } else {
-        toast.warning(`Security warning: ${raw} is missing recommended email authentication.`);
+        toast.warning("Authentication Notice", {
+          description: `Domain ${raw} is missing recommended email authentication records.`,
+        });
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to audit SPF and DMARC records.";
       setError(msg);
-      toast.error(msg);
+      toast.error("Audit Failed", {
+        description: msg,
+      });
     } finally {
       setLoading(false);
     }

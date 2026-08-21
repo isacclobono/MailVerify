@@ -26,14 +26,20 @@ export const DnsMxCheckerPage = ({ onNavigateHome }: { onNavigateHome: () => voi
       const data = await api.verifyEmail(probeEmail);
       setResult(data);
       if (data.checks.mx === "MX_FOUND") {
-        toast.success(`DNS & MX records found for ${raw}`);
+        toast.success("MX Records Discovered", {
+          description: `Domain ${raw} has active mail exchanger records configured.`,
+        });
       } else {
-        toast.warning(`No active MX records found for ${raw}`);
+        toast.warning("No MX Records", {
+          description: `Domain ${raw} does not publish active mail exchanger records.`,
+        });
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to resolve DNS records for domain.";
       setError(msg);
-      toast.error(msg);
+      toast.error("Lookup Failed", {
+        description: msg,
+      });
     } finally {
       setLoading(false);
     }

@@ -84,14 +84,18 @@ export const DocsPage = () => {
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedCodeId(id);
-    toast.info("Code example copied to clipboard!");
+    toast.info("Code Copied", {
+      description: "Ready to paste into your codebase.",
+    });
     setTimeout(() => setCopiedCodeId(null), 2000);
   };
 
   const handleCopyBaseUrl = () => {
     navigator.clipboard.writeText(BASE_URL);
     setCopiedBaseUrl(true);
-    toast.info("Base URL copied to clipboard!");
+    toast.info("Base URL Copied", {
+      description: `Target API root: ${BASE_URL}`,
+    });
     setTimeout(() => setCopiedBaseUrl(false), 2000);
   };
 

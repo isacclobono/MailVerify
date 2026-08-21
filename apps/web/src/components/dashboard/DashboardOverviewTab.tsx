@@ -3,6 +3,7 @@ import { Copy, Check, RefreshCw } from "lucide-react";
 import { VerificationResult, MonthlyQuota, ApiKeyItem } from "../../types";
 import { VerdictBadge } from "../VerdictBadge";
 import { formatTimeAgo, formatUtcDateTime } from "../../utils/time";
+import { toast } from "sonner";
 
 export type CodeLang = "curl" | "node" | "javascript" | "python" | "php" | "ruby" | "go" | "rust" | "java" | "c#" | "swift";
 
@@ -94,6 +95,9 @@ let res = client.post("https://mailverify.sk-builds.workers.dev/api/verify")
   const handleCopy = () => {
     navigator.clipboard.writeText(getCodeSnippet(selectedLang));
     setCopiedCode(true);
+    toast.info("Code Snippet Copied", {
+      description: `${selectedLang.toUpperCase()} integration snippet copied to clipboard.`,
+    });
     setTimeout(() => setCopiedCode(false), 2000);
   };
 

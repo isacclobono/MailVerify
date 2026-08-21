@@ -18,19 +18,25 @@ export const AdminLoginCard = ({ onNavigateHome }: AdminLoginCardProps) => {
     e.preventDefault();
     if (!adminEmail.trim() || !adminPassword) {
       setLoginError("Please provide both email and password.");
-      toast.error("Please provide both email and password.");
+      toast.error("Credentials Required", {
+        description: "Please provide both admin email and password.",
+      });
       return;
     }
     setLoginLoading(true);
     setLoginError(null);
     try {
       await api.adminLogin(adminEmail.trim(), adminPassword);
-      toast.success("Administrator authentication successful!");
+      toast.success("Administrator Authenticated", {
+        description: "Access granted to root platform telemetry and controls.",
+      });
       window.location.reload();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Invalid administrator email or password.";
       setLoginError(msg);
-      toast.error(msg);
+      toast.error("Authentication Failed", {
+        description: msg,
+      });
     } finally {
       setLoginLoading(false);
     }

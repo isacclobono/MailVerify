@@ -49,7 +49,9 @@ console.log(data);`;
   const handleCopy = () => {
     navigator.clipboard.writeText(getSnippet());
     setCopied(true);
-    toast.info("Code snippet copied to clipboard!");
+    toast.info("Snippet Copied", {
+      description: `${activeLang.toUpperCase()} example copied to clipboard.`,
+    });
     setTimeout(() => setCopied(false), 2000);
   };
 

@@ -71,7 +71,9 @@ export const DashboardKeysTab = ({
                 onClick={() => {
                   navigator.clipboard.writeText(createdKey.raw_key);
                   setCopiedToken(true);
-                  toast.success("API Key copied to clipboard!");
+                  toast.success("API Key Copied", {
+                    description: "Secret token copied to clipboard. Keep it safe!",
+                  });
                   setTimeout(() => setCopiedToken(false), 2000);
                 }}
                 style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", fontSize: "0.78rem", padding: "0.45rem 0.75rem" }}

@@ -151,11 +151,15 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
       const res = await api.createApiKey(newKeyName.trim());
       setCreatedKey(res);
       setNewKeyName("");
-      toast.success("API key created successfully!");
+      toast.success("API Key Generated", {
+        description: `New key "${res.name}" created. Please copy it immediately.`,
+      });
       loadApiKeys();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to generate API key.";
-      toast.error(msg);
+      toast.error("Key Generation Failed", {
+        description: msg,
+      });
     } finally {
       setGeneratingKey(false);
     }
@@ -166,10 +170,14 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
     try {
       await api.deleteApiKey(keyId);
       setApiKeys((prev) => prev.filter((k) => k.id !== keyId));
-      toast.success("API key revoked.");
+      toast.success("API Key Revoked", {
+        description: "The selected API key has been deleted and can no longer be used.",
+      });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to revoke API key.";
-      toast.error(msg);
+      toast.error("Revocation Failed", {
+        description: msg,
+      });
     }
   };
 
@@ -185,17 +193,25 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
       const res = await api.verifyEmail(singleEmail.trim());
       setSingleResult(res);
       if (res.verdict === "LIKELY_DELIVERABLE") {
-        toast.success(`Verification complete: ${res.email} is deliverable (${res.score}/100)`);
+        toast.success("Email Verified Deliverable", {
+          description: `${res.email} is deliverable with score ${res.score}/100.`,
+        });
       } else if (res.verdict.includes("RISKY") || res.verdict.includes("ROLE")) {
-        toast.warning(`Notice: ${res.email} flagged as ${res.verdict} (${res.score}/100)`);
+        toast.warning("Risky / Role Email Detected", {
+          description: `${res.email} flagged as ${res.verdict} (Score: ${res.score}/100).`,
+        });
       } else {
-        toast.error(`Warning: ${res.email} is undeliverable (${res.verdict})`);
+        toast.error("Undeliverable Email", {
+          description: `${res.email} is undeliverable (${res.verdict}).`,
+        });
       }
       loadHistoryAndStats();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Verification request failed.";
       setSingleError(msg);
-      toast.error(msg);
+      toast.error("Verification Request Failed", {
+        description: msg,
+      });
     } finally {
       setSingleLoading(false);
     }
@@ -220,8 +236,14 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
         if (extracted.length > 0) {
           setBulkInput(extracted.join("\n"));
           setBulkError(null);
+          toast.info("File Uploaded", {
+            description: `Extracted ${extracted.length} valid email addresses from ${file.name}.`,
+          });
         } else {
           setBulkError("No valid email addresses detected in the uploaded file.");
+          toast.warning("No Emails Found", {
+            description: "Could not parse any valid email formats in the uploaded file.",
+          });
         }
       }
     };
@@ -241,6 +263,9 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
     ];
     setBulkInput(samples.join("\n"));
     setBulkError(null);
+    toast.info("Sample Emails Loaded", {
+      description: "Populated batch queue with 8 representative test addresses.",
+    });
   };
 
   const handleBulkSubmit = async (e: React.FormEvent) => {
@@ -264,12 +289,16 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
     try {
       const res = await api.submitBulkVerification(emails);
       setBulkSummary(res.summary);
-      toast.success(`Batch completed! ${res.summary.total} emails verified (${res.summary.successful} deliverable).`);
+      toast.success("Batch Verification Complete", {
+        description: `Verified ${res.summary.total} emails: ${res.summary.successful} deliverable, ${res.summary.failed} risky/undeliverable.`,
+      });
       loadHistoryAndStats();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Bulk processing failed.";
       setBulkError(msg);
-      toast.error(msg);
+      toast.error("Batch Processing Failed", {
+        description: msg,
+      });
     } finally {
       setBulkLoading(false);
     }

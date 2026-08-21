@@ -146,7 +146,7 @@ export function App() {
 
   return (
     <div className="app-container">
-      <Toaster position="top-right" richColors closeButton />
+      <Toaster position="bottom-right" richColors closeButton />
       <Header
         user={user}
         onLogout={handleLogout}

@@ -40,16 +40,24 @@ export const HomePage = ({ user, onNavigateDashboard }: HomePageProps) => {
         setRemainingChecks(data.remaining_anonymous_checks);
       }
       if (data.verdict === "LIKELY_DELIVERABLE") {
-        toast.success(`Verification complete: ${data.email} is deliverable (${data.score}/100)`);
+        toast.success("Email Verified Deliverable", {
+          description: `${data.email} passed DNS, MX, and syntax checks with score ${data.score}/100.`,
+        });
       } else if (data.verdict.includes("RISKY") || data.verdict.includes("ROLE")) {
-        toast.warning(`Notice: ${data.email} flagged as ${data.verdict} (${data.score}/100)`);
+        toast.warning("Risky / Role Email Detected", {
+          description: `${data.email} is flagged as ${data.verdict} (Score: ${data.score}/100).`,
+        });
       } else {
-        toast.error(`Warning: ${data.email} is undeliverable (${data.verdict})`);
+        toast.error("Undeliverable Email Address", {
+          description: `${data.email} failed verification checks (${data.verdict}).`,
+        });
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Verification request failed";
       setError(message);
-      toast.error(message);
+      toast.error("Verification Request Failed", {
+        description: message,
+      });
       if (message.includes("limit") || message.includes("sign in")) {
         setLoginRequired(true);
         setRemainingChecks(0);

@@ -59,7 +59,9 @@ export const DashboardBulkTab = ({
     link.href = url;
     link.download = `mailverify_batch_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
-    toast.info("Exported full batch report as CSV.");
+    toast.info("CSV Export Ready", {
+      description: `Downloaded verification report containing ${bulkSummary.results.length} rows.`,
+    });
   };
 
   const downloadResultsTXT = () => {
@@ -71,7 +73,9 @@ export const DashboardBulkTab = ({
     link.href = url;
     link.download = `mailverify_batch_${new Date().toISOString().slice(0, 10)}.txt`;
     link.click();
-    toast.info("Exported batch report as TXT.");
+    toast.info("TXT Export Ready", {
+      description: `Downloaded summary text file with ${bulkSummary.results.length} entries.`,
+    });
   };
 
   const downloadDeliverableOnlyTXT = () => {
@@ -80,7 +84,9 @@ export const DashboardBulkTab = ({
       .filter((r) => r.verdict === "LIKELY_DELIVERABLE")
       .map((r) => r.email);
     if (deliverableOnly.length === 0) {
-      toast.warning("No deliverable emails found in this batch to export.");
+      toast.warning("No Deliverable Emails", {
+        description: "No clean deliverable email addresses found in this batch to export.",
+      });
       return;
     }
     const blob = new Blob([deliverableOnly.join("\n")], { type: "text/plain;charset=utf-8;" });
@@ -89,7 +95,9 @@ export const DashboardBulkTab = ({
     link.href = url;
     link.download = `mailverify_clean_deliverable_${new Date().toISOString().slice(0, 10)}.txt`;
     link.click();
-    toast.success(`Exported ${deliverableOnly.length} clean deliverable emails.`);
+    toast.success("Clean List Exported", {
+      description: `Saved ${deliverableOnly.length} deliverable email addresses as clean text list.`,
+    });
   };
 
   const downloadResultsJSON = () => {
@@ -101,7 +109,9 @@ export const DashboardBulkTab = ({
     link.href = url;
     link.download = `mailverify_batch_${new Date().toISOString().slice(0, 10)}.json`;
     link.click();
-    toast.info("Exported batch report as JSON.");
+    toast.info("JSON Export Ready", {
+      description: `Structured JSON export created with full DNS and MX audit checks.`,
+    });
   };
 
   return (

@@ -19,10 +19,14 @@ export const DashboardSettingsTab = ({ user, onLogout }: DashboardSettingsTabPro
 
     try {
       await api.deleteAccount();
-      toast.success("Account deleted successfully.");
+      toast.success("Account Permanently Deleted", {
+        description: "Your user profile, API keys, and validation logs have been purged.",
+      });
       onLogout();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete account.");
+      toast.error("Account Deletion Failed", {
+        description: err instanceof Error ? err.message : "Failed to delete account.",
+      });
     }
   };
 
