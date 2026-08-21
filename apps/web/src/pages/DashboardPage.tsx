@@ -7,13 +7,13 @@ import {
   History, 
   Settings, 
   Loader2, 
-  Download, 
   Trash2, 
   Key, 
   Copy, 
   Check, 
   Plus, 
-  Zap 
+  LayoutDashboard,
+  RefreshCw
 } from "lucide-react";
 import { VerdictBadge } from "../components/VerdictBadge";
 import { ChecksDetail } from "../components/ChecksDetail";
@@ -23,8 +23,13 @@ interface DashboardPageProps {
   onLogout: () => void;
 }
 
+type CodeLang = "curl" | "node" | "javascript" | "python" | "php" | "ruby" | "go" | "rust" | "java" | "c#" | "swift";
+
 export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
-  const [activeTab, setActiveTab] = useState<"single" | "bulk" | "history" | "keys" | "settings">("single");
+  const [activeTab, setActiveTab] = useState<"overview" | "single" | "bulk" | "history" | "keys" | "settings">("overview");
+  const [timeRange, setTimeRange] = useState<"Last 24 hours" | "Last 30 days" | "Last 12 months">("Last 24 hours");
+  const [selectedLang, setSelectedLang] = useState<CodeLang>("curl");
+  const [copiedCode, setCopiedCode] = useState(false);
 
   // Single verify state
   const [singleEmail, setSingleEmail] = useState("");
@@ -80,7 +85,7 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
         setQuota(usageData.monthly_quota);
       }
     } catch {
-      // Ignore initial stats load failures
+      // Ignore stats load failure
     } finally {
       setHistoryLoading(false);
     }
@@ -95,7 +100,7 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
         setQuota(res.usage);
       }
     } catch {
-      // Ignore initial keys load failure
+      // Ignore keys load failure
     } finally {
       setKeysLoading(false);
     }
@@ -118,9 +123,9 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
       const res = await api.verifyEmail(singleEmail.trim());
       setSingleResult(res);
       loadHistoryAndStats();
-      loadApiKeys();
     } catch (err: unknown) {
-      setSingleError(err instanceof Error ? err.message : "Verification failed");
+      const msg = err instanceof Error ? err.message : "Verification request failed.";
+      setSingleError(msg);
     } finally {
       setSingleLoading(false);
     }
@@ -128,225 +133,554 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
 
   const handleBulkSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!bulkInput.trim()) return;
+    const emails = bulkInput
+      .split(/[\r\n,]+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+
+    if (emails.length === 0) return;
 
     setBulkLoading(true);
     setBulkError(null);
     setBulkSummary(null);
 
     try {
-      const { summary } = await api.uploadBulkCsv(bulkInput.trim());
-      setBulkSummary(summary);
+      const res = await api.submitBulkVerification(emails);
+      setBulkSummary(res.summary);
       loadHistoryAndStats();
-      loadApiKeys();
     } catch (err: unknown) {
-      setBulkError(err instanceof Error ? err.message : "Bulk verification failed");
+      const msg = err instanceof Error ? err.message : "Bulk processing failed.";
+      setBulkError(msg);
     } finally {
       setBulkLoading(false);
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setBulkLoading(true);
-    setBulkError(null);
-    setBulkSummary(null);
-
-    try {
-      const text = await file.text();
-      setBulkInput(text);
-      const { summary } = await api.uploadBulkCsv(text);
-      setBulkSummary(summary);
-      loadHistoryAndStats();
-      loadApiKeys();
-    } catch (err: unknown) {
-      setBulkError(err instanceof Error ? err.message : "File parsing or upload failed");
-    } finally {
-      setBulkLoading(false);
-    }
-  };
-
-  const handleCreateApiKey = async (e: React.FormEvent) => {
+  const handleCreateKey = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newKeyName.trim()) return;
     setGeneratingKey(true);
     try {
-      const name = newKeyName.trim() || "Production API Key";
-      const res = await api.createApiKey(name);
+      const res = await api.createApiKey(newKeyName.trim());
       setCreatedKey(res);
       setNewKeyName("");
       loadApiKeys();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to create API key");
+      alert(err instanceof Error ? err.message : "Failed to generate key.");
     } finally {
       setGeneratingKey(false);
     }
   };
 
-  const handleDeleteApiKey = async (keyId: string) => {
-    if (confirm("Are you sure you want to revoke this API key? Applications using it will immediately stop working.")) {
-      try {
-        await api.deleteApiKey(keyId);
-        setApiKeys((prev) => prev.filter((k) => k.id !== keyId));
-      } catch (err: unknown) {
-        alert(err instanceof Error ? err.message : "Failed to revoke API key");
-      }
+  const handleDeleteKey = async (keyId: string) => {
+    if (!confirm("Are you sure you want to revoke this API key? Applications using it will be blocked.")) return;
+    try {
+      await api.deleteApiKey(keyId);
+      loadApiKeys();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to delete key.");
     }
   };
 
-  const handleCopyKey = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedToken(true);
-    setTimeout(() => setCopiedToken(false), 2000);
-  };
+  const activeKeyPrefix = apiKeys.length > 0 ? `${apiKeys[0].key_prefix}...` : "mv_live_8994cf5f2b0645589f2fe0d786140cf8";
 
-  const handleDownloadCsv = (results: VerificationResult[]) => {
-    if (!results || results.length === 0) return;
+  const getCodeSnippet = (lang: CodeLang): string => {
+    const key = activeKeyPrefix;
+    switch (lang) {
+      case "curl":
+        return `curl "https://mailverify.pulsechat.workers.dev/api/verify" \\\n  -X POST \\\n  -H "Content-Type: application/json" \\\n  -H "X-API-Key: ${key}" \\\n  -d '{"email": "contact@domain.com"}'`;
+      case "node":
+      case "javascript":
+        return `const res = await fetch("https://mailverify.pulsechat.workers.dev/api/verify", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-API-Key": "${key}"
+  },
+  body: JSON.stringify({ email: "contact@domain.com" })
+});
+const data = await res.json();
+console.log(data);`;
+      case "python":
+        return `import requests
 
-    const headers = ["Email", "Verdict", "Risk Score", "Syntax", "Domain", "MX", "SPF", "DMARC", "Disposable", "Role", "Date"];
-    const rows = results.map((r) => [
-      r.email,
-      r.verdict,
-      r.score,
-      r.checks.syntax,
-      r.checks.domain,
-      r.checks.mx,
-      r.checks.spf,
-      r.checks.dmarc,
-      r.checks.disposable,
-      r.checks.role,
-      r.created_at,
-    ]);
-
-    const csvContent = [headers.join(","), ...rows.map((row) => row.map((val) => `"${val}"`).join(","))].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `mailverify-export-${new Date().toISOString().substring(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleDeleteAccount = async () => {
-    if (
-      confirm(
-        "Are you sure you want to permanently delete your account, API keys, and all stored verification data?"
-      )
-    ) {
-      try {
-        await api.deleteAccount();
-        onLogout();
-      } catch (err: unknown) {
-        alert(err instanceof Error ? err.message : "Account deletion failed");
-      }
+res = requests.post(
+    "https://mailverify.pulsechat.workers.dev/api/verify",
+    headers={"X-API-Key": "${key}"},
+    json={"email": "contact@domain.com"}
+)
+print(res.json())`;
+      case "php":
+        return `$ch = curl_init("https://mailverify.pulsechat.workers.dev/api/verify");
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Content-Type: application/json",
+    "X-API-Key: ${key}"
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(["email" => "contact@domain.com"]));
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$res = curl_exec($ch);`;
+      case "go":
+        return `req, _ := http.NewRequest("POST", "https://mailverify.pulsechat.workers.dev/api/verify", bytes.NewBuffer([]byte(\`{"email":"contact@domain.com"}\`)))
+req.Header.Set("X-API-Key", "${key}")
+req.Header.Set("Content-Type", "application/json")
+resp, _ := http.DefaultClient.Do(req)`;
+      case "rust":
+        return `let client = reqwest::Client::new();
+let res = client.post("https://mailverify.pulsechat.workers.dev/api/verify")
+    .header("X-API-Key", "${key}")
+    .json(&serde_json::json!({ "email": "contact@domain.com" }))
+    .send()
+    .await?;`;
+      default:
+        return `// Request to https://mailverify.pulsechat.workers.dev/api/verify with header X-API-Key: ${key}`;
     }
   };
 
-  const usagePercent = Math.min(100, Math.round((quota.calls_used / quota.monthly_limit) * 100));
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(getCodeSnippet(selectedLang));
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const languages: CodeLang[] = ["curl", "node", "javascript", "python", "php", "ruby", "go", "rust", "java", "c#", "swift"];
+
+  // 24-hour dummy distribution buckets
+  const hourlyLabels = ["1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p", "10p", "11p", "12a", "1a", "2a", "3a", "4a", "5a", "6a", "7a", "8a", "9a", "10a", "11a", "12p"];
 
   return (
-    <div className="dashboard-page">
-      {/* Dashboard Top Header */}
-      <div className="dash-header">
+    <div style={{ maxWidth: "1120px", margin: "0 auto", width: "100%" }}>
+      {/* Top Header Row (matching reference screenshot) */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem", flexWrap: "wrap", gap: "1rem" }}>
         <div>
-          <span className="section-eyebrow">DEVELOPER ACCOUNT</span>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 800 }}>Welcome, {user.name || user.email}</h1>
+          <h1 style={{ fontSize: "2.1rem", fontWeight: 800, letterSpacing: "-0.02em", color: "#0f172a", marginBottom: "0.25rem" }}>
+            Dashboard
+          </h1>
+          <p style={{ color: "var(--text-muted)", fontSize: "1rem" }}>
+            Welcome back, {user.name ? user.name.split(" ")[0] : "Developer"}.
+          </p>
         </div>
-        <button className="btn btn-outline" onClick={onLogout}>
-          Sign out
+
+        {/* Requests This Cycle Pill */}
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.6rem",
+            padding: "0.4rem 1rem",
+            borderRadius: "9999px",
+            background: "var(--bg-subtle)",
+            border: "1px solid var(--border-subtle)",
+            fontSize: "0.85rem",
+            color: "var(--text-muted)",
+          }}
+        >
+          <span>Requests this cycle</span>
+          <strong style={{ color: "#0f172a", fontWeight: 700 }}>
+            {quota.calls_used} / {quota.monthly_limit}
+          </strong>
+          <span style={{ color: "var(--accent-blue)", fontWeight: 700 }}>
+            {Math.round((quota.calls_used / quota.monthly_limit) * 100)}%
+          </span>
+        </div>
+      </div>
+
+      {/* Sub Navigation Bar */}
+      <div
+        className="tab-nav"
+        style={{
+          display: "flex",
+          gap: "0.5rem",
+          borderBottom: "1px solid var(--border-subtle)",
+          marginBottom: "2.5rem",
+          overflowX: "auto",
+        }}
+      >
+        <button
+          className={`tab-nav-btn ${activeTab === "overview" ? "active" : ""}`}
+          onClick={() => setActiveTab("overview")}
+        >
+          <LayoutDashboard size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.35rem" }} />
+          Overview
         </button>
-      </div>
 
-      {/* Monthly Quota Alert & Progress Bar */}
-      <div className="card" style={{ padding: "1.25rem 1.5rem", marginBottom: "1.5rem", background: "var(--bg-subtle)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem", flexWrap: "wrap", gap: "0.5rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <Zap size={16} color="var(--accent-blue)" />
-            <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>Free Plan Monthly Quota:</span>
-            <span style={{ fontSize: "0.9rem", color: "var(--text-main)", fontWeight: 800 }}>
-              {quota.calls_used} / {quota.monthly_limit} API Calls
-            </span>
-          </div>
-          <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-            {quota.remaining_calls} calls remaining ({quota.current_month})
-          </div>
-        </div>
-        <div style={{ width: "100%", height: "8px", background: "var(--border-subtle)", borderRadius: "9999px", overflow: "hidden" }}>
-          <div style={{ width: `${usagePercent}%`, height: "100%", background: usagePercent > 85 ? "var(--danger)" : "var(--accent-blue)", borderRadius: "9999px", transition: "width 0.3s ease" }} />
-        </div>
-      </div>
-
-      {/* 4 Stats Boxes */}
-      <div className="stats-row" style={{ marginTop: 0 }}>
-        <div className="stat-box">
-          <div className="stat-top-bar" style={{ backgroundColor: "#d97706" }} />
-          <div className="stat-label">5-DAY TOTAL</div>
-          <div className="stat-value">{stats.total}</div>
-          <div className="stat-subtitle">emails verified</div>
-        </div>
-        <div className="stat-box">
-          <div className="stat-top-bar" style={{ backgroundColor: "#10b981" }} />
-          <div className="stat-label">DELIVERABLE</div>
-          <div className="stat-value" style={{ color: "#059669" }}>{stats.deliverable}</div>
-          <div className="stat-subtitle">passed all checks</div>
-        </div>
-        <div className="stat-box">
-          <div className="stat-top-bar" style={{ backgroundColor: "#3b82f6" }} />
-          <div className="stat-label">RISKY / ROLE</div>
-          <div className="stat-value" style={{ color: "#2563eb" }}>{stats.risky}</div>
-          <div className="stat-subtitle">requires review</div>
-        </div>
-        <div className="stat-box">
-          <div className="stat-top-bar" style={{ backgroundColor: "#e11d48" }} />
-          <div className="stat-label">UNDELIVERABLE</div>
-          <div className="stat-value" style={{ color: "#dc2626" }}>{stats.invalid}</div>
-          <div className="stat-subtitle">invalid or disposable</div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="tabs-nav">
         <button
           className={`tab-nav-btn ${activeTab === "single" ? "active" : ""}`}
           onClick={() => setActiveTab("single")}
         >
-          <Search size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.3rem" }} />
+          <Search size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.35rem" }} />
           Single Check
         </button>
+
         <button
           className={`tab-nav-btn ${activeTab === "bulk" ? "active" : ""}`}
           onClick={() => setActiveTab("bulk")}
         >
-          <Upload size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.3rem" }} />
+          <Upload size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.35rem" }} />
           Bulk Batch
         </button>
+
         <button
           className={`tab-nav-btn ${activeTab === "history" ? "active" : ""}`}
           onClick={() => setActiveTab("history")}
         >
-          <History size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.3rem" }} />
+          <History size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.35rem" }} />
           Audit History
         </button>
+
         <button
           className={`tab-nav-btn ${activeTab === "keys" ? "active" : ""}`}
           onClick={() => setActiveTab("keys")}
         >
-          <Key size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.3rem" }} />
+          <Key size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.35rem" }} />
           API Keys ({apiKeys.length})
         </button>
+
         <button
           className={`tab-nav-btn ${activeTab === "settings" ? "active" : ""}`}
           onClick={() => setActiveTab("settings")}
         >
-          <Settings size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.3rem" }} />
+          <Settings size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.35rem" }} />
           Account
         </button>
       </div>
 
-      {/* TAB 1: Single Verification */}
+      {/* TAB 1: OVERVIEW (Matching Reference Screenshot) */}
+      {activeTab === "overview" && (
+        <div>
+          {/* Time range selector & Refresh link */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "1.25rem",
+              flexWrap: "wrap",
+              gap: "1rem",
+            }}
+          >
+            <div
+              style={{
+                display: "inline-flex",
+                background: "var(--bg-subtle)",
+                padding: "0.2rem",
+                borderRadius: "var(--radius-md)",
+                border: "1px solid var(--border-subtle)",
+              }}
+            >
+              {(["Last 24 hours", "Last 30 days", "Last 12 months"] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTimeRange(t)}
+                  style={{
+                    padding: "0.35rem 0.85rem",
+                    fontSize: "0.82rem",
+                    fontWeight: 700,
+                    borderRadius: "var(--radius-sm)",
+                    border: "none",
+                    background: timeRange === t ? "#0f172a" : "transparent",
+                    color: timeRange === t ? "#ffffff" : "var(--text-muted)",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={loadHistoryAndStats}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.35rem",
+                background: "none",
+                border: "none",
+                color: "var(--text-muted)",
+                fontSize: "0.82rem",
+                cursor: "pointer",
+              }}
+            >
+              <span>Just updated</span>
+              <span style={{ textDecoration: "underline", textUnderlineOffset: "3px", color: "var(--text-main)", fontWeight: 600 }}>
+                Refresh
+              </span>
+            </button>
+          </div>
+
+          {/* 3 Metric Cards */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: "1.25rem",
+              marginBottom: "2rem",
+            }}
+          >
+            <div className="card" style={{ padding: "1.5rem" }}>
+              <div style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-muted)", marginBottom: "0.5rem" }}>
+                REQUESTS
+              </div>
+              <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>
+                {stats.total}
+              </div>
+              <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>—</div>
+            </div>
+
+            <div className="card" style={{ padding: "1.5rem" }}>
+              <div style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-muted)", marginBottom: "0.5rem" }}>
+                2XX REQUESTS (DELIVERABLE)
+              </div>
+              <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "var(--success)", lineHeight: 1 }}>
+                {stats.deliverable}
+              </div>
+              <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>—</div>
+            </div>
+
+            <div className="card" style={{ padding: "1.5rem" }}>
+              <div style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-muted)", marginBottom: "0.5rem" }}>
+                ERRORS / RISKY
+              </div>
+              <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "var(--danger)", lineHeight: 1 }}>
+                {stats.invalid + stats.risky}
+              </div>
+              <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>—</div>
+            </div>
+          </div>
+
+          {/* Requests Per Hour Visualizer */}
+          <div className="card" style={{ padding: "1.75rem", marginBottom: "2.5rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+              <div style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-muted)" }}>
+                REQUESTS PER HOUR
+              </div>
+              <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Max: {Math.max(stats.total, 1)}</span>
+            </div>
+
+            {/* Timeline Bars */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-end",
+                height: "120px",
+                gap: "4px",
+                borderBottom: "1px solid var(--border-subtle)",
+                paddingBottom: "4px",
+              }}
+            >
+              {hourlyLabels.map((_, idx) => {
+                const hasActivity = stats.total > 0 && idx === hourlyLabels.length - 2;
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      height: "100%",
+                      justifyContent: "flex-end",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "100%",
+                        height: hasActivity ? "80%" : "3px",
+                        background: hasActivity ? "var(--accent-blue)" : "rgba(226, 232, 240, 0.7)",
+                        borderRadius: "2px 2px 0 0",
+                        transition: "all 0.2s ease",
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Timeline Labels */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: "0.68rem",
+                color: "var(--text-muted)",
+                marginTop: "0.6rem",
+              }}
+            >
+              {hourlyLabels.map((h, i) => (
+                <span key={i} style={{ flex: 1, textAlign: "center" }}>
+                  {h}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent Activity Section */}
+          <div style={{ marginBottom: "3rem" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "1rem",
+              }}
+            >
+              <div style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-muted)" }}>
+                RECENT ACTIVITY
+              </div>
+              <button
+                onClick={loadHistoryAndStats}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.35rem",
+                  background: "none",
+                  border: "none",
+                  color: "var(--text-muted)",
+                  fontSize: "0.82rem",
+                  cursor: "pointer",
+                }}
+              >
+                <span>Just updated</span>
+                <span style={{ textDecoration: "underline", textUnderlineOffset: "3px", color: "var(--text-main)", fontWeight: 600 }}>
+                  Refresh
+                </span>
+              </button>
+            </div>
+
+            {history.length === 0 ? (
+              <div
+                className="card"
+                style={{
+                  border: "2px dashed var(--border-subtle)",
+                  padding: "3.5rem 2rem",
+                  textAlign: "center",
+                  borderRadius: "var(--radius-lg)",
+                }}
+              >
+                <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "0.4rem", color: "#0f172a" }}>
+                  No requests yet
+                </h3>
+                <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", marginBottom: "1.25rem", maxWidth: "480px", margin: "0 auto 1.25rem" }}>
+                  Once you make your first call to the API, the most recent requests will show up here.
+                </p>
+                <div style={{ display: "flex", justifyContent: "center", gap: "0.75rem", fontSize: "0.88rem" }}>
+                  <button
+                    onClick={() => setActiveTab("single")}
+                    style={{ background: "none", border: "none", color: "var(--accent-blue)", cursor: "pointer", textDecoration: "underline" }}
+                  >
+                    trigger a sample request
+                  </button>
+                  <span style={{ color: "var(--text-muted)" }}>or</span>
+                  <button
+                    onClick={() => setActiveTab("keys")}
+                    style={{ background: "none", border: "none", color: "var(--accent-blue)", cursor: "pointer", textDecoration: "underline" }}
+                  >
+                    view API keys
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+                  <thead>
+                    <tr style={{ background: "var(--bg-subtle)", borderBottom: "1px solid var(--border-subtle)", textAlign: "left" }}>
+                      <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 600 }}>Email</th>
+                      <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 600 }}>Verdict</th>
+                      <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 600 }}>Score</th>
+                      <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", fontWeight: 600 }}>Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history.slice(0, 5).map((item, idx) => (
+                      <tr key={idx} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                        <td style={{ padding: "0.85rem 1rem", fontWeight: 600 }}>{item.email}</td>
+                        <td style={{ padding: "0.85rem 1rem" }}>
+                          <VerdictBadge verdict={item.verdict} score={item.score} />
+                        </td>
+                        <td style={{ padding: "0.85rem 1rem" }}>{item.score}/100</td>
+                        <td style={{ padding: "0.85rem 1rem", color: "var(--text-muted)" }}>
+                          {new Date(item.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Example Request Multi-Language Snippet Box */}
+          <div style={{ marginBottom: "3rem" }}>
+            <div style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-muted)", marginBottom: "0.75rem" }}>
+              EXAMPLE REQUEST
+            </div>
+
+            <div style={{ background: "var(--bg-dark)", borderRadius: "var(--radius-lg)", border: "1px solid #1e293b", overflow: "hidden" }}>
+              {/* Language Selector Bar */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  background: "#090e17",
+                  borderBottom: "1px solid #1e293b",
+                  padding: "0.35rem 0.5rem",
+                  overflowX: "auto",
+                }}
+              >
+                {languages.map((l) => (
+                  <button
+                    key={l}
+                    onClick={() => setSelectedLang(l)}
+                    style={{
+                      background: selectedLang === l ? "#1e293b" : "transparent",
+                      color: selectedLang === l ? "#ffffff" : "#94a3b8",
+                      border: "none",
+                      padding: "0.35rem 0.65rem",
+                      borderRadius: "var(--radius-sm)",
+                      fontSize: "0.78rem",
+                      fontFamily: "var(--font-mono)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+
+              {/* Code Box */}
+              <div style={{ position: "relative", padding: "1.25rem 1.5rem" }}>
+                <button
+                  onClick={handleCopyCode}
+                  style={{
+                    position: "absolute",
+                    top: "1rem",
+                    right: "1rem",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.35rem",
+                    background: "#1e293b",
+                    border: "1px solid #334155",
+                    color: "#f8fafc",
+                    fontSize: "0.75rem",
+                    padding: "0.3rem 0.65rem",
+                    borderRadius: "var(--radius-sm)",
+                    cursor: "pointer",
+                  }}
+                >
+                  {copiedCode ? <Check size={13} color="var(--success)" /> : <Copy size={13} />}
+                  <span>{copiedCode ? "Copied!" : "Copy"}</span>
+                </button>
+
+                <pre style={{ margin: 0, color: "#38bdf8", fontFamily: "var(--font-mono)", fontSize: "0.85rem", lineHeight: 1.6, overflowX: "auto" }}>
+                  {getCodeSnippet(selectedLang)}
+                </pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: Single Verification */}
       {activeTab === "single" && (
         <div className="live-tester-card">
           <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "1rem" }}>Inspect Single Address</h2>
@@ -371,11 +705,11 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
           )}
 
           {singleResult && (
-            <div style={{ marginTop: "2rem", borderTop: "1px solid var(--border-subtle)", paddingTop: "1.5rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+            <div className="result-card" style={{ marginTop: "1.5rem" }}>
+              <div className="result-header">
                 <div>
-                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>TARGET EMAIL</div>
-                  <div style={{ fontSize: "1.2rem", fontWeight: 700 }}>{singleResult.email}</div>
+                  <span className="section-eyebrow">VERDICT</span>
+                  <div className="result-email">{singleResult.email}</div>
                 </div>
                 <VerdictBadge verdict={singleResult.verdict} score={singleResult.score} />
               </div>
@@ -385,33 +719,26 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
         </div>
       )}
 
-      {/* TAB 2: Bulk Verification */}
+      {/* TAB 3: Bulk Verification */}
       {activeTab === "bulk" && (
-        <div className="live-tester-card">
+        <div className="card" style={{ padding: "2rem" }}>
           <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "0.5rem" }}>Bulk Email Batch Engine</h2>
           <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
-            Paste email addresses (one per line, comma-separated, or JSON) or upload a CSV/TXT file.
+            Paste a list of emails (comma or newline separated) or upload a CSV file to inspect multiple records concurrently.
           </p>
 
           <form onSubmit={handleBulkSubmit}>
             <textarea
-              className="bulk-textarea"
-              placeholder="user1@domain.com&#10;user2@company.org&#10;sales@startup.io"
+              className="clean-input"
+              style={{ width: "100%", height: "160px", fontFamily: "var(--font-mono)", fontSize: "0.85rem", marginBottom: "1rem" }}
+              placeholder={`user1@domain.com\nuser2@gmail.com\nsupport@company.org`}
               value={bulkInput}
               onChange={(e) => setBulkInput(e.target.value)}
-              rows={6}
             />
-
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "1rem", flexWrap: "wrap", gap: "1rem" }}>
-              <label className="btn btn-outline" style={{ cursor: "pointer" }}>
-                <Upload size={14} /> Upload CSV / TXT
-                <input type="file" accept=".csv,.txt,.json" onChange={handleFileUpload} style={{ display: "none" }} />
-              </label>
-
-              <button type="submit" className="btn btn-black" disabled={bulkLoading || !bulkInput.trim()}>
-                {bulkLoading ? <Loader2 size={16} className="animate-spin" /> : "Run Batch Verification"}
-              </button>
-            </div>
+            <button type="submit" className="btn btn-black" disabled={bulkLoading || !bulkInput.trim()}>
+              {bulkLoading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+              <span>{bulkLoading ? "Processing Batch..." : "Run Batch Verification"}</span>
+            </button>
           </form>
 
           {bulkError && (
@@ -422,29 +749,65 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
 
           {bulkSummary && (
             <div style={{ marginTop: "2rem", borderTop: "1px solid var(--border-subtle)", paddingTop: "1.5rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                <h3 style={{ fontSize: "1.1rem", fontWeight: 700 }}>Batch Summary: {bulkSummary.total} Processed</h3>
-                <button className="btn btn-outline" onClick={() => handleDownloadCsv(bulkSummary.results)}>
-                  <Download size={14} /> Download Results (CSV)
-                </button>
+              <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "1rem" }}>Batch Processing Summary</h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+                <div className="card" style={{ padding: "1rem", textAlign: "center" }}>
+                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>TOTAL</div>
+                  <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>{bulkSummary.total}</div>
+                </div>
+                <div className="card" style={{ padding: "1rem", textAlign: "center" }}>
+                  <div style={{ fontSize: "0.75rem", color: "var(--success)" }}>DELIVERABLE</div>
+                  <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--success)" }}>{bulkSummary.successful}</div>
+                </div>
+                <div className="card" style={{ padding: "1rem", textAlign: "center" }}>
+                  <div style={{ fontSize: "0.75rem", color: "var(--danger)" }}>FAILED / RISKY</div>
+                  <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--danger)" }}>{bulkSummary.failed}</div>
+                </div>
               </div>
+            </div>
+          )}
+        </div>
+      )}
 
-              <table className="custom-table">
+      {/* TAB 4: Audit History */}
+      {activeTab === "history" && (
+        <div className="card" style={{ padding: "2rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+            <div>
+              <h2 style={{ fontSize: "1.2rem", fontWeight: 700 }}>5-Day Rolling History</h2>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+                Records are retained in encrypted storage for 5 days and purged automatically at midnight.
+              </p>
+            </div>
+            <button className="btn btn-outline" onClick={loadHistoryAndStats} disabled={historyLoading}>
+              <RefreshCw size={14} className={historyLoading ? "animate-spin" : ""} /> Refresh
+            </button>
+          </div>
+
+          {history.length === 0 ? (
+            <p style={{ color: "var(--text-muted)", textAlign: "center", padding: "2rem" }}>No verifications recorded in the last 5 days.</p>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
                 <thead>
-                  <tr>
-                    <th>Email</th>
-                    <th>Verdict</th>
-                    <th>Risk</th>
-                    <th>MX Server</th>
+                  <tr style={{ borderBottom: "2px solid var(--border-subtle)", textAlign: "left" }}>
+                    <th style={{ padding: "0.75rem" }}>Email</th>
+                    <th style={{ padding: "0.75rem" }}>Verdict</th>
+                    <th style={{ padding: "0.75rem" }}>Score</th>
+                    <th style={{ padding: "0.75rem" }}>Verified At</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {bulkSummary.results.slice(0, 50).map((r, idx) => (
-                    <tr key={idx}>
-                      <td style={{ fontWeight: 600 }}>{r.email}</td>
-                      <td><VerdictBadge verdict={r.verdict} score={r.score} /></td>
-                      <td>{r.score}/100</td>
-                      <td>{r.checks.mx}</td>
+                  {history.map((h, i) => (
+                    <tr key={i} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                      <td style={{ padding: "0.75rem", fontWeight: 600 }}>{h.email}</td>
+                      <td style={{ padding: "0.75rem" }}>
+                        <VerdictBadge verdict={h.verdict} score={h.score} />
+                      </td>
+                      <td style={{ padding: "0.75rem" }}>{h.score}/100</td>
+                      <td style={{ padding: "0.75rem", color: "var(--text-muted)" }}>
+                        {new Date(h.created_at).toLocaleString()}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -454,186 +817,125 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
         </div>
       )}
 
-      {/* TAB 3: Audit History */}
-      {activeTab === "history" && (
-        <div className="live-tester-card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-            <h2 style={{ fontSize: "1.2rem", fontWeight: 700 }}>5-Day Verification History</h2>
-            {history.length > 0 && (
-              <button className="btn btn-outline" onClick={() => handleDownloadCsv(history)}>
-                <Download size={14} /> Export CSV
-              </button>
-            )}
-          </div>
-
-          {historyLoading ? (
-            <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
-              <Loader2 size={24} className="animate-spin" style={{ margin: "0 auto" }} />
-            </div>
-          ) : history.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "3rem 1rem", color: "var(--text-muted)" }}>
-              No verification records in the last 5 days.
-            </div>
-          ) : (
-            <table className="custom-table">
-              <thead>
-                <tr>
-                  <th>Email</th>
-                  <th>Verdict</th>
-                  <th>Risk</th>
-                  <th>MX Server</th>
-                  <th>SPF</th>
-                  <th>DMARC</th>
-                  <th>Timestamp</th>
-                </tr>
-              </thead>
-              <tbody>
-                {history.map((r, idx) => (
-                  <tr key={idx}>
-                    <td style={{ fontWeight: 600 }}>{r.email}</td>
-                    <td><VerdictBadge verdict={r.verdict} score={r.score} /></td>
-                    <td>{r.score}/100</td>
-                    <td>{r.checks.mx}</td>
-                    <td>{r.checks.spf}</td>
-                    <td>{r.checks.dmarc}</td>
-                    <td style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
-                      {new Date(r.created_at).toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      )}
-
-      {/* TAB 4: API Keys & Quota */}
+      {/* TAB 5: API Keys & Quota */}
       {activeTab === "keys" && (
-        <div className="live-tester-card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
-            <div>
-              <h2 style={{ fontSize: "1.2rem", fontWeight: 700 }}>Developer API Keys</h2>
-              <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", marginTop: "0.25rem" }}>
-                Use your private API keys to integrate email validation into backend services, signup forms, and CRMs.
-              </p>
-            </div>
+        <div>
+          {/* Top Key Generation Box */}
+          <div className="card" style={{ padding: "2rem", marginBottom: "2rem" }}>
+            <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "0.5rem" }}>Generate New API Key</h2>
+            <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", marginBottom: "1.5rem" }}>
+              Authenticate backend requests via <code>X-API-Key: mv_live_...</code> or <code>Authorization: Bearer &lt;key&gt;</code>.
+            </p>
+
+            <form onSubmit={handleCreateKey} style={{ display: "flex", gap: "0.75rem", maxWidth: "520px" }}>
+              <input
+                type="text"
+                className="clean-input"
+                placeholder="Key label (e.g. Production Backend, Zapier)"
+                value={newKeyName}
+                onChange={(e) => setNewKeyName(e.target.value)}
+                required
+                disabled={generatingKey || apiKeys.length >= 5}
+              />
+              <button type="submit" className="btn btn-black" disabled={generatingKey || !newKeyName.trim() || apiKeys.length >= 5} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", whiteSpace: "nowrap" }}>
+                {generatingKey ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                <span>Create Key</span>
+              </button>
+            </form>
+
+            {createdKey && (
+              <div style={{ marginTop: "1.5rem", padding: "1rem 1.25rem", background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: "var(--radius-md)" }}>
+                <div style={{ fontWeight: 700, color: "var(--success)", fontSize: "0.9rem", marginBottom: "0.4rem" }}>
+                  🎉 API Key Created! Copy it now (it won't be displayed again):
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <code style={{ background: "#0f172a", color: "#34d399", padding: "0.5rem 0.75rem", borderRadius: "var(--radius-sm)", fontSize: "0.85rem", fontFamily: "var(--font-mono)", flex: 1, overflowX: "auto" }}>
+                    {createdKey.raw_key}
+                  </code>
+                  <button
+                    className="btn btn-black"
+                    onClick={() => {
+                      navigator.clipboard.writeText(createdKey.raw_key);
+                      setCopiedToken(true);
+                      setTimeout(() => setCopiedToken(false), 2000);
+                    }}
+                    style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
+                  >
+                    {copiedToken ? <Check size={14} /> : <Copy size={14} />}
+                    <span>{copiedToken ? "Copied" : "Copy"}</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Newly Created Key Banner (Shown once) */}
-          {createdKey && (
-            <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: "var(--radius-md)", padding: "1.25rem", marginBottom: "1.5rem" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--success)", fontWeight: 700, marginBottom: "0.5rem" }}>
-                <Check size={18} /> API Key Created Successfully!
+          {/* Active Keys List */}
+          <div className="card" style={{ padding: "2rem" }}>
+            <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "1rem" }}>Active API Keys ({apiKeys.length}/5)</h3>
+            {keysLoading ? (
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--text-muted)" }}>
+                <Loader2 size={16} className="animate-spin" /> Loading keys...
               </div>
-              <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "0.75rem" }}>
-                {createdKey.message}
-              </p>
-              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                <input
-                  type="text"
-                  readOnly
-                  value={createdKey.raw_key}
-                  style={{ width: "100%", fontFamily: "var(--font-mono)", fontSize: "0.85rem", padding: "0.6rem 0.75rem", background: "#fff", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-sm)" }}
-                />
-                <button className="btn btn-black" onClick={() => handleCopyKey(createdKey.raw_key)} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", whiteSpace: "nowrap" }}>
-                  {copiedToken ? <Check size={14} /> : <Copy size={14} />}
-                  <span>{copiedToken ? "Copied!" : "Copy Key"}</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Create Key Form */}
-          <form onSubmit={handleCreateApiKey} style={{ display: "flex", gap: "0.75rem", marginBottom: "2rem", flexWrap: "wrap" }}>
-            <input
-              type="text"
-              placeholder="e.g. My Next.js Backend, Zapier, Webhook"
-              value={newKeyName}
-              onChange={(e) => setNewKeyName(e.target.value)}
-              style={{ flex: 1, minWidth: "240px", padding: "0.6rem 0.75rem", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-subtle)", fontSize: "0.9rem" }}
-            />
-            <button type="submit" className="btn btn-black" disabled={generatingKey || apiKeys.length >= 5} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
-              {generatingKey ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-              <span>Generate API Key</span>
-            </button>
-          </form>
-
-          {/* API Keys Table */}
-          <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "0.75rem" }}>Active API Keys ({apiKeys.length}/5)</h3>
-          {keysLoading ? (
-            <div style={{ textAlign: "center", padding: "2rem" }}><Loader2 size={20} className="animate-spin" /></div>
-          ) : apiKeys.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)", fontSize: "0.9rem" }}>
-              No API keys generated yet. Click "Generate API Key" above to create your first key.
-            </div>
-          ) : (
-            <table className="custom-table" style={{ fontSize: "0.85rem" }}>
-              <thead>
-                <tr>
-                  <th>NAME</th>
-                  <th>KEY TOKEN</th>
-                  <th>CREATED</th>
-                  <th>LAST USED</th>
-                  <th style={{ textAlign: "right" }}>ACTION</th>
-                </tr>
-              </thead>
-              <tbody>
-                {apiKeys.map((k) => (
-                  <tr key={k.id}>
-                    <td style={{ fontWeight: 600 }}>{k.name}</td>
-                    <td style={{ fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>{k.key_prefix}</td>
-                    <td style={{ color: "var(--text-muted)" }}>{new Date(k.created_at).toLocaleDateString()}</td>
-                    <td style={{ color: "var(--text-muted)" }}>{k.last_used_at ? new Date(k.last_used_at).toLocaleDateString() : "Never"}</td>
-                    <td style={{ textAlign: "right" }}>
-                      <button className="btn btn-outline" style={{ color: "var(--danger)", padding: "0.25rem 0.5rem" }} onClick={() => handleDeleteApiKey(k.id)} title="Revoke Key">
-                        <Trash2 size={13} /> Revoke
-                      </button>
-                    </td>
+            ) : apiKeys.length === 0 ? (
+              <p style={{ color: "var(--text-muted)" }}>No API keys generated yet. Create one above to get started.</p>
+            ) : (
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+                <thead>
+                  <tr style={{ borderBottom: "2px solid var(--border-subtle)", textAlign: "left" }}>
+                    <th style={{ padding: "0.75rem" }}>Label</th>
+                    <th style={{ padding: "0.75rem" }}>Prefix</th>
+                    <th style={{ padding: "0.75rem" }}>Created</th>
+                    <th style={{ padding: "0.75rem", textAlign: "right" }}>Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-
-          {/* Quick cURL Example */}
-          <div style={{ marginTop: "2.5rem", background: "var(--bg-subtle)", padding: "1.25rem", borderRadius: "var(--radius-md)" }}>
-            <h4 style={{ fontWeight: 700, fontSize: "0.9rem", marginBottom: "0.5rem" }}>How to use your API Key:</h4>
-            <pre style={{ background: "#0f172a", color: "#f8fafc", padding: "0.85rem", borderRadius: "var(--radius-sm)", fontSize: "0.8rem", fontFamily: "var(--font-mono)", overflowX: "auto" }}>
-{`curl -X POST https://mailverify.pulsechat.workers.dev/api/verify \\
-  -H "Content-Type: application/json" \\
-  -H "X-API-Key: ${apiKeys.length > 0 ? apiKeys[0].key_prefix.replace("...", "xxxx") : "mv_live_your_key_here"}" \\
-  -d '{"email": "contact@targetdomain.com"}'`}
-            </pre>
+                </thead>
+                <tbody>
+                  {apiKeys.map((k) => (
+                    <tr key={k.id} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                      <td style={{ padding: "0.75rem", fontWeight: 600 }}>{k.name}</td>
+                      <td style={{ padding: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>{k.key_prefix}...</td>
+                      <td style={{ padding: "0.75rem", color: "var(--text-muted)" }}>{new Date(k.created_at).toLocaleDateString()}</td>
+                      <td style={{ padding: "0.75rem", textAlign: "right" }}>
+                        <button
+                          onClick={() => handleDeleteKey(k.id)}
+                          style={{ background: "none", border: "none", color: "var(--danger)", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}
+                        >
+                          <Trash2 size={14} /> Revoke
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       )}
 
-      {/* TAB 5: Settings & Danger Zone */}
+      {/* TAB 6: Settings / Account */}
       {activeTab === "settings" && (
-        <div className="live-tester-card" style={{ maxWidth: "580px" }}>
-          <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "1.25rem" }}>Account & Data Privacy</h2>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "2rem" }}>
-            {user.avatar_url ? (
-              <img src={user.avatar_url} alt={user.name || user.email} style={{ width: "48px", height: "48px", borderRadius: "50%" }} />
-            ) : (
-              <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Search size={20} />
-              </div>
-            )}
-            <div>
-              <div style={{ fontWeight: 700 }}>{user.name || "User"}</div>
-              <div style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>{user.email}</div>
-            </div>
+        <div className="card" style={{ padding: "2rem" }}>
+          <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "1rem" }}>Account Governance</h2>
+          <div style={{ marginBottom: "2rem" }}>
+            <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Signed in email</div>
+            <div style={{ fontSize: "1rem", fontWeight: 600 }}>{user.email}</div>
           </div>
 
-          <div style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: "1.25rem" }}>
-            <h3 style={{ fontSize: "0.95rem", color: "#dc2626", fontWeight: 700, marginBottom: "0.3rem" }}>Danger Zone</h3>
-            <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "1rem" }}>
-              Permanently delete your user profile and wipe all associated sessions, API keys, bulk job logs, and verification history.
+          <div style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: "1.5rem" }}>
+            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--danger)", marginBottom: "0.5rem" }}>Danger Zone</h3>
+            <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", marginBottom: "1rem" }}>
+              Permanently delete your profile, API keys, and all verification history under GDPR right to erasure.
             </p>
-            <button className="btn btn-danger" onClick={handleDeleteAccount}>
-              <Trash2 size={14} /> Delete Account & Wipe All Data
+            <button
+              className="btn"
+              onClick={async () => {
+                if (confirm("Are you absolutely sure you want to permanently erase your account and all data? This cannot be undone.")) {
+                  await api.deleteAccount();
+                  onLogout();
+                }
+              }}
+              style={{ background: "var(--danger)", color: "#fff", border: "none" }}
+            >
+              Permanently Delete Account
             </button>
           </div>
         </div>
